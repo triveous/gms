@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-20 15:36:48.753705",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "key_activities_performed",
+  "highlights",
+  "lowlight",
+  "pregress",
+  "milestone_achieved",
+  "trl",
+  "mrl",
+  "crl",
+  "sirl",
+  "impact_created",
+  "budget_spent",
+  "additional_comments",
+  "update_date",
+  "project"
+ ],
+ "fields": [
+  {
+   "fieldname": "key_activities_performed",
+   "fieldtype": "Long Text",
+   "label": "Key Activities Performed"
+  },
+  {
+   "fieldname": "highlights",
+   "fieldtype": "Long Text",
+   "label": "HIghlights"
+  },
+  {
+   "fieldname": "lowlight",
+   "fieldtype": "Long Text",
+   "label": "Lowlight"
+  },
+  {
+   "fieldname": "pregress",
+   "fieldtype": "Data",
+   "label": "Pregress"
+  },
+  {
+   "fieldname": "milestone_achieved",
+   "fieldtype": "Long Text",
+   "label": "Milestone Achieved"
+  },
+  {
+   "fieldname": "trl",
+   "fieldtype": "Data",
+   "label": "TRL"
+  },
+  {
+   "fieldname": "mrl",
+   "fieldtype": "Data",
+   "label": "MRL"
+  },
+  {
+   "fieldname": "crl",
+   "fieldtype": "Data",
+   "label": "CRL"
+  },
+  {
+   "fieldname": "sirl",
+   "fieldtype": "Data",
+   "label": "SIRL"
+  },
+  {
+   "fieldname": "impact_created",
+   "fieldtype": "Long Text",
+   "label": "Impact Created"
+  },
+  {
+   "fieldname": "budget_spent",
+   "fieldtype": "Data",
+   "label": "Budget Spent"
+  },
+  {
+   "fieldname": "additional_comments",
+   "fieldtype": "Small Text",
+   "label": "Additional Comments"
+  },
+  {
+   "fieldname": "update_date",
+   "fieldtype": "Date",
+   "label": "Update Date"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Grant Project"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-20 15:40:30.064112",
+ "modified_by": "Administrator",
+ "module": "Grant Reporting",
+ "name": "Grant Project Report",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

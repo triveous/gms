@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GrantMaker(Document):
+class GrantProjectGoals(Document):
 	pass

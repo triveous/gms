@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-11-12 17:29:19.429474",
+ "creation": "2025-11-20 15:15:55.309843",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -17,10 +17,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-12 17:29:42.194866",
+ "modified": "2025-11-20 15:16:31.082532",
  "modified_by": "Administrator",
  "module": "Grant Planning",
- "name": "Grant Program",
+ "name": "Grant Initiative",
  "owner": "Administrator",
  "permissions": [
   {

@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GrantProgram(Document):
+class GrantProjectMilestone(Document):
 	pass

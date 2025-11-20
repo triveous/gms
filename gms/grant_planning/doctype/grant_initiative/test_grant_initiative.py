@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestGrantProgram(FrappeTestCase):
+class TestGrantInitiative(FrappeTestCase):
 	pass

@@ -8,7 +8,15 @@
   "name1",
   "start_date",
   "end_date",
-  "description"
+  "description",
+  "isactive",
+  "decision_date",
+  "approval_number",
+  "attachment",
+  "approved_amount",
+  "grant_status",
+  "grant_type",
+  "grant_term"
  ],
  "fields": [
   {
@@ -30,12 +38,56 @@
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "isactive",
+   "fieldtype": "Check",
+   "label": "IsActive"
+  },
+  {
+   "fieldname": "decision_date",
+   "fieldtype": "Date",
+   "label": "Decision Date"
+  },
+  {
+   "fieldname": "approval_number",
+   "fieldtype": "Data",
+   "label": "Approval Number"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "approved_amount",
+   "fieldtype": "Currency",
+   "label": "Approved Amount"
+  },
+  {
+   "fieldname": "grant_status",
+   "fieldtype": "Select",
+   "label": "Grant Status",
+   "options": "Awarded\nAward Pending\nClosed"
+  },
+  {
+   "fieldname": "grant_type",
+   "fieldtype": "Select",
+   "label": "Grant Type",
+   "options": "Government"
+  },
+  {
+   "fieldname": "grant_term",
+   "fieldtype": "Select",
+   "label": "Grant Term",
+   "options": "Single Year\nMulti Year"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 13:07:31.252866",
+ "modified": "2025-11-20 16:17:51.191295",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",

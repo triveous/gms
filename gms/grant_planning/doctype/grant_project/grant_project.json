@@ -1,26 +1,33 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-11-12 17:28:17.903956",
+ "creation": "2025-11-20 15:17:06.029459",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "name1"
+  "name1",
+  "grant"
  ],
  "fields": [
   {
    "fieldname": "name1",
    "fieldtype": "Data",
    "label": "Name"
+  },
+  {
+   "fieldname": "grant",
+   "fieldtype": "Link",
+   "label": "Grant",
+   "options": "Grant"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-12 17:30:02.799798",
+ "modified": "2025-11-20 16:14:23.973914",
  "modified_by": "Administrator",
- "module": "Grant Core",
- "name": "Grant Maker",
+ "module": "Grant Planning",
+ "name": "Grant Project",
  "owner": "Administrator",
  "permissions": [
   {
