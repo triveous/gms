@@ -5,20 +5,37 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "program"
+  "name1",
+  "start_date",
+  "end_date",
+  "description"
  ],
  "fields": [
   {
-   "fieldname": "program",
-   "fieldtype": "Link",
-   "label": "Program",
-   "options": "Grant Program"
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-12 17:31:47.438998",
+ "modified": "2025-11-20 13:07:31.252866",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",
