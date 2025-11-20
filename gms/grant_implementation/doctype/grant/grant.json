@@ -20,11 +20,6 @@
  ],
  "fields": [
   {
-   "fieldname": "name1",
-   "fieldtype": "Data",
-   "label": "Name"
-  },
-  {
    "fieldname": "start_date",
    "fieldtype": "Date",
    "label": "Start Date"
@@ -67,27 +62,32 @@
   },
   {
    "fieldname": "grant_status",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Grant Status",
-   "options": "Awarded\nAward Pending\nClosed"
+   "options": "Grant Status"
   },
   {
    "fieldname": "grant_type",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Grant Type",
-   "options": "Government"
+   "options": "Grant Type"
   },
   {
    "fieldname": "grant_term",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Grant Term",
-   "options": "Single Year\nMulti Year"
+   "options": "Grant Term"
+  },
+  {
+   "fieldname": "name1",
+   "fieldtype": "Data",
+   "label": "Name"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 16:17:51.191295",
+ "modified": "2025-11-20 18:30:58.015918",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",

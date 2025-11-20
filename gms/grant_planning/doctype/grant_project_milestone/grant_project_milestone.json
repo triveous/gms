@@ -5,18 +5,59 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_3wog"
+  "grant",
+  "due_date",
+  "report",
+  "updates",
+  "date_of_completion",
+  "status",
+  "milestone_type"
  ],
  "fields": [
   {
-   "fieldname": "section_break_3wog",
-   "fieldtype": "Section Break"
+   "fieldname": "grant",
+   "fieldtype": "Link",
+   "label": "Grant",
+   "options": "Grant"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "report",
+   "fieldtype": "Link",
+   "label": "Report ",
+   "options": "Grant Project Report"
+  },
+  {
+   "fieldname": "updates",
+   "fieldtype": "Text Editor",
+   "label": "Updates"
+  },
+  {
+   "fieldname": "date_of_completion",
+   "fieldtype": "Date",
+   "label": "Date of Completion"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Completed\nPending"
+  },
+  {
+   "fieldname": "milestone_type",
+   "fieldtype": "Link",
+   "label": "Milestone Type",
+   "options": "Grant Milestone Type"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 15:20:46.009038",
+ "modified": "2025-11-20 18:31:50.467583",
  "modified_by": "Administrator",
  "module": "Grant Planning",
  "name": "Grant Project Milestone",

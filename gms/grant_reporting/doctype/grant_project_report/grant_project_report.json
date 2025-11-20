@@ -23,17 +23,17 @@
  "fields": [
   {
    "fieldname": "key_activities_performed",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Key Activities Performed"
   },
   {
    "fieldname": "highlights",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "HIghlights"
   },
   {
    "fieldname": "lowlight",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Lowlight"
   },
   {
@@ -43,7 +43,7 @@
   },
   {
    "fieldname": "milestone_achieved",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Milestone Achieved"
   },
   {
@@ -68,7 +68,7 @@
   },
   {
    "fieldname": "impact_created",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Impact Created"
   },
   {
@@ -78,7 +78,7 @@
   },
   {
    "fieldname": "additional_comments",
-   "fieldtype": "Small Text",
+   "fieldtype": "Text Editor",
    "label": "Additional Comments"
   },
   {
@@ -96,7 +96,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 15:40:30.064112",
+ "modified": "2025-11-20 17:47:01.498903",
  "modified_by": "Administrator",
  "module": "Grant Reporting",
  "name": "Grant Project Report",

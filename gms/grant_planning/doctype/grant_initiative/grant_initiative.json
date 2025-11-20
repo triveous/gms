@@ -5,11 +5,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "name1"
+  "name"
  ],
  "fields": [
   {
-   "fieldname": "name1",
+   "fieldname": "name",
    "fieldtype": "Data",
    "label": "Name"
   }

@@ -14,7 +14,7 @@
  "fields": [
   {
    "fieldname": "goal_item",
-   "fieldtype": "Small Text",
+   "fieldtype": "Data",
    "label": "Goal Item"
   },
   {
@@ -42,7 +42,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 15:20:09.419660",
+ "modified": "2025-11-20 17:48:05.688287",
  "modified_by": "Administrator",
  "module": "Grant Planning",
  "name": "Grant Project Goals",
