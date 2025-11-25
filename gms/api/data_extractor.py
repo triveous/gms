@@ -3,8 +3,6 @@ import os
 import sys
 
 import frappe
-import google.generativeai as genai
-import openpyxl
 from frappe.model.document import Document
 
 
@@ -27,6 +25,8 @@ def extract_text_from_docx(file_path):
 
 
 def extract_text_from_xlsx(file_path):
+	import openpyxl
+
 	"""Extracts all text from an .xlsx file, preserving some sheet/row structure."""
 	try:
 		workbook = openpyxl.load_workbook(file_path)
@@ -44,6 +44,8 @@ def extract_text_from_xlsx(file_path):
 
 
 def get_structured_data_from_gemini(text_content, api_key):
+	import google.generativeai as genai
+
 	"""Sends the extracted text to the Gemini model and asks for structured JSON output."""
 	try:
 		genai.configure(api_key=api_key)
