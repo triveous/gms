@@ -1,44 +1,26 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-11-20 15:18:42.081724",
+ "creation": "2025-11-21 11:27:09.331019",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "goal_item",
-  "budget_forecast",
-  "start_period",
-  "end_period"
+  "upload_grant_document"
  ],
  "fields": [
   {
-   "fieldname": "goal_item",
-   "fieldtype": "Text Editor",
-   "label": "Goal Item"
-  },
-  {
-   "fieldname": "budget_forecast",
-   "fieldtype": "Currency",
-   "label": "Budget Forecast"
-  },
-  {
-   "fieldname": "start_period",
-   "fieldtype": "Date",
-   "label": "Start Period"
-  },
-  {
-   "fieldname": "end_period",
-   "fieldtype": "Date",
-   "label": "End Period"
+   "fieldname": "upload_grant_document",
+   "fieldtype": "Attach",
+   "label": "Upload grant document"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-24 16:39:45.741478",
+ "modified": "2025-11-21 15:33:10.364608",
  "modified_by": "Administrator",
  "module": "Grant Planning",
- "name": "Grant Project Goals",
+ "name": "Grant Planning Form",
  "owner": "Administrator",
  "permissions": [
   {

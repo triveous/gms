@@ -29,7 +29,7 @@
   {
    "fieldname": "highlights",
    "fieldtype": "Text Editor",
-   "label": "HIghlights"
+   "label": "Highlights"
   },
   {
    "fieldname": "lowlight",
@@ -39,7 +39,7 @@
   {
    "fieldname": "pregress",
    "fieldtype": "Data",
-   "label": "Pregress"
+   "label": "Progress"
   },
   {
    "fieldname": "milestone_achieved",
@@ -48,22 +48,22 @@
   },
   {
    "fieldname": "trl",
-   "fieldtype": "Data",
+   "fieldtype": "Text Editor",
    "label": "TRL"
   },
   {
    "fieldname": "mrl",
-   "fieldtype": "Data",
+   "fieldtype": "Text Editor",
    "label": "MRL"
   },
   {
    "fieldname": "crl",
-   "fieldtype": "Data",
+   "fieldtype": "Text Editor",
    "label": "CRL"
   },
   {
    "fieldname": "sirl",
-   "fieldtype": "Data",
+   "fieldtype": "Text Editor",
    "label": "SIRL"
   },
   {
@@ -73,7 +73,7 @@
   },
   {
    "fieldname": "budget_spent",
-   "fieldtype": "Data",
+   "fieldtype": "Text Editor",
    "label": "Budget Spent"
   },
   {
@@ -96,7 +96,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 17:47:01.498903",
+ "modified": "2025-11-25 11:49:07.600082",
  "modified_by": "Administrator",
  "module": "Grant Reporting",
  "name": "Grant Project Report",

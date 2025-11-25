@@ -5,7 +5,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "grant",
   "due_date",
   "report",
   "updates",
@@ -14,12 +13,6 @@
   "milestone_type"
  ],
  "fields": [
-  {
-   "fieldname": "grant",
-   "fieldtype": "Link",
-   "label": "Grant",
-   "options": "Grant"
-  },
   {
    "fieldname": "due_date",
    "fieldtype": "Date",
@@ -57,7 +50,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 18:31:50.467583",
+ "modified": "2025-11-24 16:38:23.189988",
  "modified_by": "Administrator",
  "module": "Grant Planning",
  "name": "Grant Project Milestone",

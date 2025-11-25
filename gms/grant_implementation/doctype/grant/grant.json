@@ -5,7 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "name1",
+  "title",
   "start_date",
   "end_date",
   "description",
@@ -57,7 +57,7 @@
   },
   {
    "fieldname": "approved_amount",
-   "fieldtype": "Currency",
+   "fieldtype": "Data",
    "label": "Approved Amount"
   },
   {
@@ -79,7 +79,7 @@
    "options": "Grant Term"
   },
   {
-   "fieldname": "name1",
+   "fieldname": "title",
    "fieldtype": "Data",
    "label": "Name"
   }
@@ -87,7 +87,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 18:30:58.015918",
+ "modified": "2025-11-25 14:05:34.912333",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",

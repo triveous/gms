@@ -5,26 +5,19 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "name",
-  "grant"
+  "title"
  ],
  "fields": [
   {
-   "fieldname": "name",
+   "fieldname": "title",
    "fieldtype": "Data",
    "label": "Name"
-  },
-  {
-   "fieldname": "grant",
-   "fieldtype": "Link",
-   "label": "Grant",
-   "options": "Grant"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-20 17:40:08.491286",
+ "modified": "2025-11-24 16:37:43.615931",
  "modified_by": "Administrator",
  "module": "Grant Planning",
  "name": "Grant Project",
