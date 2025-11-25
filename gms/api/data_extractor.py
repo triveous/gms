@@ -2,6 +2,7 @@ import json
 import os
 import sys
 
+import docx
 import frappe
 import google.generativeai as genai
 import openpyxl
@@ -9,8 +10,6 @@ from frappe.model.document import Document
 
 
 def extract_text_from_docx(file_path):
-	import docx
-
 	try:
 		doc = docx.Document(file_path)
 		full_text = []
