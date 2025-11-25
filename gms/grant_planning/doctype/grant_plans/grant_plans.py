@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 # import frappe
-from frappe import frappe
+from frappe import _, frappe
 from frappe.model.document import Document
 
 from gms.api.data_extractor import run_extraction_pipeline
@@ -49,8 +49,7 @@ def create_grant_projects_from_extracted_json(extracted):
 
 		y1 = project.get("y1", {})
 
-		for quarter_key, quarter_data in y1.items():
-			print(f"Processing {quarter_key} data: {quarter_data}")
+		for quarter_data in y1.items():
 			goals_text = quarter_data.get("goals_deliverables", "")
 			budget = quarter_data.get("budget", "")
 
@@ -96,7 +95,6 @@ class GrantPlans(Document):
 		file_path = self.get_full_file_path(self.upload_plan)
 
 		structured_data = run_extraction_pipeline(file_path)
-		print(structured_data)
 		create_grant_projects_from_extracted_json(structured_data)
 
-		frappe.msgprint("Data fetching task started successfully", alert=True)
+		frappe.msgprint(_("Data fetching task started successfully"), alert=True)

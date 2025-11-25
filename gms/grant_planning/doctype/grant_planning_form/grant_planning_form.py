@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from gms.api.data_extractor import run_extraction_pipeline
@@ -60,4 +61,4 @@ class GrantPlanningForm(Document):
 		structured_data = run_extraction_pipeline(file_path)
 		create_grant_from_extracted_json(structured_data, file_url)
 
-		frappe.msgprint("Data fetching task started successfully", alert=True)
+		frappe.msgprint(_("Data fetching task started successfully"), alert=True)

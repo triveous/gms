@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from gms.api.data_extractor import run_extraction_pipeline
@@ -66,7 +67,7 @@ class GrantProjectQuarterlyUpdate(Document):
 		file_path = self.get_full_file_path(self.upload_quarterly_update)
 
 		structured_data = run_extraction_pipeline(file_path)
-		print(structured_data)
+
 		create_grant_project_reports(structured_data)
 
-		frappe.msgprint("Data fetching task started successfully", alert=True)
+		frappe.msgprint(_("Data fetching task started successfully"), alert=True)
