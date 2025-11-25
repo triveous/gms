@@ -19,15 +19,13 @@ def create_grant_project_reports(extracted):
 
 	for row in reports_data:
 		project_name = row.get("workstream_names")
-		print("KEY ACTIVITIES:------>", row.get("key_activities_performed", ""))
+
 		# Find project
 		project = frappe.db.get_value("Grant Project", {"title": project_name}, ["name", "title"])
-		print("PROJECT NAME:------>", project_name)
+
 		if not project:
 			frappe.logger().warning(f"[Grant Report] Project not found: {project_name}")
 			continue
-
-		print("PROJECT FOUND:------>", project)
 
 		# Create report
 		report_doc = frappe.get_doc(
@@ -53,7 +51,6 @@ def create_grant_project_reports(extracted):
 		)
 
 		report_doc.insert(ignore_permissions=True)
-		frappe.db.commit()
 
 		created_reports.append(report_doc.name)
 

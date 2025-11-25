@@ -43,7 +43,7 @@ def create_grant_projects_from_extracted_json(extracted):
 		)
 
 		project_doc.insert(ignore_permissions=True)
-		frappe.db.commit()
+		# frappe.db.commit()
 
 		created_project_docs.append(project_doc.name)
 
@@ -66,7 +66,7 @@ def create_grant_projects_from_extracted_json(extracted):
 				}
 			)
 			goal_doc.insert(ignore_permissions=True)
-			frappe.db.commit()
+			# frappe.db.commit()
 
 			milestone_doc = frappe.get_doc(
 				{
@@ -82,7 +82,7 @@ def create_grant_projects_from_extracted_json(extracted):
 			)
 
 			milestone_doc.insert(ignore_permissions=True)
-			frappe.db.commit()
+			# frappe.db.commit()
 
 	return created_project_docs
 

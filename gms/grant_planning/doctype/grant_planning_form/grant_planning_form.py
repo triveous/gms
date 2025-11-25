@@ -29,7 +29,7 @@ def create_grant_from_extracted_json(extracted, file_url):
 
 	# Insert into DB
 	grant.insert(ignore_permissions=True)
-	frappe.db.commit()
+	# frappe.db.commit()
 
 	# 2️⃣ Attach file to Grant (default attachment sidebar)
 	file_doc = frappe.get_doc(
@@ -42,7 +42,7 @@ def create_grant_from_extracted_json(extracted, file_url):
 	)
 
 	file_doc.insert(ignore_permissions=True)
-	frappe.db.commit()
+	# frappe.db.commit()
 
 	return grant.name
 
