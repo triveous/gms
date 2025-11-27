@@ -3,39 +3,42 @@
  "allow_rename": 1,
  "creation": "2025-11-20 15:17:06.029459",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "title"
+  "title",
+  "project_goals",
+  "project_milestones"
  ],
  "fields": [
   {
    "fieldname": "title",
    "fieldtype": "Data",
    "label": "Name"
+  },
+  {
+   "fieldname": "project_goals",
+   "fieldtype": "Table",
+   "label": "Project Goals",
+   "options": "Grant Project Goals"
+  },
+  {
+   "fieldname": "project_milestones",
+   "fieldtype": "Table",
+   "label": "Project Milestones",
+   "options": "Grant Project Milestone"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "istable": 1,
  "links": [],
- "modified": "2025-11-24 16:37:43.615931",
+ "modified": "2025-11-26 18:34:45.495976",
  "modified_by": "Administrator",
  "module": "Grant Planning",
  "name": "Grant Project",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
+ "permissions": [],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",

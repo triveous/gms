@@ -12,11 +12,8 @@
   "isactive",
   "decision_date",
   "approval_number",
-  "attachment",
   "approved_amount",
-  "grant_status",
-  "grant_type",
-  "grant_term"
+  "projects"
  ],
  "fields": [
   {
@@ -51,43 +48,26 @@
    "label": "Approval Number"
   },
   {
-   "fieldname": "attachment",
-   "fieldtype": "Attach",
-   "label": "Attachment"
-  },
-  {
    "fieldname": "approved_amount",
    "fieldtype": "Data",
    "label": "Approved Amount"
   },
   {
-   "fieldname": "grant_status",
-   "fieldtype": "Link",
-   "label": "Grant Status",
-   "options": "Grant Status"
-  },
-  {
-   "fieldname": "grant_type",
-   "fieldtype": "Link",
-   "label": "Grant Type",
-   "options": "Grant Type"
-  },
-  {
-   "fieldname": "grant_term",
-   "fieldtype": "Link",
-   "label": "Grant Term",
-   "options": "Grant Term"
-  },
-  {
    "fieldname": "title",
    "fieldtype": "Data",
    "label": "Name"
+  },
+  {
+   "fieldname": "projects",
+   "fieldtype": "Table",
+   "label": "Projects",
+   "options": "Grant Project"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-25 14:05:34.912333",
+ "modified": "2025-11-26 18:26:47.730263",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",
