@@ -5,6 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "column_break_fqzj",
   "title",
   "start_date",
   "end_date",
@@ -12,8 +13,7 @@
   "isactive",
   "decision_date",
   "approval_number",
-  "approved_amount",
-  "projects"
+  "approved_amount"
  ],
  "fields": [
   {
@@ -58,16 +58,14 @@
    "label": "Name"
   },
   {
-   "fieldname": "projects",
-   "fieldtype": "Table",
-   "label": "Projects",
-   "options": "Grant Project"
+   "fieldname": "column_break_fqzj",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 18:26:47.730263",
+ "modified": "2025-11-28 09:57:20.871229",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",
