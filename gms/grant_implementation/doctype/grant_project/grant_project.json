@@ -6,8 +6,12 @@
  "engine": "InnoDB",
  "field_order": [
   "basic_information_section",
+  "grant",
   "title",
-  "grant"
+  "alias",
+  "start_date",
+  "end_date",
+  "lead_institute"
  ],
  "fields": [
   {
@@ -28,12 +32,32 @@
    "label": "Grant",
    "options": "Grant",
    "reqd": 1
+  },
+  {
+   "fieldname": "alias",
+   "fieldtype": "Data",
+   "label": "Alias"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "lead_institute",
+   "fieldtype": "Data",
+   "label": "Lead Institute"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-02 12:54:38.938322",
+ "modified": "2025-12-02 18:00:06.692469",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant Project",
@@ -54,7 +78,9 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "title"
 }

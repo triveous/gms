@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-02 16:44:51.993520",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_informtion_section",
+  "title",
+  "project",
+  "milestone_type",
+  "submitted_at",
+  "progress_update_section",
+  "period_start",
+  "period_end",
+  "metrics_section",
+  "metric_computed_at",
+  "metrics_values"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_informtion_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Informtion"
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Project",
+   "options": "Grant Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "milestone_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Milestone Type",
+   "options": "Grant Project Milestone Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "progress_update_section",
+   "fieldtype": "Section Break",
+   "label": "Progress Update"
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start"
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "metrics_section",
+   "fieldtype": "Section Break",
+   "label": "Metrics"
+  },
+  {
+   "fieldname": "metric_computed_at",
+   "fieldtype": "Datetime",
+   "label": "Metric Computed At"
+  },
+  {
+   "fieldname": "metrics_values",
+   "fieldtype": "Table",
+   "label": "Metrics Values",
+   "options": "Grant Metric Value"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "max_attachments": 5,
+ "modified": "2025-12-02 17:36:56.605520",
+ "modified_by": "Administrator",
+ "module": "Grant Implementation",
+ "name": "Grant Project Milestone",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}

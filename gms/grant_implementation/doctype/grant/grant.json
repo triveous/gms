@@ -13,10 +13,7 @@
   "description",
   "active",
   "approval_identifier",
-  "approved_amount",
-  "type",
-  "term",
-  "status"
+  "approved_amount"
  ],
  "fields": [
   {
@@ -74,27 +71,6 @@
    "fieldtype": "Currency",
    "label": "Approved Amount",
    "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "type",
-   "fieldtype": "Link",
-   "label": "Type",
-   "options": "Grant Type",
-   "reqd": 1
-  },
-  {
-   "fieldname": "term",
-   "fieldtype": "Link",
-   "label": "Term",
-   "options": "Grant Term",
-   "reqd": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Link",
-   "label": "Status",
-   "options": "Grant Status",
    "reqd": 1
   }
  ],

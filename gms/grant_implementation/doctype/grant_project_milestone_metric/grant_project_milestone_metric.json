@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-02 18:20:25.649308",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_section",
+  "code",
+  "title",
+  "description",
+  "datatype",
+  "allow_multi_values",
+  "formatting_instruction",
+  "allow_dynamic_title"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_section",
+   "fieldtype": "Section Break",
+   "label": "Basic"
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "datatype",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "DataType",
+   "options": "INT\nFLOAT\nBOOLEAN\nSTRING",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_multi_values",
+   "fieldtype": "Check",
+   "label": "Allow Multi Values"
+  },
+  {
+   "fieldname": "formatting_instruction",
+   "fieldtype": "Data",
+   "label": "Formatting Instruction"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_dynamic_title",
+   "fieldtype": "Check",
+   "label": "Allow Dynamic Title"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-02 18:42:21.592224",
+ "modified_by": "Administrator",
+ "module": "Grant Implementation",
+ "name": "Grant Project Milestone Metric",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
