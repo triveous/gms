@@ -5,18 +5,35 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_zm5n"
+  "basic_information_section",
+  "title",
+  "grant"
  ],
  "fields": [
   {
-   "fieldname": "section_break_zm5n",
-   "fieldtype": "Section Break"
+   "fieldname": "basic_information_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "grant",
+   "fieldtype": "Link",
+   "label": "Grant",
+   "options": "Grant",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-02 12:36:29.660724",
+ "modified": "2025-12-02 12:54:38.938322",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant Project",
