@@ -1,5 +1,3 @@
 Grant Management System
-Grant Core
-Grant Planning
 Grant Implementation
 Grant Reporting
