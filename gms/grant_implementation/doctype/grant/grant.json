@@ -1,27 +1,111 @@
 {
  "actions": [],
- "allow_rename": 1,
+ "autoname": "hash",
  "creation": "2025-11-12 17:30:40.650708",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "program"
+  "basic_information_section",
+  "title",
+  "alias",
+  "start_date",
+  "end_date",
+  "description",
+  "active",
+  "approval_identifier",
+  "approved_amount",
+  "type",
+  "term",
+  "status"
  ],
  "fields": [
   {
-   "fieldname": "program",
+   "fieldname": "basic_information_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "alias",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Alias",
+   "reqd": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Long Text",
+   "label": "Description"
+  },
+  {
+   "default": "True",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "approval_identifier",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Approval Identifier",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "approved_amount",
+   "fieldtype": "Currency",
+   "label": "Approved Amount",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "type",
    "fieldtype": "Link",
-   "label": "Program",
-   "options": "Grant Program"
+   "label": "Type",
+   "options": "Grant Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "term",
+   "fieldtype": "Link",
+   "label": "Term",
+   "options": "Grant Term",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Link",
+   "label": "Status",
+   "options": "Grant Status",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-12 17:31:47.438998",
+ "modified": "2025-12-02 12:34:43.191135",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -39,7 +123,9 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "alias"
 }
