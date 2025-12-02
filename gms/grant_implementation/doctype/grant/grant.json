@@ -13,7 +13,8 @@
   "description",
   "active",
   "approval_identifier",
-  "approved_amount"
+  "approved_amount",
+  "lead_organization"
  ],
  "fields": [
   {
@@ -72,12 +73,18 @@
    "label": "Approved Amount",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "lead_organization",
+   "fieldtype": "Link",
+   "label": "Lead Organization",
+   "options": "Grant Partner"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-02 12:34:43.191135",
+ "modified": "2025-12-02 20:49:52.385386",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant",

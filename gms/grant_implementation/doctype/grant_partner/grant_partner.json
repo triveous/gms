@@ -1,23 +1,19 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-12-02 12:36:29.660724",
+ "creation": "2025-12-02 20:22:29.899502",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "basic_information_section",
+  "basic_info_section",
   "grant",
-  "title",
-  "alias",
-  "start_date",
-  "end_date",
-  "lead_organization"
+  "title"
  ],
  "fields": [
   {
-   "fieldname": "basic_information_section",
+   "fieldname": "basic_info_section",
    "fieldtype": "Section Break",
-   "label": "Basic Information"
+   "label": "Basic Info"
   },
   {
    "fieldname": "title",
@@ -29,40 +25,19 @@
   {
    "fieldname": "grant",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Grant",
    "options": "Grant",
-   "reqd": 1
-  },
-  {
-   "fieldname": "alias",
-   "fieldtype": "Data",
-   "label": "Alias"
-  },
-  {
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "label": "Start Date"
-  },
-  {
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "label": "End Date"
-  },
-  {
-   "fieldname": "lead_organization",
-   "fieldtype": "Link",
-   "label": "Lead Organization",
-   "options": "Grant Partner",
    "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-02 20:49:23.858795",
+ "modified": "2025-12-02 20:23:36.659315",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
- "name": "Grant Project",
+ "name": "Grant Partner",
  "owner": "Administrator",
  "permissions": [
   {
