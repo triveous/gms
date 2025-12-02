@@ -21,6 +21,12 @@ app_license = "mit"
 # 	}
 # ]
 
+fixtures = [
+    {
+        "dt": "Grant Project Milestone Type"
+    }    
+]
+
 # Includes in <head>
 # ------------------
 

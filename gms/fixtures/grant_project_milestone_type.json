@@ -1,0 +1,162 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Grant Project Milestone Type",
+  "modified": "2025-12-02 18:44:21.060417",
+  "name": "Progress Update",
+  "table_avgk": [
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "kap",
+    "datatype": "STRING",
+    "description": "What are the key activities performed?",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Key Activities Performed"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "hl",
+    "datatype": "STRING",
+    "description": "What are the highlights defined in the report",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "High Lights"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "ll",
+    "datatype": "STRING",
+    "description": "What are the low lights defined in the report",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Low Lights"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "progress",
+    "datatype": "FLOAT",
+    "description": "What is the current overall progress of the program?",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Overall Progress"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "ml",
+    "datatype": "STRING",
+    "description": "What are the milestone achieved",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Milestone Achieved"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "trl",
+    "datatype": "INT",
+    "description": "What is the TRL metric",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Technology Readiness Level"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 1,
+    "code": "impact",
+    "datatype": "STRING",
+    "description": "What are the impact created",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Impact Created"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "budget-spent",
+    "datatype": "STRING",
+    "description": "How much budget was spent",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Budget Spent"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 1,
+    "code": "grantee-comments",
+    "datatype": "STRING",
+    "description": "What comment did workstream owner provided",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Grantee Comment"
+   },
+   {
+    "allow_dynamic_title": 1,
+    "allow_multi_values": 0,
+    "code": "nodal-agency-comment",
+    "datatype": "STRING",
+    "description": "What comment did nodal agency gave ?",
+    "formatting_instruction": null,
+    "parent": "Progress Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Nodal Agency Comment"
+   }
+  ]
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Grant Project Milestone Type",
+  "modified": "2025-12-02 20:42:38.731401",
+  "name": "Planning Update",
+  "table_avgk": [
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 1,
+    "code": "goal",
+    "datatype": "STRING",
+    "description": "What are the goal for this period",
+    "formatting_instruction": null,
+    "parent": "Planning Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Goal"
+   },
+   {
+    "allow_dynamic_title": 0,
+    "allow_multi_values": 0,
+    "code": "budget-forecast",
+    "datatype": "FLOAT",
+    "description": "What is the forecasted budget for this period",
+    "formatting_instruction": null,
+    "parent": "Planning Update",
+    "parentfield": "table_avgk",
+    "parenttype": "Grant Project Milestone Type",
+    "title": "Budget Forecast"
+   }
+  ]
+ }
+]
