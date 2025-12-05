@@ -6,13 +6,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { TrendingUp, User } from 'lucide-react';
+import { TrendingUp, User, ChevronDown } from 'lucide-react';
 import ChatToggleButton from '@/components/ChatToggleButton';
+import { useChatContext } from '@/contexts/ChatContext';
 
 const TopBar: React.FC = () => {
+    const { isChatOpen } = useChatContext();
     return (
-        <div className="bg-card sticky top-0 z-40 border-b border-border">
-            <div className="mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="bg-card sticky top-0 z-40 ">
+            <div className="mx-auto px-[72px] h-16 flex items-center justify-between">
                 {/* Logo */}
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
@@ -23,15 +25,14 @@ const TopBar: React.FC = () => {
                 </div>
 
                 {/* Right side buttons */}
-                <div className="flex items-center gap-2">
-                    <ChatToggleButton />
-                    
+                <div className="flex items-center gap-6" style={{ marginRight: isChatOpen ? '380px' : '0', transition: 'margin-right 300ms ease-in-out' }}>
                     {/* User Dropdown Menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="gap-2">
                                 <User className="w-4 h-4" />
                                 CPMU
+                                <ChevronDown className="w-4 h-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -40,6 +41,11 @@ const TopBar: React.FC = () => {
                             <DropdownMenuItem>Logout</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
+                    
+                    {/* Separator */}
+                    <div className="h-6 w-px bg-border" />
+                    
+                    {!isChatOpen && <ChatToggleButton />}
                 </div>
             </div>
         </div>
