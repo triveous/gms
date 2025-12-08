@@ -6,7 +6,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { TrendingUp, User, ChevronDown, ChartNoAxesCombined } from 'lucide-react';
+import { User, ChevronDown, ChartNoAxesCombined } from 'lucide-react';
 import ChatToggleButton from '@/components/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
 

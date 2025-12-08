@@ -1,33 +1,14 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { ArrowLeft, AlertCircle, TrendingUp, TrendingDown, CheckCircle2, ChevronDown, CircleCheckBig, BadgeInfo } from 'lucide-react';
+import { TrendingUp, TrendingDown, CircleCheckBig, BadgeInfo } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { ProjectCard } from '@/components/ProjectCard';
 import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 
-const budgetData = [
-    { date: 'Q1 2024', sanctioned: 40, released: 30, actual: 25 },
-    { date: 'Q2 2024', sanctioned: 60, released: 50, actual: 42 },
-    { date: 'Q3 2024', sanctioned: 80, released: 65, actual: 58 },
-    { date: 'Q4 2024', sanctioned: 100, released: 82, actual: 75 },
-    { date: 'Q1 2025', sanctioned: 110, released: 95, actual: 85 },
-];
-
-const chartConfig = {
-    sanctioned: { label: 'Sanctioned', color: '#60A5FA' },
-    released: { label: 'Released', color: '#34D399' },
-    actual: { label: 'Actual', color: '#F59E0B' },
-};
 
 export default function Grant() {
-    const { id } = useParams();
     const navigate = useNavigate();
     
 
@@ -40,22 +21,7 @@ export default function Grant() {
         lastModified: 'Last modified on: 21 Apr 2025',
     };
 
-    const metrics = {
-        screeningReadiness: { current: 4, status: 'on-track' },
-        projectBenchmarks: { current: 6, status: 'at-risk' },
-        overallProgress: { current: 4, status: 'on-track' },
-        securityCompliance: { current: 4, status: 'on-track' },
-    };
 
-    const highlights = [
-        'Medical updates and advancements: Digital pathology services are increasing pathology capacity by early detection of the Oral Lesion',
-        'Developed a handheld device (VeloScope) which is the World leading device to produce rapid, real-time results for DM-PCR in under 30 mins.',
-    ];
-
-    const lowlights = [
-        'Hardware and Software compatibility: We were facing the issue of Low Oral Lesion images Data Transfer in some of the district hospital.',
-        'Discussed about the product development regarding lack of data: From COVID Screening to India\'s Health Ecosystem.',
-    ];
 
     const projects = [
         {

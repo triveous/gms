@@ -1,33 +1,14 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { ArrowLeft, CheckCircle2, AlertCircle, Calendar, CircleCheckBig, BadgeInfo, TrendingUp, TrendingDown, Link } from 'lucide-react';
+import { CircleCheckBig, BadgeInfo, TrendingUp, TrendingDown, Link } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { ProjectCard } from '@/components/ProjectCard';
 import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 
-const budgetData = [
-    { date: 'Q1 2024', sanctioned: 30, released: 25, actual: 20 },
-    { date: 'Q2 2024', sanctioned: 50, released: 42, actual: 35 },
-    { date: 'Q3 2024', sanctioned: 70, released: 58, actual: 50 },
-    { date: 'Q4 2024', sanctioned: 85, released: 72, actual: 65 },
-    { date: 'Q1 2025', sanctioned: 95, released: 85, actual: 78 },
-];
-
-const chartConfig = {
-    sanctioned: { label: 'Sanctioned', color: '#60A5FA' },
-    released: { label: 'Released', color: '#34D399' },
-    actual: { label: 'Actual', color: '#F59E0B' },
-};
 
 export default function Project() {
-    const { id } = useParams();
     const navigate = useNavigate();
 
     const projectData = {
@@ -38,70 +19,7 @@ export default function Project() {
         endDate: 'Last updated: 10/10/2023',
     };
 
-    const metrics = {
-        screeningReadiness: { current: 4, status: 'on-track' },
-        projectBenchmarks: { current: 6, status: 'at-risk' },
-        commercialization: { current: 4, status: 'on-track' },
-        securityCompliance: { current: 4, status: 'on-track' },
-    };
 
-    const highlights = [
-        'Medical updates and advancements: Digital pathology services are increasing pathology capacity by early detection of the Oral Lesion',
-        'Developed a handheld device (VeloScope) which is the World leading device to produce rapid, real-time results for DM-PCR in under 30 mins.',
-    ];
-
-    const lowlights = [
-        'Hardware and Software compatibility: We were facing the issue of Low Oral Lesion images Data Transfer in some of the district hospital.',
-        'Discussed about the product development regarding lack of data: From COVID Screening to India\'s Health Ecosystem.',
-    ];
-
-    const milestones = [
-        { quarter: 'Q1 2020-2026', progress: 40, description: 'SG: Make product M Validation Summary' },
-        { quarter: 'Q2 2021-2022', progress: 30, description: 'Pilot Study & Clinical Documents' },
-        { quarter: 'Q3 2022-2024', progress: 25, description: 'Technology Architecture Degree' },
-        { quarter: 'Q4 2024-2025', progress: 10, description: 'Rapid Assay & Testing' },
-    ];
-
-    const artifacts = [
-        'Study plans to screen lung cong-specific',
-        'SG: Make a product M Validation Summary',
-        'Technology Scorecard',
-        'Rapid Assay & Testing',
-        'Strong Evidence-Authored Impact',
-    ];
-
-    const projects = [
-        {
-            id: '1',
-            title: 'A point of care artificial intelligence (AI) based screening tools for oral cancer',
-            projectLead: 'IISc Bangalore',
-            activeSince: '12 years',
-            lastUpdated: '12/10/2025',
-            metrics: {
-                tbl: { value: 4, change: '+2', isPositive: true },
-                mrl: { value: 6, change: '-1', isPositive: false },
-                crl: { value: 4, change: '+2', isPositive: true },
-                sirl: { value: 4, change: '+2', isPositive: true },
-            },
-            budgetSpent: '₹ 92 Cr.',
-            progress: '40%',
-        },
-        {
-            id: '2',
-            title: 'Consortium for AI and Remote Digital Interventions Against Cardiovascular disease in India',
-            projectLead: 'JIPMER Puducherry',
-            activeSince: '6 months',
-            lastUpdated: '12/10/2025',
-            metrics: {
-                tbl: { value: 4, change: '+2', isPositive: true },
-                mrl: { value: 6, change: '-1', isPositive: false },
-                crl: { value: 4, change: '+2', isPositive: true },
-                sirl: { value: 4, change: '+2', isPositive: true },
-            },
-            budgetSpent: '₹ 92 Cr.',
-            progress: '40%',
-        },
-    ];
 
     const quarterlyProgress = [
         { quarter: 'Q2- 2025-2026', percentage: 40 },

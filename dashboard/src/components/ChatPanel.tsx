@@ -3,8 +3,6 @@ import { useChatContext } from '@/contexts/ChatContext';
 import { Button } from '@/components/ui/button';
 import { X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Thread } from './thread';
-// import { Thread } from './assistant-ui/thread';
 
 const ChatPanel: React.FC = () => {
     const { isChatOpen, closeChat } = useChatContext();
@@ -92,7 +90,7 @@ const ChatPanel: React.FC = () => {
                                 </Button>
                             </div>
                         </div>
-                        {/* <Thread /> */}
+                    
                     </div>
 
                     {/* Input Area */}
