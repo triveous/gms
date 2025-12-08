@@ -21,11 +21,7 @@ app_license = "mit"
 # 	}
 # ]
 
-fixtures = [
-    {
-        "dt": "Grant Project Milestone Type"
-    }    
-]
+fixtures = [{"dt": "Grant Project Milestone Type"}]
 
 # Includes in <head>
 # ------------------
@@ -249,4 +245,6 @@ fixtures = [
 # }
 
 
-website_route_rules = [{'from_route': '/dashboard/<path:app_path>', 'to_route': 'dashboard'},]
+website_route_rules = [
+	{"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"},
+]
