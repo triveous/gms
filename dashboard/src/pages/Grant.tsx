@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { ArrowLeft, AlertCircle, TrendingUp, TrendingDown, CheckCircle2, ChevronDown, CircleCheckBig, BadgeInfo } from 'lucide-react';
@@ -10,6 +10,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { ProjectCard } from '@/components/ProjectCard';
 import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
+import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 
 const budgetData = [
     { date: 'Q1 2024', sanctioned: 40, released: 30, actual: 25 },
@@ -155,51 +156,10 @@ export default function Grant() {
             </div>
 
             {/* Separator */}
-            <div className="h-px bg-border mb-6" />
+            <div className="h-px bg-border" />
 
             {/* Controls Row */}
-            <div className="sticky top-17 z-40 bg-background pb-3 flex items-center justify-between mb-3">
-                <div className="flex items-center gap-4">
-                    <Select defaultValue="q2">
-                        <SelectTrigger className="bg-card h-10">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="q2">
-                                <span className="text-foreground">Q2 Jul-Sep 2025</span>
-                                {" "}
-                                <span className="text-muted-foreground/60 font-sans text-sm font-normal leading-[21px] tracking-[0.07px]">(Recent Quarter)</span>
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                    
-                    <Select defaultValue="q1">
-                        <SelectTrigger className="h-10 bg-card">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="q1">
-                                <span className="text-foreground"><span className="text-muted-foreground/60 font-sans text-sm font-normal leading-[21px] tracking-[0.07px]">Compare to</span> Q1 | Apr-Jun 2025</span>
-                            </SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <Select>
-                    <SelectTrigger className="h-10 bg-card text-foreground">
-                        <div className="flex items-center gap-2">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 10v2.667A1.333 1.333 0 0112.667 14H3.333A1.333 1.333 0 012 12.667V10m2.667-4L8 9.333m0 0L11.333 6M8 9.333V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            <SelectValue placeholder="Download Reports" />
-                        </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="pdf">Download as PDF</SelectItem>
-                        <SelectItem value="excel">Download as Excel</SelectItem>
-                        <SelectItem value="csv">Download as CSV</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+            <DashbaordFilterComponent />
 
             {/* Projects Section */}
             <SectionWrapper 

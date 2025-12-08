@@ -18,12 +18,13 @@ const DashboardWrapper: React.FC<DashboardWrapperProps> = ({
     return (
         <div 
             className={cn(
-                "min-h-screen bg-[#f8fafc] transition-all duration-300 ease-in-out p-[44px] border-border border-[1px] rounded-[12px]",
+                "min-h-screen bg-[#f8fafc] transition-all duration-300 ease-in-out p-[44px] border-border border-[1px]",
                 className
             )}
             style={{
                 maxWidth: isChatOpen ? 'calc(100vw - 464px)' : '100%',
-                transition: 'max-width 300ms ease-in-out'
+                transition: 'max-width 300ms ease-in-out',
+                borderRadius: isChatOpen ? '12px' : '0'
             }}
         >
             <div 

@@ -6,7 +6,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { TrendingUp, User, ChevronDown } from 'lucide-react';
+import { TrendingUp, User, ChevronDown, ChartNoAxesCombined } from 'lucide-react';
 import ChatToggleButton from '@/components/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
 
@@ -19,7 +19,7 @@ const TopBar: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                         {/* Placeholder for the logo icon from design */}
-                        <TrendingUp className="w-6 h-6 text-primary" />
+                        <ChartNoAxesCombined className="w-6 h-6 text-sidebar-accent-foreground" />
                         <span className="text-xl font-bold text-foreground tracking-tight">AICOE</span>
                     </div>
                 </div>
