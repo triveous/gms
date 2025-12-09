@@ -18,7 +18,7 @@ const DashboardWrapper: React.FC<DashboardWrapperProps> = ({
     return (
         <div 
             className={cn(
-                "min-h-screen bg-[#f8fafc] transition-all duration-300 ease-in-out p-[44px] border-border border-[1px]",
+                'min-h-screen bg-[#f8fafc] transition-all duration-300 ease-in-out p-[44px] border-border border-[1px]',
                 className
             )}
             style={{
@@ -29,7 +29,7 @@ const DashboardWrapper: React.FC<DashboardWrapperProps> = ({
         >
             <div 
                 className={cn(
-                    "max-w-[1200px] mx-auto transition-all duration-300",
+                    'max-w-[1200px] mx-auto transition-all duration-300',
                     containerClassName
                 )}
             >

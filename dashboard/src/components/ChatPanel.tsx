@@ -10,8 +10,8 @@ const ChatPanel: React.FC = () => {
     return (
         <div
             className={cn(
-                "fixed top-0 right-0 h-screen min-w-[447px] bg-background   transition-transform duration-300 ease-in-out z-50",
-                isChatOpen ? "translate-x-0" : "translate-x-full"
+                'fixed top-0 right-0 h-screen min-w-[447px] bg-background   transition-transform duration-300 ease-in-out z-50',
+                isChatOpen ? 'translate-x-0' : 'translate-x-full'
             )}
         >
             <div className="flex flex-col h-full">

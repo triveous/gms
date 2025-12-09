@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build --base=/assets/gms/dashboard/",
+    "build": "vite build --base=/assets/gms/dashboard/ && yarn copy-html-entry",
     "lint": "eslint .",
     "preview": "vite preview",
+    "copy-html-entry": "cp ../gms/public/dashboard/index.html ../gms/www/dashboard.html",
     "prepare": "husky"
   },
   "dependencies": {

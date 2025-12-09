@@ -23,6 +23,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 };
 
+/* eslint-disable react-refresh/only-export-components */
 export const useChatContext = () => {
     const context = useContext(ChatContext);
     if (!context) {
