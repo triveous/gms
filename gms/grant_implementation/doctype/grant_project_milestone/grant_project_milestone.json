@@ -13,6 +13,7 @@
   "progress_update_section",
   "period_start",
   "period_end",
+  "forecasted_amount",
   "artifacts_section",
   "artifacts",
   "partners_and_team_member_section",
@@ -114,13 +115,18 @@
    "fieldtype": "Table",
    "label": "Contributors",
    "options": "Grant Project Milestone Contributor"
+  },
+  {
+   "fieldname": "forecasted_amount",
+   "fieldtype": "Small Text",
+   "label": "Forecasted Amount"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
  "max_attachments": 5,
- "modified": "2025-12-02 20:36:52.691374",
+ "modified": "2025-12-11 20:27:47.610094",
  "modified_by": "Administrator",
  "module": "Grant Implementation",
  "name": "Grant Project Milestone",
