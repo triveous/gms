@@ -9,8 +9,27 @@ interface ProjectMetric {
     isPositive: boolean;
 }
 
+interface ComparisonMetric {
+    current: number;
+    previous: number;
+    growth: number;
+    growth_percent: number;
+}
+
+interface ComparisonResult {
+    quarter: string;
+    compare_with: string;
+    metrics: {
+        "Technology Readiness Level": ComparisonMetric;
+        "Market Readiness Level": ComparisonMetric;
+        "Commercial Readiness Level": ComparisonMetric;
+        "Social Impact Readiness Level": ComparisonMetric;
+    }
+}
+
 interface ProjectCardProps {
     title: string;
+    id: string;
     projectLead: string;
     activeSince: string;
     lastUpdated: string;
@@ -22,24 +41,64 @@ interface ProjectCardProps {
     };
     budgetSpent: string;
     progress: string;
+    comparisonData?: {
+        project: string;
+        result: ComparisonResult;
+    };
 }
 
 export function ProjectCard({
     title,
+    id,
     projectLead,
     activeSince,
     lastUpdated,
     metrics,
     budgetSpent,
     progress,
+    comparisonData,
 }: ProjectCardProps) {
-
+    console.log(comparisonData);
     const navigate = useNavigate();
     
-    const handleProjectClick = (projectId: number) => {
+    const handleProjectClick = (projectId: string) => {
         navigate(`/project/${projectId}`);
     };
-    
+
+    const getMetricDisplay = (key: 'tbl' | 'mrl' | 'crl' | 'sirl', name: keyof ComparisonResult['metrics']) => {
+        const defaultMetric = metrics[key];
+        
+        if (comparisonData?.result?.metrics?.[name]) {
+            const compMetric = comparisonData.result.metrics[name];
+            
+            // Check if there is no growth (growth is 0)
+            if (compMetric.growth === 0) {
+                 return {
+                    value: defaultMetric.value,
+                    change: 'No Change',
+                    isPositive: true // Neutral essentially, handled by component
+                };
+            }
+
+            return {
+                value: defaultMetric.value,
+                change: `${compMetric.growth > 0 ? '+' : ''}${compMetric.growth_percent}%`,
+                isPositive: compMetric.growth >= 0
+            };
+        }
+        
+        // If no comparison data, return empty change so badge is hidden
+        return {
+             ...defaultMetric,
+             change: '' 
+        };
+    };
+
+    const tblDisplay = getMetricDisplay('tbl', 'Technology Readiness Level');
+    const mrlDisplay = getMetricDisplay('mrl', 'Market Readiness Level');
+    const crlDisplay = getMetricDisplay('crl', 'Commercial Readiness Level');
+    const sirlDisplay = getMetricDisplay('sirl', 'Social Impact Readiness Level');
+    // console.log(tblDisplay, mrlDisplay, crlDisplay, sirlDisplay);
     return (
         <div className="p-6 bg-card border border-border rounded-[4px] flex flex-col gap-4">
             {/* Project Header */}
@@ -56,7 +115,7 @@ export function ProjectCard({
                         <span>Last Updated: {lastUpdated}</span>
                     </div>
                 </div>
-                <Button variant="outline" className="w-[155.5px] h-[45px] px-6 gap-2" onClick={() => handleProjectClick(1)}>
+                <Button variant="outline" className="w-[155.5px] h-[45px] px-6 gap-2" onClick={() => handleProjectClick(id)}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="14"
@@ -77,30 +136,30 @@ export function ProjectCard({
             <div className="flex gap-4 items-end">
                 <MetricItem
                     label="TRL"
-                    value={metrics.tbl.value}
-                    change={metrics.tbl.change}
-                    isPositive={metrics.tbl.isPositive}
+                    value={tblDisplay.value}
+                    change={tblDisplay.change}
+                    isPositive={tblDisplay.isPositive}
                 />
                 <div className="w-px h-22 bg-border" />
                 <MetricItem
                     label="MRL"
-                    value={metrics.mrl.value}
-                    change={metrics.mrl.change}
-                    isPositive={metrics.mrl.isPositive}
+                    value={mrlDisplay.value}
+                    change={mrlDisplay.change}
+                    isPositive={mrlDisplay.isPositive}
                 />
                 <div className="w-px h-22 bg-border" />
                 <MetricItem
                     label="CRL"
-                    value={metrics.crl.value}
-                    change={metrics.crl.change}
-                    isPositive={metrics.crl.isPositive}
+                    value={crlDisplay.value}
+                    change={crlDisplay.change}
+                    isPositive={crlDisplay.isPositive}
                 />
                 <div className="w-px h-22 bg-border" />
                 <MetricItem
                     label="SIRL"
-                    value={metrics.sirl.value}
-                    change={metrics.sirl.change}
-                    isPositive={metrics.sirl.isPositive}
+                    value={sirlDisplay.value}
+                    change={sirlDisplay.change}
+                    isPositive={sirlDisplay.isPositive}
                 />
 
                 <div className="flex-1" />

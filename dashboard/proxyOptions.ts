@@ -9,5 +9,14 @@ export default {
 			const site_name = req.headers.host.split(':')[0];
 			return `http://${site_name}:${webserver_port}`;
 		}
-	}
+	},
+	server: {
+    proxy: {
+      '/api': {
+        target: 'http://dev.localhost:8000',
+        changeOrigin: true,
+        secure: true
+      }
+    }
+  }
 };
