@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 
 import {
   CardContent,
@@ -15,29 +15,9 @@ import {
 
 export const description = 'An interactive area chart'
 
-const chartData = [
-  { date: '2024-04-01', forcasted: 55, actual: 40 },
-  { date: '2024-04-02', forcasted: 25, actual: 45 },
-  { date: '2024-04-03', forcasted: 42, actual: 30 },
-  { date: '2024-04-04', forcasted: 60, actual: 65 },
-  { date: '2024-04-05', forcasted: 93, actual: 73 },
-  { date: '2024-04-06', forcasted: 75, actual: 85 },
-  { date: '2024-04-07', forcasted: 61, actual: 45 },
-  { date: '2024-04-08', forcasted: 100, actual: 80 },
-  { date: '2024-04-09', forcasted: 15, actual: 28 },
-  { date: '2024-04-10', forcasted: 65, actual: 48 },
-  { date: '2024-04-11', forcasted: 82, actual: 88 },
-  { date: '2024-04-12', forcasted: 73, actual: 53 },
-  { date: '2024-04-13', forcasted: 86, actual: 95 },
-  { date: '2024-04-14', forcasted: 34, actual: 55 },
-]
-
 const chartConfig = {
-  visitors: {
-    label: 'Visitors',
-  },
-  forcasted: {
-    label: 'Forcasted',
+  forecasted: {
+    label: 'Forecasted',
     color: '#00E396',
   },
   actual: {
@@ -46,22 +26,31 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function BudgetUtilizationChart() {
-  const [timeRange] = React.useState('90d')
+export interface BudgetUtilizationItem {
+  quarter: string
+  title: string
+  quarterStartDate: string
+  budgetSpent: number
+  forecastedAmount: number
+}
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const referenceDate = new Date('2024-06-30')
-    let daysToSubtract = 90
-    if (timeRange === '30d') {
-      daysToSubtract = 30
-    } else if (timeRange === '7d') {
-      daysToSubtract = 7
-    }
-    const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
-    return date >= startDate
-  })
+export function BudgetUtilizationChart({
+  budgetUtilization,
+}: {
+  budgetUtilization: BudgetUtilizationItem[]
+}) {
+  const chartData = React.useMemo(() => {
+    if (!budgetUtilization) return []
+    return [...budgetUtilization]
+      .sort((a, b) => new Date(a.quarterStartDate).getTime() - new Date(b.quarterStartDate).getTime())
+      .map((item) => ({
+        quarter: item.quarter,
+        title: item.title,
+        quarterStartDate: item.quarterStartDate,
+        actual: item.budgetSpent / 10000000, // Convert to Crores
+        forecasted: item.forecastedAmount / 10000000, // Convert to Crores
+      }))
+  }, [budgetUtilization])
 
   return (
     <div className="pt-0">
@@ -70,75 +59,85 @@ export function BudgetUtilizationChart() {
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
         >
-          <AreaChart data={filteredData}>
+          <AreaChart data={chartData} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="fillActual" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="#00E396"
+                  stopColor="#2E93FA"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="#00E396"
+                  stopColor="#2E93FA"
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id="fillForcasted" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillForecasted" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="#2E93FA"
+                  stopColor="#00E396"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="#2E93FA"
+                  stopColor="#00E396"
                   stopOpacity={0.1}
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} />
+            <CartesianGrid vertical={false} strokeDasharray="3 3"/>
             <XAxis
-              dataKey="date"
+              dataKey="quarter"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
+              tickMargin={10}
               tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })
+                 const parts = value.split('-')
+                 if (parts.length >= 2) {
+                    return `${parts[0]} ${parts[1]}`
+                 }
+                 return value
               }}
             />
+             <YAxis
+              hide={false}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => `${value}`}
+             />
             <ChartTooltip
               cursor={false}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })
-                  }}
                   indicator="dot"
+                  formatter={(value, name) => (
+                      <div className="flex gap-2 text-xs">
+                        {/* <div className={'w-2 h-2 bg-['+name==='Actual'?'#2E93FA]':'#00E396]'}></div> */}
+                        <span className="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}:</span>
+                        <span className="font-bold">₹ {Number(value).toLocaleString('en-IN')} Cr.</span>
+                      </div>
+                  )}
+                  labelFormatter={(value, payload) => {
+                      if (payload && payload.length > 0) {
+                          return payload[0].payload.title
+                      }
+                      return value
+                  }}
                 />
               }
             />
-            <Area
-              dataKey="forcasted"
-              type="natural"
-              fill="url(#fillForcasted)"
+             <Area
+              dataKey="actual"
+              type="monotone"
+              fill="url(#fillActual)"
               stroke="var(--color-actual)"
-              stackId="a"
             />
             <Area
-              dataKey="actual"
-              type="natural"
-              fill="url(#fillActual)"
-              stroke="var(--color-forcasted)"
-              stackId="a"
+              dataKey="forecasted"
+              type="monotone"
+              fill="url(#fillForecasted)"
+              stroke="var(--color-forecasted)"
             />
           </AreaChart>
         </ChartContainer>
@@ -146,3 +145,4 @@ export function BudgetUtilizationChart() {
     </div>
   )
 }
+

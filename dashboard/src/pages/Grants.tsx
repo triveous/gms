@@ -4,111 +4,128 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { SectionWrapper } from '@/components/SectionWrapper';
+import { useFrappeGetCall } from 'frappe-react-sdk';
+import { useEffect, useMemo, useState } from 'react';
 
-interface Grant {
+interface GrantUI {
     id: string;
     name: string;
     leadInstitute: string;
     timeline: string;
-    totalBudget: string;
-    budgetSpend: string;
-    budgetSpendPercent: number;
-    overallProgress: number;
-    totalProjects: number;
-    impactCreated: string;
-    impactUnit: string;
-    aiBreakthroughs: number;
+    totalBudget: string | number;
+    budgetSpend: string | number;
+    budgetSpendPercent: string | number;
+    overallProgress: string | number;
+    totalProjects: string | number;
 }
-
-const mockGrants: Grant[] = [
-    {
-        id: '1',
-        name: 'Artificial Intelligence Centre of Excellence for Health and AI',
-        leadInstitute: 'IISc Bangalore',
-        timeline: '4 year (April 2020 - 31 March 2024)',
-        totalBudget: '₹ 300 Cr.',
-        budgetSpend: '₹ 120 Cr.',
-        budgetSpendPercent: 40,
-        overallProgress: 40,
-        totalProjects: 4,
-        impactCreated: '20 Cr.',
-        impactUnit: 'citizens',
-        aiBreakthroughs: 3
-    },
-    {
-        id: '2',
-        name: 'Artificial Intelligence Centre of Excellence for Agriculture',
-        leadInstitute: 'IIT Ropar',
-        timeline: '4 year (April 2020 - 31 March 2024)',
-        totalBudget: '₹ 300 Cr.',
-        budgetSpend: '₹ 100 Cr.',
-        budgetSpendPercent: 33,
-        overallProgress: 20,
-        totalProjects: 9,
-        impactCreated: '10 Cr.',
-        impactUnit: 'citizens',
-        aiBreakthroughs: 5
-    },
-    {
-        id: '3',
-        name: 'Artificial Intelligence Centre of Excellence for Sustainable Cities',
-        leadInstitute: 'IIT Kanpur',
-        timeline: '4 year (April 2020 - 31 March 2024)',
-        totalBudget: '₹ 300 Cr.',
-        budgetSpend: '₹ 80 Cr.',
-        budgetSpendPercent: 40,
-        overallProgress: 30,
-        totalProjects: 2,
-        impactCreated: '10 Lakh.',
-        impactUnit: 'citizens',
-        aiBreakthroughs: 1
-    },
-    {
-        id: '1',
-        name: 'Artificial Intelligence Centre of Excellence for Health and AI',
-        leadInstitute: 'IISc Bangalore',
-        timeline: '4 year (April 2020 - 31 March 2024)',
-        totalBudget: '₹ 300 Cr.',
-        budgetSpend: '₹ 120 Cr.',
-        budgetSpendPercent: 40,
-        overallProgress: 40,
-        totalProjects: 4,
-        impactCreated: '20 Cr.',
-        impactUnit: 'citizens',
-        aiBreakthroughs: 3
-    },
-    {
-        id: '2',
-        name: 'Artificial Intelligence Centre of Excellence for Agriculture',
-        leadInstitute: 'IIT Ropar',
-        timeline: '4 year (April 2020 - 31 March 2024)',
-        totalBudget: '₹ 300 Cr.',
-        budgetSpend: '₹ 100 Cr.',
-        budgetSpendPercent: 33,
-        overallProgress: 20,
-        totalProjects: 9,
-        impactCreated: '10 Cr.',
-        impactUnit: 'citizens',
-        aiBreakthroughs: 5
-    },
-    {
-        id: '3',
-        name: 'Artificial Intelligence Centre of Excellence for Sustainable Cities',
-        leadInstitute: 'IIT Kanpur',
-        timeline: '4 year (April 2020 - 31 March 2024)',
-        totalBudget: '₹ 300 Cr.',
-        budgetSpend: '₹ 80 Cr.',
-        budgetSpendPercent: 40,
-        overallProgress: 30,
-        totalProjects: 2,
-        impactCreated: '10 Lakh.',
-        impactUnit: 'citizens',
-        aiBreakthroughs: 1
-    }
-];
 
 export default function Grants() {
     const navigate = useNavigate();
+
+    const { data, error, isLoading } = useFrappeGetCall(
+        'gms.api.grants.get_grants_with_related',
+        { limit: 50 }
+    );
+
+
+
+    const [grants, setGrants] = useState<GrantUI[]>([]);
+
+    // Helper: Replace null/undefined/"" with "--"
+    const safe = (value: string) =>
+        value === null || value === undefined || value === '' ? '--' : value;
+
+    const formatIndianAmount = (value: any) => {
+        if (value === null || value === undefined || value === '' || isNaN(value)) {
+            return '--';
+        }
+
+        const amount = Number(value);
+
+        if (amount >= 1_00_00_000) {
+            // Crores (>= 1 Cr)
+            return `₹ ${(amount / 1_00_00_000).toLocaleString('en-IN', {
+                maximumFractionDigits: 2
+            })} Cr`;
+        }
+
+        if (amount >= 1_00_000) {
+            // Lakhs
+            return `₹${(amount / 1_00_000).toLocaleString('en-IN', {
+                maximumFractionDigits: 2
+            })} Lakhs`;
+        }
+
+        // Default fallback (just number)
+        return amount.toLocaleString('en-IN');
+    };
+
+    const formatTimeline = (start: string, end: string) => {
+        if (!start || !end) return '--';
+
+        const s = new Date(start);
+        const e = new Date(end);
+
+        if (isNaN(s.getTime()) || isNaN(e.getTime())) return '--';
+
+        // Calculate difference in years
+        const years = e.getFullYear() - s.getFullYear();
+
+        // Convert to readable date formats
+        const months = [
+            'January','February','March','April','May','June',
+            'July','August','September','October','November','December'
+        ];
+
+        const startFormatted = `${months[s.getMonth()]} ${s.getFullYear()}`;
+        const endFormatted = `${e.getDate()} ${months[e.getMonth()]} ${e.getFullYear()}`;
+
+        return `${years} year (${startFormatted} - ${endFormatted})`;
+    };
+
+
+    const calculateBudgetSpendPercent = (total: any, spent: any) => {
+        const totalAmount = Number(total);
+        const spentAmount = Number(spent);
+
+        if (
+            total === null ||
+            total === undefined ||
+            total === '' ||
+            spent === null ||
+            spent === undefined ||
+            spent === '' ||
+            isNaN(totalAmount) ||
+            isNaN(spentAmount) ||
+            totalAmount === 0
+        ) {
+            return '--';
+        }
+
+        return ((spentAmount / totalAmount) * 100).toFixed(0);
+    };
+
+    // API → UI formatted grants
+    const formattedGrants = useMemo<GrantUI[]>(() => {
+        if (!data) return [];
+        return data.message.map((g: any) => ({
+            id: safe(g.name),
+            name: safe(g.title),
+            leadInstitute: safe(g.organization.title),
+            timeline:formatTimeline(g.start_date, g.end_date),
+            totalBudget: formatIndianAmount(g.approved_amount),
+
+            // Fields we DON'T have yet → default "--"
+            budgetSpend: formatIndianAmount(g.budget_spent),
+            budgetSpendPercent: calculateBudgetSpendPercent(g.approved_amount, g.budget_spent),
+            overallProgress: '--',
+            totalProjects: safe(g.total_projects),
+        }));
+    }, [data]);
+
+    useEffect(() => {
+        setGrants(formattedGrants);
+    }, [formattedGrants]);
 
     const handleGrantClick = (grantId: string) => {
         navigate(`/grant/${grantId}`);
@@ -116,92 +133,107 @@ export default function Grants() {
 
     return (
         <DashboardLayout>
-            {/* Page Title */}
-            <SectionWrapper 
-                title="List of CoE's"
-                contentClassName="space-y-4"
-            >
-                {mockGrants.map((grant) => (
+            <SectionWrapper title="List of CoE's" contentClassName="space-y-4">
+                {isLoading && (
+                    <div className="text-center text-muted-foreground py-6">
+                        Loading grants...
+                    </div>
+                )}
+
+                {error && (
+                    <div className="text-center text-red-600 py-6">
+                        Failed to load grants.
+                    </div>
+                )}
+
+                {!isLoading && grants.length === 0 && (
+                    <div className="text-center text-muted-foreground py-6">
+                        No grants found.
+                    </div>
+                )}
+
+                {grants.map((grant) => (
                     <div
                         key={grant.id}
                         className="p-6 bg-card border-border rounded border flex flex-col gap-4"
                     >
-                        {/* Header Section */}
+                        {/* Header */}
                         <div className="flex gap-4">
-                            {/* Left Container */}
                             <div className="flex flex-col gap-4 flex-1">
-                                {/* Header Row */}
-                                <h2 className="text-foreground text-xl font-semibold leading-[120%] tracking-[-0.4px]">
+                                <h2 className="text-xl font-semibold text-foreground">
                                     {grant.name}
                                 </h2>
-                                
-                                {/* Metadata Row */}
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground font-normal leading-[150%]">
+
+                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <span>Lead Institute: {grant.leadInstitute}</span>
                                     <span className="text-border">|</span>
                                     <span>Timeline: {grant.timeline}</span>
                                 </div>
                             </div>
 
-                            {/* Right Container */}
                             <div>
                                 <Button
                                     variant="outline"
-                                    className="w-[155.5px] h-[45px] px-6 gap-2 text-foreground border-border hover:bg-accent"
+                                    className="w-[155px] h-[45px] px-6 gap-2"
                                     onClick={() => handleGrantClick(grant.id)}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                        <path d="M4.75 8.66699C5.5324 8.66699 6.16699 9.30158 6.16699 10.084V12.084C6.16664 12.8661 5.53219 13.5 4.75 13.5H1.41699C0.634806 13.5 0.000351737 12.8661 0 12.084V10.084C0 9.30158 0.634589 8.66699 1.41699 8.66699H4.75ZM12.083 6C12.8654 6 13.5 6.63459 13.5 7.41699V12.083C13.5 12.8654 12.8654 13.5 12.083 13.5H8.75C7.96775 13.4998 7.33301 12.8653 7.33301 12.083V7.41699C7.33301 6.6347 7.96775 6.00018 8.75 6H12.083ZM1.5 12H4.66699V10.167H1.5V12ZM8.83301 12H12V7.5H8.83301V12ZM4.75 0C5.5324 1.28852e-07 6.16699 0.634589 6.16699 1.41699V6.08301C6.16699 6.86541 5.5324 7.5 4.75 7.5H1.41699C0.634589 7.5 0 6.86541 0 6.08301V1.41699C0 0.634589 0.634589 0 1.41699 0H4.75ZM1.5 6H4.66699V1.5H1.5V6ZM12.083 0C12.8654 1.28852e-07 13.5 0.634589 13.5 1.41699V3.41699C13.4998 4.19925 12.8653 4.83301 12.083 4.83301H8.75C7.96785 4.83283 7.33318 4.19914 7.33301 3.41699V1.41699C7.33301 0.634697 7.96775 0.000175814 8.75 0H12.083ZM8.83301 3.33301H12V1.5H8.83301V3.33301Z" fill="#020617"/>
-                                    </svg>
                                     View CoE <ChevronRight className="w-4 h-4" />
                                 </Button>
                             </div>
                         </div>
 
-                        {/* Metrics Grid */}
+                        {/* Metrics */}
                         <div className="flex gap-4">
                             {/* Total Budget */}
                             <div>
-                                <div className="text-muted-foreground font-body font-medium text-sm leading-5 tracking-[0.5%]">Total Budget</div>
-                                <div className="text-xl font-bold text-foreground">
+                                <div className="text-sm text-muted-foreground">
+                                    Total Budget
+                                </div>
+                                <div className="text-xl font-bold">
                                     {grant.totalBudget}
                                 </div>
                             </div>
 
-                            <div className="w-px bg-border self-stretch" />
+                            <div className="w-px bg-border" />
 
-                            {/* Total Budget Spend */}
+                            {/* Budget Spend */}
                             <div>
-                                <div className="text-muted-foreground font-body font-medium text-sm leading-5 tracking-[0.5%]">Total Budget Spend</div>
+                                <div className="text-sm text-muted-foreground">
+                                    Total Budget Spend
+                                </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="text-xl font-bold text-foreground">
+                                    <div className="text-xl font-bold">
                                         {grant.budgetSpend}
                                     </div>
-                                    <Badge
-                                        variant="secondary"
-                                        className="bg-green-100 hover:bg-green-100 border-0 text-[10px] px-1.5 py-0 h-5"
-                                    >
-                                        {grant.budgetSpendPercent}%
-                                    </Badge>
+                                    {grant.budgetSpendPercent !== '--' && (
+                                        <Badge className="bg-green-100 border-0 h-5 px-1.5 text-[10px]">
+                                            {grant.budgetSpendPercent}%
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="w-px bg-border self-stretch" />
+                            <div className="w-px bg-border" />
 
                             {/* Overall Progress */}
                             <div>
-                                <div className="text-muted-foreground font-body font-medium text-sm leading-5 tracking-[0.5%]">Overall Progress</div>
-                                <div className="text-xl font-bold text-foreground">
-                                    {grant.overallProgress}%
+                                <div className="text-sm text-muted-foreground">
+                                    Overall Progress
+                                </div>
+                                <div className="text-xl font-bold">
+                                    {grant.overallProgress}
+                                    {grant.overallProgress !== '--' && '%'}
                                 </div>
                             </div>
 
-                            <div className="w-px bg-border self-stretch" />
+                            <div className="w-px bg-border" />
 
                             {/* Total Projects */}
                             <div>
-                                <div className="text-muted-foreground font-body font-medium text-sm leading-5 tracking-[0.5%]">Total Projects</div>
-                                <div className="text-xl font-bold text-foreground">
+                                <div className="text-sm text-muted-foreground">
+                                    Total Projects
+                                </div>
+                                <div className="text-xl font-bold">
                                     {grant.totalProjects}
                                 </div>
                             </div>

@@ -246,3 +246,5 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 
 
 website_route_rules = [{"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}]
+
+override_whitelisted_methods = {"gms.api.get_grants_with_related": "gms.api.grants.get_grants_with_related"}
