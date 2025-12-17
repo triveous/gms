@@ -10,6 +10,7 @@
   "project",
   "milestone_type",
   "submitted_at",
+  "forecasted_amount",
   "progress_update_section",
   "period_start",
   "period_end",
@@ -114,13 +115,18 @@
    "fieldtype": "Table",
    "label": "Metrics Values",
    "options": "Grant Metric Value"
+  },
+  {
+   "fieldname": "forecasted_amount",
+   "fieldtype": "Small Text",
+   "label": "Forecasted Amount"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
  "max_attachments": 5,
- "modified": "2025-12-16 22:02:59.972265",
+ "modified": "2025-12-17 20:22:44.371493",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant Project Milestone",
