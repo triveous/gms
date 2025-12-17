@@ -10,8 +10,9 @@ from werkzeug.wrappers import Response
 import frappe
 import json
 
+GOOGLE_API_KEY = frappe.conf.get("google_api_key")
 aikam_agent = Agent(
-    GoogleModel("gemini-2.5-flash",provider=GoogleProvider(api_key="API_KEY")),
+    GoogleModel("gemini-2.5-flash",provider=GoogleProvider(api_key=GOOGLE_API_KEY)),
     system_prompt=f"""Your are helpful assistant"""
 )
 
