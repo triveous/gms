@@ -1,27 +1,14 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { ArrowLeft, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
+import { CircleCheckBig, BadgeInfo, TrendingUp, TrendingDown, Link } from 'lucide-react';
+import DashboardLayout from '@/components/DashboardLayout';
+import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
+import { SectionWrapper } from '@/components/SectionWrapper';
+import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 
-const budgetData = [
-    { date: 'Q1 2024', sanctioned: 30, released: 25, actual: 20 },
-    { date: 'Q2 2024', sanctioned: 50, released: 42, actual: 35 },
-    { date: 'Q3 2024', sanctioned: 70, released: 58, actual: 50 },
-    { date: 'Q4 2024', sanctioned: 85, released: 72, actual: 65 },
-    { date: 'Q1 2025', sanctioned: 95, released: 85, actual: 78 },
-];
-
-const chartConfig = {
-    sanctioned: { label: 'Sanctioned', color: '#60A5FA' },
-    released: { label: 'Released', color: '#34D399' },
-    actual: { label: 'Actual', color: '#F59E0B' },
-};
 
 export default function Project() {
-    const { id } = useParams();
     const navigate = useNavigate();
 
     const projectData = {
@@ -32,446 +19,361 @@ export default function Project() {
         endDate: 'Last updated: 10/10/2023',
     };
 
-    const metrics = {
-        screeningReadiness: { current: 4, status: 'on-track' },
-        projectBenchmarks: { current: 6, status: 'at-risk' },
-        commercialization: { current: 4, status: 'on-track' },
-        securityCompliance: { current: 4, status: 'on-track' },
-    };
 
-    const highlights = [
-        'Medical updates and advancements: Digital pathology services are increasing pathology capacity by early detection of the Oral Lesion',
-        'Developed a handheld device (VeloScope) which is the World leading device to produce rapid, real-time results for DM-PCR in under 30 mins.',
-    ];
 
-    const lowlights = [
-        'Hardware and Software compatibility: We were facing the issue of Low Oral Lesion images Data Transfer in some of the district hospital.',
-        'Discussed about the product development regarding lack of data: From COVID Screening to India\'s Health Ecosystem.',
-    ];
-
-    const milestones = [
-        { quarter: 'Q1 2020-2026', progress: 40, description: 'SG: Make product M Validation Summary' },
-        { quarter: 'Q2 2021-2022', progress: 30, description: 'Pilot Study & Clinical Documents' },
-        { quarter: 'Q3 2022-2024', progress: 25, description: 'Technology Architecture Degree' },
-        { quarter: 'Q4 2024-2025', progress: 10, description: 'Rapid Assay & Testing' },
-    ];
-
-    const artifacts = [
-        'Study plans to screen lung cong-specific',
-        'SG: Make a product M Validation Summary',
-        'Technology Scorecard',
-        'Rapid Assay & Testing',
-        'Strong Evidence-Authored Impact',
+    const quarterlyProgress = [
+        { quarter: 'Q2- 2025-2026', percentage: 40 },
+        { quarter: 'Q1- 2025-2026', percentage: 30 },
+        { quarter: 'Q4- 2024-2025', percentage: 20 },
+        { quarter: 'Q3- 2024-2025', percentage: 10 },
     ];
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-blue-50">
-            <div className="max-w-7xl mx-auto p-6 md:p-8">
-                {/* Back Button */}
-                <Button
-                    variant="ghost"
-                    className="mb-4 text-blue-600 hover:text-blue-700"
-                    onClick={() => navigate(`/grant/${id}`)}
+        <DashboardLayout>
+            {/* Breadcrumb */}
+            <div className="mb-6 flex items-center gap-2">
+                <div 
+                    
+                    className="text-sm text-muted-foreground  flex items-center gap-1"
                 >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Grant
-                </Button>
-
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                            <Badge className="mb-3 bg-blue-100 text-blue-700 border-0">
-                                ❖ AI-CoE
-                            </Badge>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                                CPMU Project dashboard
-                            </h1>
-                            <h2 className="text-xl text-gray-700 mb-2">
-                                {projectData.name}
-                            </h2>
-                            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                                <span><span className="font-medium">Department:</span> {projectData.department}</span>
-                                <span>•</span>
-                                <span><span className="font-medium">Lead Institute:</span> {projectData.leadInstitute}</span>
-                                <span>•</span>
-                                <span><span className="font-medium">Start Date:</span> {projectData.startDate}</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Button variant="outline">
-                                ⚙ Filter
-                            </Button>
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                                ↗ Export
-                            </Button>
-                        </div>
-                    </div>
-                    <p className="text-sm text-gray-500">{projectData.endDate}</p>
+                    Home <span>›</span>
                 </div>
-
-                {/* TODAY'S METRICS */}
-                <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">TODAY'S Metrics (Q3 2025)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Card className="border-l-4 border-l-green-500">
-                            <CardContent className="pt-6">
-                                <p className="text-sm text-gray-600 mb-1">Screening Readiness Level</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-3xl font-bold">{metrics.screeningReadiness.current}</p>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-0">
-                                        on track
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-l-4 border-l-orange-500">
-                            <CardContent className="pt-6">
-                                <p className="text-sm text-gray-600 mb-1">Project Benchmarks Level</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-3xl font-bold">{metrics.projectBenchmarks.current}</p>
-                                    <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-0">
-                                        at risk
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-l-4 border-l-green-500">
-                            <CardContent className="pt-6">
-                                <p className="text-sm text-gray-600 mb-1">Commercialization Readiness</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-3xl font-bold">{metrics.commercialization.current}</p>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-0">
-                                        on track
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-l-4 border-l-green-500">
-                            <CardContent className="pt-6">
-                                <p className="text-sm text-gray-600 mb-1">Security/Compliance Readiness</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-3xl font-bold">{metrics.securityCompliance.current}</p>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-0">
-                                        on track
-                                    </Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                {/* KEY HIGHLIGHTS & LOWLIGHTS */}
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                                Key Highlights & Lowlights (Q3 2025)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-2">Highlights</p>
-                                    {highlights.map((highlight, index) => (
-                                        <div key={index} className="flex gap-2 mb-3">
-                                            <Badge variant="secondary" className="bg-green-100 text-green-700 border-0 shrink-0">
-                                                Good
-                                            </Badge>
-                                            <p className="text-sm text-gray-600">{highlight}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <AlertCircle className="h-5 w-5 text-orange-600" />
-                                Observed Behavior
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-700 mb-2">Lowlights</p>
-                                    {lowlights.map((lowlight, index) => (
-                                        <div key={index} className="flex gap-2 mb-3">
-                                            <Badge variant="secondary" className="bg-green-100 text-green-700 border-0 shrink-0">
-                                                Good
-                                            </Badge>
-                                            <p className="text-sm text-gray-600">{lowlight}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* PROGRESS SECTION */}
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    {/* Progress & Milestones */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center justify-between">
-                                <span>Progress</span>
-                                <Button variant="link" className="text-blue-600 text-sm">
-                                    View all →
-                                </Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {milestones.map((milestone, index) => (
-                                    <div key={index} className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-gray-400" />
-                                                <span className="font-medium">{milestone.quarter}</span>
-                                            </div>
-                                            <span className="text-gray-600">{milestone.progress}%</span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                            <div
-                                                className="bg-blue-600 h-2 rounded-full"
-                                                style={{ width: `${milestone.progress}%` }}
-                                            />
-                                        </div>
-                                        <p className="text-xs text-gray-600">{milestone.description}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Artifacts */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center justify-between">
-                                <span>Artifacts</span>
-                                <Button variant="link" className="text-blue-600 text-sm">
-                                    View all →
-                                </Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-2">
-                                {artifacts.map((artifact, index) => (
-                                    <div key={index} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded">
-                                        <div className="h-8 w-8 bg-blue-100 rounded flex items-center justify-center text-blue-600">
-                                            📄
-                                        </div>
-                                        <p className="text-sm text-gray-700">{artifact}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* BUDGET UTILIZATION */}
-                <Card className="mb-8">
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                            <span>Budget Utilization</span>
-                            <div className="flex gap-6 text-sm font-normal">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 bg-blue-400 rounded"></div>
-                                    <span>Sanctioned</span>
-                                    <span className="font-semibold">₹ 40 Cr</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 bg-green-400 rounded"></div>
-                                    <span>Released</span>
-                                    <span className="font-semibold">₹ 32 Cr</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 bg-orange-400 rounded"></div>
-                                    <span>Actual</span>
-                                    <span className="font-semibold">₹ 28 Cr</span>
-                                </div>
-                            </div>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ChartContainer config={chartConfig} className="h-[300px]">
-                            <AreaChart data={budgetData}>
-                                <defs>
-                                    <linearGradient id="sanctioned-project" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="released-project" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#34D399" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="actual-project" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis dataKey="date" />
-                                <YAxis />
-                                <ChartTooltip content={<ChartTooltipContent />} />
-                                <Area
-                                    type="monotone"
-                                    dataKey="sanctioned"
-                                    stroke="#60A5FA"
-                                    fill="url(#sanctioned-project)"
-                                    strokeWidth={2}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="released"
-                                    stroke="#34D399"
-                                    fill="url(#released-project)"
-                                    strokeWidth={2}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="actual"
-                                    stroke="#F59E0B"
-                                    fill="url(#actual-project)"
-                                    strokeWidth={2}
-                                />
-                            </AreaChart>
-                        </ChartContainer>
-
-                        {/* Summary Stats */}
-                        <div className="grid grid-cols-3 gap-6 mt-6 pt-6 border-t">
-                            <div>
-                                <p className="text-sm text-gray-500 mb-1">Q3 Fund Utilization</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-2xl font-bold">₹ 40 Cr</p>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-0">
-                                        24% up
-                                    </Badge>
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 mb-1">Q4 EC Fund Utilization</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-2xl font-bold">₹ 44 Cr</p>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-0">
-                                        24% up
-                                    </Badge>
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 mb-1">Q1 Fund Utilization</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-2xl font-bold">120%</p>
-                                    <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-0">
-                                        23% up
-                                    </Badge>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-6 mt-4">
-                            <div>
-                                <p className="text-sm text-gray-500 mb-1">Current year Utilized</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-2xl font-bold">78%</p>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700 border-0">
-                                        9% up
-                                    </Badge>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* PEOPLE & PARTNERS */}
-                <div className="grid md:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center justify-between">
-                                People & Partners
-                                <Button variant="link" className="text-blue-600 text-sm">
-                                    See all →
-                                </Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-semibold mb-2">Academic & Industry Partners</p>
-                                    <div className="space-y-2 text-sm">
-                                        <div>
-                                            <p className="font-medium">Indian Institute of Science (IISc)</p>
-                                            <p className="text-gray-600">Lead institution in AI research</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">Tata Memorial Hospital</p>
-                                            <p className="text-gray-600">Partner institution</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="border-t pt-4">
-                                    <p className="text-sm font-semibold mb-2">Stakeholders</p>
-                                    <div className="text-sm">
-                                        <p className="font-medium">Ministry of Health</p>
-                                        <p className="text-gray-600">Regulatory support and guidelines</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center justify-between">
-                                Lead Investigators and Partners
-                                <span className="text-sm font-normal text-gray-500">See 8</span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div>
-                                    <p className="text-sm font-semibold mb-2">Principal Investigator</p>
-                                    <div className="text-sm space-y-1">
-                                        <p className="font-medium">Dr. Rajesh Kumar</p>
-                                        <p className="text-gray-600">Associate Professor, Medical Informatics</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold mb-2">Publication list</p>
-                                    <div className="text-sm">
-                                        <p className="text-blue-600 cursor-pointer hover:underline">
-                                            Dr Kumar and 2 others published new findings on AI-based detection
-                                        </p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold mb-2">Deliverables list</p>
-                                    <div className="text-sm">
-                                        <p className="text-gray-600">
-                                            Next deliverables: Prototype testing and clinical validation (Q4 2025)
-                                        </p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-semibold mb-2">Research Brief</p>
-                                    <div className="text-sm">
-                                        <p className="text-gray-600">
-                                            Current research focuses on machine learning algorithms for improved detection accuracy
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <div onClick={() => navigate('/grant/1')} className=" cursor-pointer text-sm text-foreground flex items-center gap-1">
+                    Projects
                 </div>
             </div>
-        </div>
+
+            {/* Page Header */}
+            <div className="mb-6">
+                <h1 className="text-foreground font-semibold text-[30px] leading-[125%] tracking-[-0.3px] mb-4">
+                    {projectData.name}
+                </h1>
+            </div>
+
+            {/* Metrics Cards */}
+            <div className="flex gap-4 mb-6">
+                {/* Total Budget */}
+                <div className="flex flex-col gap-3">
+                    <div className="text-muted-foreground font-medium text-base leading-[150%]">Total Budget</div>
+                    <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">₹ 300 Cr.</div>
+                </div>
+
+                <div className="w-px bg-border self-stretch" />
+
+                {/* Total Budget Spend */}
+                <div className="flex flex-col gap-3">
+                    <div className="text-muted-foreground font-medium text-base leading-[150%]">Total Budget Spend</div>
+                    <div className="flex items-center gap-2">
+                        <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">₹ 120 Cr.</div>
+                        <Badge className="bg-green-100 text-foreground font-mono text-xs font-normal leading-[150%]">
+                            40%
+                        </Badge>
+                    </div>
+                </div>
+
+                <div className="w-px bg-border self-stretch" />
+
+                {/* Overall Progress */}
+                <div className="flex flex-col gap-3">
+                    <div className="text-muted-foreground font-medium text-base leading-[150%]">Overall Progress</div>
+                    <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">40%</div>
+                </div>
+            </div>
+
+            {/* Separator */}
+            <div className="h-px bg-border mb-6" />
+
+            {/* Controls Row */}
+            <DashbaordFilterComponent />
+
+            <SectionWrapper 
+                title="TCRM's Metrics" 
+                contentClassName="grid grid-cols-4 gap-4"
+            >
+                {/* Q3 Forecasted */}
+                <div className="p-6 bg-card border border-border rounded flex flex-col gap-4">
+                    <div className="text-muted-foreground font-medium text-base leading-6">Technology Readiness Level</div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-semibold leading-[120%]  text-foreground">4</span>
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                            <TrendingDown className="w-3 h-3" />
+                            <span className="text-xs font-medium">+2</span>
+                        </span>
+                    </div>
+                </div>
+
+                {/* Q3 Actual Spend */}
+                <div className="p-6 bg-card border border-border rounded flex flex-col gap-4">
+                    <div className="text-muted-foreground font-medium text-base leading-6">Market Readiness Level</div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-semibold leading-[120%]  text-foreground">6</span>
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                            <TrendingUp className="w-3 h-3" />
+                            <span className="text-xs font-medium">-1</span>
+                        </span>
+                    </div>
+                </div>
+
+                {/* Q3 Utilisation % */}
+                <div className="p-6 bg-card border border-border rounded flex flex-col gap-4">
+                    <div className="text-muted-foreground font-medium text-base leading-6">Commercial Readiness Level</div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-semibold leading-[120%]  text-foreground">4</span>
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 text-orange-700">
+                            <TrendingUp className="w-3 h-3" />
+                            <span className="text-xs font-medium">2%</span>
+                        </span>
+                    </div>
+                </div>
+
+                {/* Current year Utilised */}
+                <div className="p-6 bg-card border border-border rounded flex flex-col gap-4">
+                    <div className="text-muted-foreground font-medium text-base leading-6">Social Impact Readiness Level</div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-semibold leading-[120%]  text-foreground">4</span>
+                        <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
+                            <TrendingUp className="w-3 h-3" />
+                            <span className="text-xs font-medium">+2</span>
+                        </span>
+                    </div>
+                </div>
+            </SectionWrapper>
+
+            {/* Key Highlights & Lowlights */}
+            <SectionWrapper 
+                title="Key Highlights & Lowlights"
+                contentClassName="grid flex gap-6 flex-col"
+            >
+                <div className="grid grid-cols-3 gap-6">
+                    {/* Highlights */}
+                    <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
+                        <h3>Highlights</h3>
+                        <div className="flex flex-col gap-4 text-muted-foreground">
+                            <div className="flex gap-2 items-start">
+                                <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                <p>
+                                    Received positive and encouraging reviews from Technology Advisors on the System Design
+                                </p>
+                            </div>
+                            <div className="flex gap-2 items-start">
+                                <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                <p>
+                                    Submitting a blue print for doing a user research / review studies at scale in India
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Lowlights */}
+                    <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
+                        <h3>Lowlights</h3>
+                        <div className="flex flex-col gap-4 text-muted-foreground">
+                            <div className="flex gap-2 items-start">
+                                <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
+                                <p>
+                                    Hardware and Software compatibility has been tuning out to be the major design revision factor than we anticipated. We are going ahead with the largest API/SDK distribution as per Android Developer's distribution page
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Outcome Indicator */}
+                    <div className="flex flex-col gap-4">
+                        {/* Outcome Indicator */}
+                        <div className='h-[117px] p-6 bg-card border border-border rounded'>
+                            <div className="text-sm text-muted-foreground mb-3">Outcome Indicator</div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl font-semibold text-foreground">Good</span>
+                                <div className="w-6 h-6 rounded-md bg-green-500 flex items-center justify-center">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                        <path d="M11.667 3.5L5.25 9.917L2.333 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Impact Indicator */}
+                        <div className='h-[117px] p-6 bg-card border border-border rounded'>
+                            <div className="text-sm text-muted-foreground mb-3">Impact Indicator</div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl font-semibold text-foreground">Good</span>
+                                <div className="w-6 h-6 rounded-md bg-green-500 flex items-center justify-center">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                        <path d="M11.667 3.5L5.25 9.917L2.333 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* Progress Artifacts Ask DiyaAI  */}
+                <div className="grid grid-cols-3 gap-6">
+                    {/* Progress Card */}
+                    <div className="p-6 bg-card border border-border rounded">
+                        <h3 className="text-base font-semibold mb-1">Progress</h3>
+                        <p className="text-sm text-muted-foreground mb-6">Overall Progress achieved quarter-wise</p>
+                        
+                        <div className="space-y-6">
+                            {quarterlyProgress.map((item, index) => (
+                                <div key={index}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-medium">{item.quarter}</span>
+                                        <span className="text-sm font-semibold">{item.percentage}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div 
+                                            className="bg-black h-2 rounded-full" 
+                                            style={{ width: `${item.percentage}%` }} 
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Button variant="outline" className="w-full mt-6">
+                            View all
+                            <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none">
+                                <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </Button>
+                    </div>
+
+                    {/* Artifacts Card */}
+                    <div className="p-6 bg-card border border-border rounded">
+                        <h3 className="text-base font-semibold mb-1">Artifacts</h3>
+                        <p className="text-sm text-muted-foreground mb-6">Quick links to access the projects related doc</p>
+                        
+                        <div className="space-y-6">
+                            <a href="#" className="flex items-center gap-2 text-sm hover:underline">
+                                <Link className='h-4 w-4'/>
+                                ML Model Accuracy & Validation Summary
+                            </a>
+                            <a href="#" className="flex items-center gap-2 text-sm hover:underline">
+                                <Link className='h-4 w-4'/>
+                                User Research Blueprint / Protocol Document
+                            </a>
+                            <a href="#" className="flex items-center gap-2 text-sm hover:underline">
+                                <Link className='h-4 w-4'/>
+                                Technology Architecture Diagram
+                            </a>
+                            <a href="#" className="flex items-center gap-2 text-sm hover:underline">
+                                <Link className='h-4 w-4'/>
+                                App Usability Testing Results
+                            </a>
+                            <a href="#" className="flex items-center gap-2 text-sm hover:underline">
+                                <Link className='h-4 w-4'/>
+                                Pilot Study Report 
+                            </a>
+                            <a href="#" className="flex items-center gap-2 text-sm hover:underline">
+                                <Link className='h-4 w-4'/>
+                                Training & Capacity Building Report
+                            </a>
+                        </div>
+
+                        <Button variant="outline" className="w-full mt-6">
+                            View all
+                            <svg className="ml-2 w-4 h-4" viewBox="0 0 16 16" fill="none">
+                                <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </Button>
+                    </div>
+
+                    {/* Ask DiyaAI Card */}
+                    <div className="p-6 bg-card border border-border rounded">
+                        <h3 className="text-base font-semibold mb-1">Impact & Innovation Outcomes</h3>
+                        <p className="text-sm text-muted-foreground mb-6">Real-world beneficiaries and breakthroughs achieved</p>
+                        
+                        <div className="space-y-4">
+                            {/* Impact created */}
+                            <div className="p-4 border border-orange-200 rounded-lg bg-orange-50/30">
+                                <div className="text-sm text-muted-foreground mb-2">Impact created</div>
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <span className="text-3xl font-bold text-foreground">20 Cr.</span>
+                                    <span className="text-sm text-muted-foreground">citizens</span>
+                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-100 text-green-700">
+                                    <TrendingUp className="w-3 h-3" />
+                                    <span className="text-xs font-medium">10%</span>
+                                </span>
+                            </div>
+
+                            {/* AI breakthroughs */}
+                            <div className="p-4 border border-orange-200 rounded-lg bg-orange-50/30">
+                                <div className="text-sm text-muted-foreground mb-2">AI breakthroughs</div>
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <span className="text-3xl font-bold text-foreground">3</span>
+                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-100 text-green-700">
+                                    <TrendingUp className="w-3 h-3" />
+                                    <span className="text-xs font-medium">+1</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </SectionWrapper>
+
+
+
+            {/* Budget Utilisation */}
+            <SectionWrapper 
+                title="Budget Utilisation"
+                contentClassName="flex flex-col gap-6"
+            >
+                <div className="p-6 bg-card border border-border rounded">
+                    <BudgetUtilizationChart />
+                </div>
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-4 gap-4">
+                    {/* Q3 Forecasted */}
+                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                        <div className="text-sm text-muted-foreground">Q3 Forecasted</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">₹ 80 Cr.</span>
+                            <span className="flex items-center gap-1 px-2 py-1 rounded-xl bg-input ">
+                                <TrendingDown className="w-3 h-3" />
+                                <span className="text-xs font-medium">12%</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Q3 Actual Spend */}
+                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                        <div className="text-sm text-muted-foreground">Q3 Actual Spend</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">₹ 92 Cr.</span>
+                            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-input ">
+                                <TrendingUp className="w-3 h-3" />
+                                <span className="text-xs font-medium">12%</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Q3 Utilisation % */}
+                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                        <div className="text-sm text-muted-foreground">Q3 Utilisation %</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">120%</span>
+                            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 text-orange-700">
+                                <TrendingUp className="w-3 h-3" />
+                                <span className="text-xs font-medium">2%</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Current year Utilised */}
+                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                        <div className="text-sm text-muted-foreground">Current year Utilised</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">78 %</span>
+                            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
+                                <TrendingUp className="w-3 h-3" />
+                                <span className="text-xs font-medium">+18%</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </SectionWrapper>
+        </DashboardLayout>
     );
 }
