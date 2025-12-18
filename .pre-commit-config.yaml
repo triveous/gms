@@ -39,6 +39,7 @@ repos:
         exclude: |
             (?x)^(
                 gms/public/dist/.*|
+                gms/public/dashboard/assets/.*|
                 .*node_modules.*|
                 .*boilerplate.*|
                 gms/templates/includes/.*|
