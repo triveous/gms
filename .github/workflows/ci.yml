@@ -89,6 +89,7 @@ jobs:
           bench setup requirements --dev
           npm cache clean --force
           npm install --prefix ./apps/gms/dashboard
+          npm install -g yarn 
           bench new-site --db-root-password root --admin-password admin test_site
           bench --site test_site install-app gms
           bench build
