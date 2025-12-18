@@ -87,8 +87,8 @@ jobs:
         run: |
           bench get-app gms $GITHUB_WORKSPACE
           bench setup requirements --dev
-          cd $GITHUB_WORKSPACE/dashboard && npm install
-          cd /home/runner/frappe-bench
+          npm cache clean --force
+          npm install --prefix ./apps/gms/dashboard
           bench new-site --db-root-password root --admin-password admin test_site
           bench --site test_site install-app gms
           bench build
