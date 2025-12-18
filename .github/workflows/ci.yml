@@ -64,17 +64,13 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: 'echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT'
-
-      - uses: actions/cache@v4
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+      - name: Cache npm
+        uses: actions/cache@v4
+        with: 
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-
+            ${{ runner.os }}-npm-
 
       - name: Install MariaDB Client
         run: sudo apt-get install mariadb-client
@@ -91,6 +87,8 @@ jobs:
         run: |
           bench get-app gms $GITHUB_WORKSPACE
           bench setup requirements --dev
+          cd $GITHUB_WORKSPACE/dashboard && npm install
+          cd /home/runner/frappe-bench
           bench new-site --db-root-password root --admin-password admin test_site
           bench --site test_site install-app gms
           bench build
