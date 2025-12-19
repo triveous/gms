@@ -15,6 +15,9 @@ const ChatPanel: React.FC = () => {
     const { messages, sendMessage, status } = useChat({
         transport: new DefaultChatTransport({
             api: '/api/v2/method/gms.ai.agent.chat',
+            headers:{
+                "X-Frappe-CSRF-Token": window.csrf_token
+            }
         }),
     });
 
@@ -87,26 +90,26 @@ const ChatPanel: React.FC = () => {
                             <div className="flex flex-col items-end text-right mt-auto mb-2">
                                 {/* <h3 className="text-sm font-semibold text-foreground mb-2">Quick suggestion to ask.</h3>
                                 <p className="text-xs text-muted-foreground mb-4">You can pick can from below or ask anything in chat.</p>
-                                
+
                                 <div className="w-full space-y-2">
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         className="w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal"
                                         onClick={() => handleSend('How much budget utilised by each project')}
                                         disabled={status !== 'ready'}
                                     >
                                         How much budget utilised by each project
                                     </Button>
-                                    <Button 
-                                        variant='outline' 
+                                    <Button
+                                        variant='outline'
                                         className='w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal'
                                         onClick={() => handleSend('Projects having more than 5 MRL Metric')}
                                         disabled={status !== 'ready'}
                                     >
                                         Projects having more than 5 MRL Metric
                                     </Button>
-                                    <Button 
-                                        variant='outline' 
+                                    <Button
+                                        variant='outline'
                                         className='w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal'
                                         onClick={() => handleSend('Summarise Goals and Impact of the CoE')}
                                         disabled={status !== 'ready'}
@@ -118,8 +121,8 @@ const ChatPanel: React.FC = () => {
                         ) : (
                             <div className="flex flex-col gap-6">
                                 {messages.map(message => (
-                                    <div 
-                                        key={message.id} 
+                                    <div
+                                        key={message.id}
                                         className={cn(
                                             'flex flex-col w-full',
                                             message.role === 'user' ? 'items-end' : 'items-start'
@@ -151,7 +154,7 @@ const ChatPanel: React.FC = () => {
                     </div>
 
                     {/* Input Area */}
-                    <form 
+                    <form
                         onSubmit={(e) => {
                             e.preventDefault();
                             handleSend(input);
@@ -169,7 +172,7 @@ const ChatPanel: React.FC = () => {
                                     placeholder="Ask me about the project"
                                     className="flex-1 text-sm text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:outline-none disabled:opacity-50"
                                 />
-                                <button 
+                                <button
                                     type="submit"
                                     disabled={status !== 'ready' || !input.trim()}
                                     className="p-0 border-none bg-transparent cursor-pointer disabled:opacity-50"
