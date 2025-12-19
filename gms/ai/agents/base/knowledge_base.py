@@ -292,7 +292,7 @@ class DoclingCustomLoader(BaseLoader):
         return list(chunker.chunk(result.document))
 
 
-class _KnowledgeBase:
+class KnowledgeBase:
     ingest_embedding: Embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001", task_type="RETRIEVAL_DOCUMENT")
     query_embedding: Embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001", task_type="RETRIEVAL_QUERY")
     uploader = DoclingImageUploader,
@@ -378,7 +378,7 @@ def _create_kb(name: str):
     import frappe
     MILVUS_CONN_URI = frappe.conf.get("milvus_conn_uri")
     uploader = DoclingImageUploaderFS("/workspace/development/storage")
-    return _KnowledgeBase(name, uploader=uploader, milvus_conn=MILVUS_CONN_URI)
+    return KnowledgeBase(name, uploader=uploader, milvus_conn=MILVUS_CONN_URI)
 
 
 kb = _create_kb("documents")

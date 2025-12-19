@@ -1,13 +1,12 @@
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic import ValidationError
-from gms.ai.agents.aikam import aikam_agent
+from gms.ai.agents.chat_agent import chat_agent, ChatAgentDeps
+from gms.ai.agents.base.knowledge_base import kb
 from gms.utils.iterator import stream_async_iterator
 from werkzeug.wrappers import Response
 
 import frappe
-import json
-
 
 @frappe.whitelist(allow_guest=True)
 def run():
@@ -19,9 +18,10 @@ def run():
         except ValidationError as e:
             return "Failed"
         
-        adapter = VercelAIAdapter(agent=aikam_agent, run_input=run_input, accept=accept)
+        adapter = VercelAIAdapter(agent=chat_agent, run_input=run_input, accept=accept)
         # Conver to UIMessageData Protocol
-        event_stream = adapter.run_stream()
+        deps = ChatAgentDeps(kb=kb)
+        event_stream = adapter.run_stream(deps=deps)
         # Serialized the message to string which text stream
         sse_event_stream = adapter.encode_stream(event_stream)
         

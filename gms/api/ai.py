@@ -1,6 +1,6 @@
 
 from gms.ai.agents.base.knowledge_base import kb
-from gms.ai.agents.aikam import aikam_agent
+from aikam.apps.gms.gms.ai.agents.chat_agent import aikam_agent
 
 import frappe
 
