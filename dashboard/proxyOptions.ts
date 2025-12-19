@@ -11,12 +11,12 @@ export default {
 		}
 	},
 	server: {
-    proxy: {
-      '/api': {
-        target: 'http://dev.localhost:8000',
-        changeOrigin: true,
-        secure: true
-      }
-    }
-  }
+		proxy: {
+			'/api': {
+				target: 'http://dev.localhost:8000',
+				changeOrigin: true,
+				secure: false
+			}
+		}
+	}
 };
