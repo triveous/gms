@@ -9,6 +9,13 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
+    "docling>=2.65.0",
+    "langchain-docling>=2.0.0",
+    "langchain-core>=1.2.3",
+    "langchain-google-genai>=4.0.0",
+    "pillow>=11.3.0",
+    "langchain-milvus>=0.3.1",
+    "pydantic-ai-slim[google]>=1.32.0"
 ]
 
 [build-system]
@@ -54,3 +61,8 @@ typing-modules = ["frappe.types.DF"]
 quote-style = "double"
 indent-style = "tab"
 docstring-code-format = true
+
+[deploy.dependencies.apt]
+packages = [
+    "libgl1",
+]
