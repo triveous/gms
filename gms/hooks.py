@@ -139,13 +139,15 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "Grant": {
+        "on_update": ["gms.api.grant2.on_update"],
+    },
+    "File": {
+        "on_update": ["gms.api.file.on_file_update"],
+        "after_delete": ["gms.api.file.on_file_deleted"],
+    },
+}
 
 # Scheduled Tasks
 # ---------------
@@ -245,6 +247,10 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # }
 
 
-website_route_rules = [{"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}]
+website_route_rules = [
+    {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}
+]
 
-override_whitelisted_methods = {"gms.api.get_grants_with_related": "gms.api.grants.get_grants_with_related"}
+override_whitelisted_methods = {
+    "gms.api.get_grants_with_related": "gms.api.grants.get_grants_with_related"
+}

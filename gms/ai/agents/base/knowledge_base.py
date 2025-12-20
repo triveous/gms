@@ -1,38 +1,37 @@
+import json
+import os
+from abc import ABC, abstractmethod
+from io import BytesIO
+from pathlib import Path
+
+import frappe
 from docling.datamodel.document import ConversionResult
 from docling.datamodel.pipeline_options import PdfPipelineOptions
-from docling.document_converter import DocumentConverter, PdfFormatOption, InputFormat
-from docling_core.transforms.chunker import DocMeta
-from docling_core.transforms.chunker import HybridChunker
+from docling.document_converter import DocumentConverter, InputFormat, PdfFormatOption
+from docling_core.transforms.chunker import DocMeta, HybridChunker
 from docling_core.transforms.chunker.base import BaseChunk
+from docling_core.transforms.chunker.hierarchical_chunker import (
+    ChunkingDocSerializer,
+    ChunkingSerializerProvider,
+)
 from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
-from docling_core.types.doc import DocItemLabel
+from docling_core.transforms.serializer.markdown import (
+    MarkdownParams,
+    MarkdownTableSerializer,
+)
+from docling_core.types.doc import DocItemLabel, ImageRefMode
 from docling_core.types.doc.document import DoclingDocument, ImageRef
 from docling_core.types.io import DocumentStream
+from frappe.core.doctype.file.file import File
 from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_docling.picture_description import PictureDescriptionLangChainOptions
-from pydantic import BaseModel, ConfigDict
-from docling_core.types.doc.document import DoclingDocument, ImageRef
-from docling_core.transforms.chunker.hierarchical_chunker import ChunkingDocSerializer, ChunkingSerializerProvider
-from docling_core.transforms.serializer.markdown import MarkdownTableSerializer, MarkdownParams
-from docling_core.types.doc import ImageRefMode
-from PIL import Image as PILImage
 from langchain_core.embeddings import Embeddings
-from langchain_core.messages import ContentBlock, TextContentBlock, ImageContentBlock, HumanMessage
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.vectorstores import VectorStore
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_milvus import Milvus, BM25BuiltInFunction
-
-from abc import ABC, abstractmethod
-from pathlib import Path
-from io import BytesIO
-
-import os
-import base64
-import json
-import frappe
+from langchain_docling.picture_description import PictureDescriptionLangChainOptions
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_milvus import BM25BuiltInFunction, Milvus
+from pydantic import BaseModel, ConfigDict
 
 _logger = frappe.logger("knowledgbase", allow_site=True, file_count=50)
 
@@ -88,6 +87,7 @@ Here is the chunk we want to situate within the whole document
 </chunk>
 Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else."""
 
+
 class MarkdownChunkingSerializerProvider(ChunkingSerializerProvider):
     def get_serializer(self, doc):
         return ChunkingDocSerializer(
@@ -114,14 +114,16 @@ class DoclingImageUploader(ABC):
             if not self.get_doc_id(doc=doc):
                 raise ValueError("Document id is not set.")
 
-            image_name = "_".join([
-                self.get_doc_id(doc=doc),
-                f"{doc.origin.binary_hash:016X}",
-                str(idx + 1),
-                f".{pic.image.pil_image.format.lower() if pic.image.pil_image.format else 'png'}"
-            ])
-            file_path = os.path.join(*[self.get_prefix(), image_name])
-            updated_image = self.save(pic.image, file_path)
+            image_name = "_".join(
+                [
+                    self.get_doc_id(doc=doc),
+                    f"{doc.origin.binary_hash:016X}",
+                    str(idx + 1),
+                    f".{pic.image.pil_image.format.lower() if pic.image.pil_image.format else 'png'}",
+                ]
+            )
+
+            updated_image = self.save(pic.image, image_name)
             pic.image = updated_image
 
     @staticmethod
@@ -133,31 +135,59 @@ class DoclingImageUploader(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def save(self, pil: ImageRef, file_path: str) -> ImageRef:
+    def save(self, pil: ImageRef, file_name: str) -> ImageRef:
         raise NotImplementedError
 
 
-class DoclingImageUploaderFS(DoclingImageUploader):
+class DoclingImageUploaderFrappe(DoclingImageUploader):
     root_dir: str
+    folder_created = False
 
     def __init__(self, root_dir: str):
         super().__init__()
         self.root_dir = root_dir
-        os.makedirs(self.root_dir, exist_ok=True)
 
     def get_prefix(self):
+        if not self.folder_created:
+            file = frappe.new_doc("File")
+            file.is_folder = 1
+            if "/" in self.root_dir:
+                file.file_name = self.root_dir.split("/")[-1]
+                file.folder = "/".join(self.root_dir.split("/")[:-1])
+            else:
+                file.file_name = self.root_dir
+                file.folder = "Home"
+            file.insert(ignore_if_duplicate=True)
+            self.folder_created = True
         return self.root_dir
 
-    def save(self, image_ref: ImageRef, file_path: str) -> ImageRef:
+    def save(self, image_ref: ImageRef, file_name: str) -> ImageRef:
         pil_image = image_ref.pil_image
-        pil_image.save(file_path)
+        buff = BytesIO()
+        pil_image.save(
+            buff,
+            format=image_ref.mimetype.split("/")[1].upper(),
+        )
+        file: File = frappe.get_doc(
+            {
+                "doctype": "File",
+                "folder": self.get_prefix(),
+                "file_name": file_name,
+                "is_private": 1,
+                "content": buff.getvalue(),
+            }
+        ).save(ignore_permissions=True)
+
+        print(f"File url {file.file_url}")
+
         return ImageRef(
             mimetype=image_ref.mimetype,
-            uri=Path(file_path),
+            uri=Path(file.file_url),
             size=image_ref.size,
             dpi=image_ref.dpi,
-            _pil=pil_image
+            _pil=pil_image,
         )
+
 
 class DoclingCustomLoaderOption(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -178,26 +208,37 @@ class DoclingCustomLoader(BaseLoader):
     src: str | BytesIO
     name: str
     option: DoclingCustomLoaderOption
+    doc_meta: dict[str, str]
 
-    def __init__(self, src: str | BytesIO, name: str, option: DoclingCustomLoaderOption):
+    def __init__(
+        self,
+        src: str | BytesIO,
+        name: str,
+        option: DoclingCustomLoaderOption,
+        doc_meta: dict[str, str] = {},
+    ):
         self.src = src
         self.name = name
         self.option = option
+        self.doc_meta = doc_meta
 
     def lazy_load(self):
         do_stream = self.get_stream()
-        _logger.debug("Document stream loaded")
-        
-        result = self._transform(do_stream)
-        _logger.debug("Document transformed")
-        
-        chunks = self._chunking(result)
-        _logger.debug("Chunking done")
-        
-        return [self._chunk_to_document(chunk, result.document) for chunk in list(chunks)]
+        print("Document stream loaded")
 
-    @staticmethod
-    def _chunk_to_document(chunk: BaseChunk, document: DoclingDocument) -> Document:
+        result = self._transform(do_stream)
+        print("Document transformed")
+
+        chunks = self._chunking(result)
+        print("Chunking done")
+
+        return [
+            self._chunk_to_document(chunk, result.document) for chunk in list(chunks)
+        ]
+
+    def _chunk_to_document(
+        self, chunk: BaseChunk, document: DoclingDocument
+    ) -> Document:
         # noinspection PyTypeChecker
         doc_meta: DocMeta = chunk.meta
         # noinspection PyTypeHints
@@ -207,22 +248,25 @@ class DoclingCustomLoader(BaseLoader):
         filename = doc_meta.origin.filename
 
         image_refs: list[ImageRef] = [
-            d.get_ref().resolve(document).image for d in doc_meta.doc_items if
-            d.label == DocItemLabel.PICTURE
+            d.get_ref().resolve(document).image
+            for d in doc_meta.doc_items
+            if d.label == DocItemLabel.PICTURE
         ]
-        images = [{
-            "mime_type": ref.mimetype,
-            "uri": str(ref.uri),
-            "width": ref.size.width,
-            "height": ref.size.height,
-            "dpi": ref.dpi
-        } for ref in image_refs]
+        images = [
+            {
+                "mime_type": ref.mimetype,
+                "uri": str(ref.uri),
+                "width": ref.size.width,
+                "height": ref.size.height,
+                "dpi": ref.dpi,
+            }
+            for ref in image_refs
+        ]
 
-        page_content = f"""
-    {" > ".join(chunk.meta.headings or [])}
+        page_content = f"""\
+            {" > ".join(chunk.meta.headings or [])}
+            {chunk.text}""".strip()
 
-    {chunk.text}
-    """.strip()
         return Document(
             page_content=page_content,
             metadata={
@@ -231,8 +275,9 @@ class DoclingCustomLoader(BaseLoader):
                 "mime_type": mime_type,
                 "binary_hash": binary_hash,
                 "filename": filename,
-                "images": json.dumps(images)
-            }
+                "images": json.dumps(images),
+                **self.doc_meta,
+            },
         )
 
     def get_stream(self) -> DocumentStream:
@@ -254,13 +299,17 @@ class DoclingCustomLoader(BaseLoader):
         pdf_pipeline_options.images_scale = self.option.images_scale
         if self.option.enable_picture_description:
             if self.option.picture_description_llm is None:
-                assert False, "picture_description_llm must be provided when enable_picture_description is True"
+                assert False, (
+                    "picture_description_llm must be provided when enable_picture_description is True"
+                )
             pdf_pipeline_options.enable_remote_services = True
             pdf_pipeline_options.allow_external_plugins = True
             pdf_pipeline_options.do_picture_description = True
-            pdf_pipeline_options.picture_description_options = PictureDescriptionLangChainOptions(
-                prompt=self.option.picture_description_prompt,
-                llm=self.option.picture_description_llm,
+            pdf_pipeline_options.picture_description_options = (
+                PictureDescriptionLangChainOptions(
+                    prompt=self.option.picture_description_prompt,
+                    llm=self.option.picture_description_llm,
+                )
             )
         pdf_pipeline_options.generate_page_images = True  # Allows Tablet Image Gen
         pdf_pipeline_options.generate_picture_images = True
@@ -279,33 +328,56 @@ class DoclingCustomLoader(BaseLoader):
 
         if self.option.image_uploader is not None:
             self.option.image_uploader.run(result.document)
-            _logger.debug("Images uploaded")
+            print("Images uploaded")
         return result
 
     def _chunking(self, result: ConversionResult) -> list[BaseChunk]:
         tokenizer = HuggingFaceTokenizer.from_pretrained(
             model_name="sentence-transformers/all-MiniLM-L6-v2",
-            max_tokens=self.option.token_size
+            max_tokens=self.option.token_size,
         )
         serializer_provider = MarkdownChunkingSerializerProvider()
-        chunker = HybridChunker(merge_peers=True, tokenizer=tokenizer, serializer_provider=serializer_provider)
+        chunker = HybridChunker(
+            merge_peers=True,
+            tokenizer=tokenizer,
+            serializer_provider=serializer_provider,
+        )
         return list(chunker.chunk(result.document))
 
 
 class KnowledgeBase:
-    ingest_embedding: Embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001", task_type="RETRIEVAL_DOCUMENT")
-    query_embedding: Embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001", task_type="RETRIEVAL_QUERY")
-    uploader = DoclingImageUploader,
+    ingest_embedding: Embeddings = GoogleGenerativeAIEmbeddings(
+        model="gemini-embedding-001", task_type="RETRIEVAL_DOCUMENT"
+    )
+    query_embedding: Embeddings = GoogleGenerativeAIEmbeddings(
+        model="gemini-embedding-001", task_type="RETRIEVAL_QUERY"
+    )
+    uploader = DoclingImageUploader
     ingest_store: VectorStore
     query_store: VectorStore
 
-    def __init__(self, name: str, uploader: DoclingImageUploader, milvus_conn: str):
-        self.ingest_store = self._create_store(milvus_conn, name, self.ingest_embedding)
-        self.query_store = self._create_store(milvus_conn, name, self.query_embedding)
-        self.uploader = uploader
+    def __init__(
+        self,
+        name: str = "documents",
+        root_path="Home",
+        MILVUS_CONN_URI=frappe.conf.get("milvus_conn_uri")
+        or os.environ["MILVUS_CONN_URI"],
+    ):
+        self.ingest_store = self._create_store(
+            MILVUS_CONN_URI, name, self.ingest_embedding
+        )
+        self.query_store = self._create_store(
+            MILVUS_CONN_URI, name, self.query_embedding
+        )
+        self.uploader = DoclingImageUploaderFrappe(root_path)
 
     @staticmethod
-    def _create_store(uri: str, collection_name: str, embedding_model: Embeddings, ):
+    def _create_store(
+        uri: str,
+        collection_name: str,
+        embedding_model: Embeddings,
+        drop_old=False,
+    ):
         dense_index_param = {"metric_type": "COSINE", "index_type": "HNSW"}
         sparse_index_param = {"metric_type": "BM25", "index_type": "AUTOINDEX"}
         return Milvus(
@@ -318,10 +390,10 @@ class KnowledgeBase:
             consistency_level="Strong",
             connection_args={"uri": uri},
             index_params=[dense_index_param, sparse_index_param],
-            drop_old=False,
+            drop_old=drop_old,
         )
 
-    def ingest(self, src: str | BytesIO, name: str):
+    def ingest(self, src: str | BytesIO, name: str, doc_meta: dict = dict()):
         # Load and Chunk
         loader = DoclingCustomLoader(
             src=src,
@@ -329,35 +401,34 @@ class KnowledgeBase:
             option=DoclingCustomLoaderOption(
                 image_uploader=self.uploader,
                 enable_picture_description=True,
-                picture_description_llm=ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite"),
+                picture_description_llm=ChatGoogleGenerativeAI(
+                    model="gemini-2.0-flash-lite"
+                ),
                 picture_description_prompt=PROMPT_PICTURE_DESCRIPTION_DETAILED,
                 token_size=2048,
                 enable_chunk_summary=False,
-                chunk_summary_llm=ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite")
-            )
+                chunk_summary_llm=ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite"),
+            ),
+            doc_meta=doc_meta,
         )
         documents = list(loader.lazy_load())
         self.ingest_store.add_documents(documents)
 
-    def retrieve_raw(self, query: str, k = 20, rrf_ranker_param:(float,float) = (0.7,0.3)):
+    def remove(self, expr):
+        self.ingest_store.delete(expr=expr)
+        pass
+
+    def retrieve_raw(
+        self, query: str, k=20, rrf_ranker_param: (float, float) = (0.7, 0.3)
+    ):
         results = self.query_store.similarity_search(
             query,
             k=k,
             ranker_type="rrf",
             # Check params: https://milvus.io/docs/multi-vector-search.md
-            ranker_params={"weights": list(rrf_ranker_param)}
+            ranker_params={"weights": list(rrf_ranker_param)},
         )
         return results
-    
+
     def load_content():
         pass
-        
-
-def _create_kb(name: str):
-    import frappe
-    MILVUS_CONN_URI = frappe.conf.get("milvus_conn_uri")
-    uploader = DoclingImageUploaderFS("/workspace/development/storage")
-    return KnowledgeBase(name, uploader=uploader, milvus_conn=MILVUS_CONN_URI)
-
-
-kb = _create_kb("documents")

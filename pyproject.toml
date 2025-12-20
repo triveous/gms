@@ -65,4 +65,5 @@ docstring-code-format = true
 [deploy.dependencies.apt]
 packages = [
     "libgl1",
+    "libgl1-mesa-glx",
 ]
