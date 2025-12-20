@@ -13,4 +13,3 @@ def ingest_to_kb():
         print(e)
         return "Failed"
     # frappe.enqueue(do_ingest_to_kb, queue='long')
-    return result

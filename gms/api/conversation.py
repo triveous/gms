@@ -1,6 +1,6 @@
 import frappe
 from gms.ai.agents.base.knowledge_base import kb
-from gms.ai.agents.chat_agent import ChatAgentDeps, chat_agent
+from gms.ai.agents.chat_agent import SupportDependencies, chat_agent
 from gms.ai.doctype.ai_conversation.ai_conversation import AIConversation
 from gms.utils.iterator import stream_async_iterator
 from pydantic import ValidationError
@@ -36,7 +36,7 @@ def run():
     # Create a convertor which convert the model response to UIMessage responnse
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
     adapter = VercelAIAdapter(agent=chat_agent, run_input=run_input, accept=accept)
-    deps = ChatAgentDeps(kb=kb)
+    deps = SupportDependencies(kb=kb)
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,

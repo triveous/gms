@@ -339,40 +339,19 @@ class KnowledgeBase:
         documents = list(loader.lazy_load())
         self.ingest_store.add_documents(documents)
 
-    def retrieve(self, query: str):
+    def retrieve_raw(self, query: str, k = 20, rrf_ranker_param:(float,float) = (0.7,0.3)):
         results = self.query_store.similarity_search(
             query,
-            k=20,
+            k=k,
             ranker_type="rrf",
             # Check params: https://milvus.io/docs/multi-vector-search.md
-            ranker_params={"weights": [0.7, 0.3]}
+            ranker_params={"weights": list(rrf_ranker_param)}
         )
-
-        # Generate
-        chat = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.0, thinking_budget=0)
-        #
-        text = r"""Based on the following documents, please provide a detailed explanation of the following question: {query}
-        You can embed the markdown image from the wherever needed to explain the further in detail.
-        {"\n".join([f"<document><content>{d.page_content}</content>{d.metadata}</document>" for d in results])}
-        """
-
-        content: list[ContentBlock] = [TextContentBlock(type="text", text=text)]
-        for doc in results:
-            if doc.metadata.get("images") is not None:
-                images = json.loads(doc.metadata["images"])
-                for img in images:
-                    if img['uri'] is not None:
-                        mime_type = img['mime_type']
-                        uri = img['uri']
-                        _logger.debug(uri)
-                        image = PILImage.open(img['uri'])
-                        buffer = BytesIO()
-                        image.save(buffer, format=mime_type.split("/")[1])
-                        base64str = base64.b64encode(buffer.getvalue()).decode("utf-8")
-                        content.append(ImageContentBlock(type="image", base64=base64str, mime_type=mime_type))
-
-        return chat.invoke([HumanMessage(content_blocks=content)]).text
+        return results
     
+    def load_content():
+        pass
+        
 
 def _create_kb(name: str):
     import frappe
