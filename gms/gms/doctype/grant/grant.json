@@ -14,8 +14,7 @@
   "active",
   "approval_identifier",
   "approved_amount",
-  "lead_organization",
-  "dpr"
+  "lead_organization"
  ],
  "fields": [
   {
@@ -80,17 +79,12 @@
    "fieldtype": "Link",
    "label": "Lead Organization",
    "options": "Grant Partner"
-  },
-  {
-   "fieldname": "dpr",
-   "fieldtype": "Attach",
-   "label": "DPR"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-20 22:52:49.760196",
+ "modified": "2025-12-21 04:44:54.447484",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant",
