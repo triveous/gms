@@ -9,5 +9,4 @@ from frappe.model.document import Document
 class AIConversation(Document):
     
     def set_history(self, messages: str):
-        print(f"Settign history for {self.name}")
         self.messages = messages

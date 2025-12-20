@@ -11,7 +11,7 @@ from pydantic_core import to_jsonable_python
 from werkzeug.wrappers import Response
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def run():
     if not frappe.request.data:
         frappe.throw("Missing details to initiate a chat")
@@ -63,3 +63,15 @@ def save_agent_run(converstion: AIConversation, run: AgentRun):
     converstion.set_history(messages_json)
     converstion.save()
     frappe.db.commit()
+
+
+@frappe.whitelist()
+def history():
+    conversation_id = frappe.form_dict.get("conversation_id")
+    conversation:AIConversation = frappe.get_doc("AI Conversation",conversation_id)
+    if conversation.messages is not None:
+        message_history = ModelMessagesTypeAdapter.validate_json(conversation.messages)
+        history = VercelAIAdapter.dump_messages(message_history)
+        return to_jsonable_python(history)
+        
+    return []
