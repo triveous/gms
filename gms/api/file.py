@@ -30,10 +30,13 @@ def ingest_file_to_kb_if_needed(doc: File):
     if doc.file_type != "PDF":
         return False
 
-    ingest_to_kb(file_id=doc.name)
+    frappe.enqueue(
+        "gms.api.file.ingest_to_kb", file_id=doc.name, job_id=doc.name, at_front=True
+    )
 
 
 def ingest_to_kb(file_id):
+    frappe.log(f"Ingesting file {file_id}")
     doc = frappe.get_doc("File", file_id)
 
     doc_meta = {"file_id": file_id}
@@ -65,6 +68,7 @@ def ingest_to_kb(file_id):
         buf = BytesIO(open(full_path, "rb").read())
         kb = KnowledgeBase(root_path=root_path)
         kb.ingest(buf, doc.file_name, doc_meta=doc_meta)
+        frappe.log("Ingested")
 
 
 def remove_document_if_needed(doc: File):
@@ -74,11 +78,18 @@ def remove_document_if_needed(doc: File):
         or doc.attached_to_doctype is None
     ):
         return
-    remove_ingested_document(file_id=doc.name)
+
+    frappe.enqueue(
+        "gms.api.file.remove_ingested_document",
+        queue="long",
+        file_id=doc.name,
+        job_id=f"remove_ingested-{doc.name}",
+        at_front=True,
+    )
 
 
 def remove_ingested_document(file_id: str):
-    doc = frappe.get_doc("File", file_id)
+    frappe.log(f"Removing ingested file {file_id}")
     kb = KnowledgeBase()
-    kb.remove(f'file_id = "{doc.name}"')
-    print(f"Remove doc with file id {doc.name}")
+    kb.remove(f'file_id == "{file_id}"')
+    frappe.log(f"Remove doc with file id {file_id}")

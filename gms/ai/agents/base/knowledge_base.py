@@ -1,4 +1,5 @@
 import json
+import frappe
 import os
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -178,7 +179,7 @@ class DoclingImageUploaderFrappe(DoclingImageUploader):
             }
         ).save(ignore_permissions=True)
 
-        print(f"File url {file.file_url}")
+        frappe.log(f"File url {file.file_url}")
 
         return ImageRef(
             mimetype=image_ref.mimetype,
@@ -224,13 +225,13 @@ class DoclingCustomLoader(BaseLoader):
 
     def lazy_load(self):
         do_stream = self.get_stream()
-        print("Document stream loaded")
+        frappe.log("Document stream loaded")
 
         result = self._transform(do_stream)
-        print("Document transformed")
+        frappe.log("Document transformed")
 
         chunks = self._chunking(result)
-        print("Chunking done")
+        frappe.log("Chunking done")
 
         return [
             self._chunk_to_document(chunk, result.document) for chunk in list(chunks)
@@ -328,7 +329,7 @@ class DoclingCustomLoader(BaseLoader):
 
         if self.option.image_uploader is not None:
             self.option.image_uploader.run(result.document)
-            print("Images uploaded")
+            frappe.log("Images uploaded")
         return result
 
     def _chunking(self, result: ConversionResult) -> list[BaseChunk]:
