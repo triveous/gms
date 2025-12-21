@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-21 15:30:17.899473",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "info_section",
+  "file",
+  "processing_status",
+  "processing_attempts",
+  "processing_last_attempted_at",
+  "metadata",
+  "error_log",
+  "failure_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "info_section",
+   "fieldtype": "Section Break",
+   "label": "Info"
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "File",
+   "options": "File",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "metadata",
+   "fieldtype": "JSON",
+   "label": "Metadata"
+  },
+  {
+   "fieldname": "error_log",
+   "fieldtype": "Link",
+   "label": "Error Log",
+   "options": "Error Log"
+  },
+  {
+   "default": "0",
+   "fieldname": "processing_attempts",
+   "fieldtype": "Int",
+   "label": "Processing Attempts",
+   "reqd": 1
+  },
+  {
+   "default": "Created",
+   "fieldname": "processing_status",
+   "fieldtype": "Select",
+   "label": "Processing Status",
+   "options": "Created\nQueued\nSuccess\nFailed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "failure_reason",
+   "fieldtype": "Data",
+   "label": "Failure Reason"
+  },
+  {
+   "fieldname": "processing_last_attempted_at",
+   "fieldtype": "Datetime",
+   "label": "Processing Last Attempted At"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-21 17:46:55.777349",
+ "modified_by": "Administrator",
+ "module": "AI",
+ "name": "AI Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

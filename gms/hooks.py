@@ -140,12 +140,13 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # Hook on document methods and events
 
 doc_events = {
-    "Grant": {
-        "on_update": ["gms.api.grant2.on_update"],
-    },
     "File": {
-        "on_update": ["gms.api.file.on_file_update"],
-        "after_delete": ["gms.api.file.on_file_deleted"],
+        "on_update": ["gms.api.file.on_update"],
+        "after_delete": ["gms.api.file.on_after_delete"],
+    },
+    "AI Document": {
+        "on_update": ["gms.api.ai_document.on_update"],
+        "after_delete": ["gms.api.ai_document.after_delete"],
     },
 }
 
@@ -196,7 +197,7 @@ doc_events = {
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-# ignore_links_on_delete = ["Communication", "ToDo"]
+ignore_links_on_delete = ["AI Document"]
 
 # Request Events
 # ----------------

@@ -1,5 +1,4 @@
 import json
-import frappe
 import os
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -388,7 +387,6 @@ class KnowledgeBase:
             builtin_function=BM25BuiltInFunction(),
             vector_field=["dense", "sparse"],
             enable_dynamic_field=True,
-            consistency_level="Strong",
             connection_args={"uri": uri},
             index_params=[dense_index_param, sparse_index_param],
             drop_old=drop_old,
@@ -415,17 +413,21 @@ class KnowledgeBase:
         documents = list(loader.lazy_load())
         self.ingest_store.add_documents(documents)
 
-    def remove(self, expr):
-        self.ingest_store.delete(expr=expr)
-        pass
+    def remove(self, expr, filter_params={}):
+        return self.ingest_store.delete(expr=expr, filter_params=filter_params)
 
     def retrieve_raw(
-        self, query: str, k=20, rrf_ranker_param: (float, float) = (0.7, 0.3)
+        self,
+        query: str,
+        k=20,
+        rrf_ranker_param: (float, float) = (0.7, 0.3),
+        expr: str = None,
     ):
         results = self.query_store.similarity_search(
             query,
             k=k,
             ranker_type="rrf",
+            expr=expr,
             # Check params: https://milvus.io/docs/multi-vector-search.md
             ranker_params={"weights": list(rrf_ranker_param)},
         )
