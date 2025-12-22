@@ -139,13 +139,16 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+    "File": {
+        "on_update": ["gms.api.file.on_update"],
+        "after_delete": ["gms.api.file.on_after_delete"],
+    },
+    "AI Document": {
+        "on_update": ["gms.api.ai_document.on_update"],
+        "after_delete": ["gms.api.ai_document.after_delete"],
+    },
+}
 
 # Scheduled Tasks
 # ---------------
@@ -194,7 +197,7 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-# ignore_links_on_delete = ["Communication", "ToDo"]
+ignore_links_on_delete = ["AI Document"]
 
 # Request Events
 # ----------------
@@ -245,6 +248,10 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # }
 
 
-website_route_rules = [{"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}]
+website_route_rules = [
+    {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}
+]
 
-override_whitelisted_methods = {"gms.api.get_grants_with_related": "gms.api.grants.get_grants_with_related"}
+override_whitelisted_methods = {
+    "gms.api.get_grants_with_related": "gms.api.grants.get_grants_with_related"
+}

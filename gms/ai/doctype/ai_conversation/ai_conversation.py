@@ -2,8 +2,11 @@
 # For license information, please see license.txt
 
 # import frappe
+
 from frappe.model.document import Document
 
 
 class AIConversation(Document):
-	pass
+    
+    def set_history(self, messages: str):
+        self.messages = messages
