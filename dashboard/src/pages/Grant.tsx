@@ -8,6 +8,7 @@ import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 import OrgMembers, { type Partner, type Contributor } from '@/components/OrgMembers';
+import EmptyState from '@/components/EmptyState';
 import { useFrappeGetCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent } from '@/utils/formatters';
@@ -83,11 +84,11 @@ export default function Grant() {
     const effectiveSelectedPeriod = useMemo(() => findLatestQuarter(selectedPeriod), [selectedPeriod, grantData]);
     const effectiveComparisonQuarter = useMemo(() => findLatestQuarter(comparisonQuarter), [comparisonQuarter, grantData]);
 
-    const { data: projectsRes, error: projectError, isLoading: projectLoading, mutate } = useFrappeGetCall(
+    const { data: projectsRes, isLoading: projectsLoading, mutate } = useFrappeGetCall(
         'gms.api.projects.get_grant_projects_by_quarter',
         { grant_id: id, quarter_value: effectiveSelectedPeriod }
     );
-    console.log('DATA ----> ',projectsRes)
+    console.log('DATA ---> ',projectsRes)
 
     // API → UI formatted grants
     const formattedGrant = useMemo<GrantUI>(() => {
@@ -113,6 +114,12 @@ export default function Grant() {
     useEffect(() => {
         setGrantData(formattedGrant);
     }, [formattedGrant]);
+
+    useEffect(() => {
+    if (grantData.quartersList && grantData.quartersList.length > 0 && grantData.quartersList[0].items && grantData.quartersList[0].items.length > 0) {
+        setSelectedPeriod(grantData.quartersList[0].items[0].value);
+    }
+    },[grantData])
 
 
     useEffect(() => {
@@ -376,143 +383,151 @@ export default function Grant() {
             {/* Separator */}
             <div className="h-px bg-border" />
 
-            {/* Controls Row */}
-            <DashbaordFilterComponent 
-                quartersList={grantData.quartersList} 
-                selectedPeriod={selectedPeriod} 
-                setSelectedPeriod={setSelectedPeriod}
-                comparisonQuarter={comparisonQuarter}
-                setComparisonQuarter={setComparisonQuarter}
-            />
 
-            {/* Projects Section */}
-            <SectionWrapper 
-                title="Projects"
-                className="mt-8"
-                contentClassName="space-y-4"
-            >
-                {projectsData.map((project) => (
-                    <ProjectCard
-                        key={project.id}
-                        title={project.title}
-                        id={project.id}
-                        projectLead={project.projectLead}
-                        activeSince={project.activeSince}
-                        lastUpdated={project.lastUpdated}
-                        metrics={project.metrics}
-                        budgetSpent={project.budgetSpent}
-                        progress={project.progress}
-                        comparisonData={comparisonRes?.message?.find((item: any) => item.project === project.id)}
+
+            {/* Conditional rendering based on projects data */}
+            {projectsData.length === 0 ? (
+                <EmptyState />
+            ) : (
+                <>
+                    {/* Controls Row */}
+                    <DashbaordFilterComponent 
+                        quartersList={grantData.quartersList} 
+                        selectedPeriod={selectedPeriod} 
+                        setSelectedPeriod={setSelectedPeriod}
+                        comparisonQuarter={comparisonQuarter}
+                        setComparisonQuarter={setComparisonQuarter}
                     />
-                ))}
-            </SectionWrapper>
+                    {/* Projects Section */}
+                    <SectionWrapper 
+                        title="Projects"
+                        className="mt-8"
+                        contentClassName="space-y-4"
+                    >
+                        {projectsData.map((project) => (
+                            <ProjectCard
+                                key={project.id}
+                                title={project.title}
+                                id={project.id}
+                                projectLead={project.projectLead}
+                                activeSince={project.activeSince}
+                                lastUpdated={project.lastUpdated}
+                                metrics={project.metrics}
+                                budgetSpent={project.budgetSpent}
+                                progress={project.progress}
+                                comparisonData={comparisonRes?.message?.find((item: any) => item.project === project.id)}
+                            />
+                        ))}
+                    </SectionWrapper>
 
-            {/* Key Highlights & Lowlights */}
-            <SectionWrapper 
-                title="Key Highlights & Lowlights"
-                contentClassName="grid grid-cols-2 gap-6"
-            >
-                {/* Highlights */}
-                <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
-                    <h3>Highlights</h3>
-                    <div className="flex flex-col gap-4">
-                        <div className="flex gap-2 items-start">
-                            <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                            <p>
-                                Received positive and encouraging reviews from Technology Advisors on the System Design
-                            </p>
+                    {/* Key Highlights & Lowlights */}
+                    <SectionWrapper 
+                        title="Key Highlights & Lowlights"
+                        contentClassName="grid grid-cols-2 gap-6"
+                    >
+                        {/* Highlights */}
+                        <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
+                            <h3>Highlights</h3>
+                            <div className="flex flex-col gap-4">
+                                <div className="flex gap-2 items-start">
+                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Received positive and encouraging reviews from Technology Advisors on the System Design
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 items-start">
+                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Submitting a blue print for doing a user research / review studies at scale in India
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex gap-2 items-start">
-                            <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                            <p>
-                                Submitting a blue print for doing a user research / review studies at scale in India
-                            </p>
+
+                        {/* Lowlights */}
+                        <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
+                            <h3>Lowlights</h3>
+                            <div className="flex flex-col gap-4 ">
+                                <div className="flex gap-2 items-start">
+                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Hardware and Software compatibility has been tuning out to be the major design revision factor than we anticipated. We are going ahead with the largest API/SDK distribution as per Android Developer's distribution page
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Lowlights */}
-                <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
-                    <h3>Lowlights</h3>
-                    <div className="flex flex-col gap-4 ">
-                        <div className="flex gap-2 items-start">
-                            <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                            <p>
-                                Hardware and Software compatibility has been tuning out to be the major design revision factor than we anticipated. We are going ahead with the largest API/SDK distribution as per Android Developer's distribution page
-                            </p>
+                       
+                    </SectionWrapper>
+
+                    {/* Budget Utilisation */}
+                    <SectionWrapper 
+                        title="Budget Utilisation"
+                        contentClassName="flex flex-col gap-6"
+                    >
+                        <div className="p-6 bg-card border border-border rounded">
+                            <BudgetUtilizationChart budgetUtilization={grantData.budget_utilization}/>
                         </div>
-                    </div>
-                </div>
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-4 gap-4">
+                            {/* Forecasted */}
+                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Forecasted</div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                        {formatIndianAmount(budgetMetrics.forecasted)}
+                                    </span>
+                                    {forecastedTrend && (
+                                        <TrendingBadge change={forecastedTrend.change} isPositive={forecastedTrend.isPositive} />
+                                    ) }
+                                </div>
+                            </div>
 
-               
-            </SectionWrapper>
+                            {/* Actual Spend */}
+                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Actual Spend</div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                        {formatIndianAmount(budgetMetrics.actual)}
+                                    </span>
+                                     {spentTrend && (
+                                        <TrendingBadge change={spentTrend.change} isPositive={spentTrend.isPositive} />
+                                    )}
+                                </div>
+                            </div>
 
-            {/* Budget Utilisation */}
-            <SectionWrapper 
-                title="Budget Utilisation"
-                contentClassName="flex flex-col gap-6"
-            >
-                <div className="p-6 bg-card border border-border rounded">
-                    <BudgetUtilizationChart budgetUtilization={grantData.budget_utilization}/>
-                </div>
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-4 gap-4">
-                    {/* Forecasted */}
-                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                        <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Forecasted</div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                {formatIndianAmount(budgetMetrics.forecasted)}
-                            </span>
-                            {forecastedTrend && (
-                                <TrendingBadge change={forecastedTrend.change} isPositive={forecastedTrend.isPositive} />
-                            ) }
+                            {/* Utilisation % */}
+                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Utilisation %</div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                        {budgetMetrics.utilization}%
+                                    </span>
+                                    {utilizationTrend && (
+                                        <TrendingBadge change={utilizationTrend.change} isPositive={utilizationTrend.isPositive} />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Current year Utilised */}
+                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                <div className="text-sm text-muted-foreground">Overall year Utilised</div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                        {budgetMetrics.overallUtilization}%
+                                    </span>
+                                    {/* <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
+                                        <TrendingUp className="w-3 h-3" />
+                                        <span className="text-xs font-medium">--</span>
+                                    </span> */}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </SectionWrapper>
 
-                    {/* Actual Spend */}
-                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                        <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Actual Spend</div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                {formatIndianAmount(budgetMetrics.actual)}
-                            </span>
-                             {spentTrend && (
-                                <TrendingBadge change={spentTrend.change} isPositive={spentTrend.isPositive} />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Utilisation % */}
-                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                        <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Utilisation %</div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                {budgetMetrics.utilization}%
-                            </span>
-                            {utilizationTrend && (
-                                <TrendingBadge change={utilizationTrend.change} isPositive={utilizationTrend.isPositive} />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Current year Utilised */}
-                    <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                        <div className="text-sm text-muted-foreground">Overall year Utilised</div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                {budgetMetrics.overallUtilization}%
-                            </span>
-                            {/* <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
-                                <TrendingUp className="w-3 h-3" />
-                                <span className="text-xs font-medium">--</span>
-                            </span> */}
-                        </div>
-                    </div>
-                </div>
-            </SectionWrapper>
-
-            <OrgMembers partners={partners} contributors={contributors} />
+                    <OrgMembers partners={partners} contributors={contributors} />
+                </>
+            )}
             </>
             )}
         </DashboardLayout>

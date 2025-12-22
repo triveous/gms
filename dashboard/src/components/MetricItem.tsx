@@ -9,9 +9,9 @@ interface MetricItemProps {
 
 export function MetricItem({ label, value, change, isPositive }: MetricItemProps) {
     return (
-        <div className="flex flex-col xl:w-[117px] h-auto xl:h-[89px]  xl:px-[16px] xl:py-[12px] gap-[12px]">
+        <div className="flex flex-col xl:w-[117px] h-auto   xl:px-[16px] xl:py-[12px] gap-[12px]">
             <div className="text-neutral-500 font-inter text-base font-medium leading-6">{label}</div>
-            <div className="flex flex-col items-start gap-2 xl:flex-row xl:items-center xl:gap-4">
+            <div className="flex flex-col items-start gap-2   xl:gap-4">
                 <span className="text-[#020617] font-inter text-2xl font-semibold leading-[120%] ">
                     {value}
                 </span>

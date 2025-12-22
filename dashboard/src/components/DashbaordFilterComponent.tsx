@@ -62,11 +62,11 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
     }
   }, [secondSelectOptions, comparisonQuarter, setComparisonQuarter]);
 
-  useEffect(() => {
-    if (quartersList && quartersList.length > 0 && quartersList[0].items && quartersList[0].items.length > 0) {
-        setSelectedPeriod(quartersList[0].items[0].value);
-    }
-  },[])
+  // useEffect(() => {
+  //   if (quartersList && quartersList.length > 0 && quartersList[0].items && quartersList[0].items.length > 0) {
+  //       setSelectedPeriod(quartersList[0].items[0].value);
+  //   }
+  // },[])
 
   return (
     <div className="sticky top-16 z-40 bg-[#f8fafc] pb-3 flex items-center justify-between pt-6 mb-3">

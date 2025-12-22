@@ -170,7 +170,11 @@ export default function Project() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectResponse, projectError]);
 
-
+    useEffect(() => {
+    if (projectData && projectData.quartersList && projectData.quartersList.length > 0 && projectData.quartersList[0].items && projectData.quartersList[0].items.length > 0) {
+        setSelectedPeriod(projectData.quartersList[0].items[0].value);
+    }
+    },[projectData])
 
 
 
