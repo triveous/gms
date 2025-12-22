@@ -7,7 +7,6 @@ from pydantic import ValidationError
 from pydantic_ai import AgentRun, ModelMessagesTypeAdapter
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
-from pydantic_ai.ui.ag_ui import AGUIAdapter
 from pydantic_core import to_jsonable_python
 from werkzeug.wrappers import Response
 
@@ -60,6 +59,7 @@ def run():
 
 @frappe.whitelist()
 def run_a2ui():
+    from pydantic_ai.ui.ag_ui import AGUIAdapter
     if not frappe.request.data:
         frappe.throw("Missing details to initiate a chat")
         return
@@ -108,7 +108,7 @@ def run_a2ui():
 def save_agent_run(converstion: AIConversation, run: AgentRun):
     messages_json = to_jsonable_python(run.all_messages_json())
     converstion.set_history(messages_json)
-    converstion.save()
+    # converstion.save()
     frappe.db.commit()
 
 
@@ -125,6 +125,7 @@ def history():
 
 @frappe.whitelist()
 def history_a2ui():
+    from pydantic_ai.ui.ag_ui import AGUIAdapter
     conversation_id = frappe.form_dict.get("conversation_id")
     conversation: AIConversation = frappe.get_doc("AI Conversation", conversation_id)
     if conversation.messages is not None:
