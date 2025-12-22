@@ -6,7 +6,7 @@ from gms.ai.agents.base.knowledge_base import KnowledgeBase
 from gms.ai.doctype.ai_document.ai_document import AIDocument
 
 
-def on_update(doc: AIDocument, method):
+def after_insert(doc: AIDocument, method):
     frappe.enqueue(
         "gms.api.ai_document.index_ai_document",
         ai_document_id=doc.name,
@@ -145,10 +145,3 @@ def remove_from_index(ai_document_id: str, file_id: str):
         expr=f'ai_document_id == "{ai_document_id}" or file_id == "{file_id}"',
     )
     frappe.log("Unindexed")
-
-
-@frappe.whitelist(allow_guest=True)
-def remove_from_index2():
-    ai_document_id = frappe.form_dict.get("ai_document_id")
-    file_id = frappe.form_dict.get("file_id")
-    remove_from_index(ai_document_id=ai_document_id, file_id=file_id)

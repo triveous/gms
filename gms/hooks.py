@@ -145,7 +145,7 @@ doc_events = {
         "after_delete": ["gms.api.file.on_after_delete"],
     },
     "AI Document": {
-        "on_update": ["gms.api.ai_document.on_update"],
+        "after_insert": ["gms.api.ai_document.after_insert"],
         "after_delete": ["gms.api.ai_document.after_delete"],
     },
 }
