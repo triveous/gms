@@ -108,7 +108,7 @@ def run_a2ui():
 def save_agent_run(converstion: AIConversation, run: AgentRun):
     messages_json = to_jsonable_python(run.all_messages_json())
     converstion.set_history(messages_json)
-    # converstion.save()
+    converstion.save()
     frappe.db.commit()
 
 
