@@ -9,9 +9,20 @@ import {
 import { User, ChevronDown, ChartNoAxesCombined } from 'lucide-react';
 import ChatToggleButton from '@/components/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TopBar: React.FC = () => {
     const { isChatOpen } = useChatContext();
+    const { logout } = useAuth();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
     return (
         <div className="bg-card sticky top-0 z-40 ">
             <div className="mx-auto px-[72px] h-16 flex items-center justify-between">
@@ -36,9 +47,9 @@ const TopBar: React.FC = () => {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
-                            <DropdownMenuItem>Logout</DropdownMenuItem>
+                            {/* <DropdownMenuItem>Profile</DropdownMenuItem>
+                            <DropdownMenuItem>Settings</DropdownMenuItem> */}
+                            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     
