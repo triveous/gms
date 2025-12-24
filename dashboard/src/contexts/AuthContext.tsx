@@ -2,8 +2,7 @@
 import {
   useFrappeAuth
 } from 'frappe-react-sdk'
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { createContext, useContext } from 'react'
 
 type AuthContextType = {
   user: string | null
@@ -16,21 +15,12 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const navigate = useNavigate()
   const {
     login: frappeLogin,
     logout: frappeLogout,
     currentUser,
-    isLoading
+    isLoading,
   } = useFrappeAuth()
-
-  const [user, setUser] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isLoading) {
-      setUser(currentUser ?? null)
-    }
-  }, [currentUser, isLoading])
 
   const login = async (email: string, password: string) => {
     try {
@@ -38,8 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         username: email,
         password
       })
-      setUser(currentUser)
-      navigate('/')
+      window.location.href = '/'
     } catch {
       throw new Error('Invalid email or password')
     }
@@ -47,15 +36,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     await frappeLogout()
-    setUser(null)
     window.location.href = '/login'
   }
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        isLoggedIn: !!user,
+        user: currentUser ?? null,
+        isLoggedIn: !!currentUser,
         login,
         logout,
         loading: isLoading
