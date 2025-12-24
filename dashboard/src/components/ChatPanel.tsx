@@ -1,28 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useChatContext } from '@/contexts/ChatContext';
 import { Button } from '@/components/ui/button';
-import { X, Plus } from 'lucide-react';
+import { X, Clock, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useFrappeCreateDoc, useFrappeGetDocList, useFrappeGetCall } from 'frappe-react-sdk';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+interface Conversation {
+    name: string;
+    title: string;
+}
 
 const ChatPanel: React.FC = () => {
     const { isChatOpen, closeChat } = useChatContext();
+    const { createDoc } = useFrappeCreateDoc();
     const [input, setInput] = useState('');
+    const [currentConversaionId, setCurrentConversaionId] = useState('');
 
-    const { messages, sendMessage, status } = useChat({
+    const { messages, sendMessage, status, setMessages } = useChat({
+        id: currentConversaionId,
         transport: new DefaultChatTransport({
-            api: '/api/v2/method/gms.ai.agent.chat',
+            api: '/api/method/gms.api.conversation.run',
             headers:{
-                "X-Frappe-CSRF-Token": window.csrf_token
+                'X-Frappe-CSRF-Token': window.csrf_token
             }
         }),
     });
 
+    // const { call: fetchHistory, result: conversationHistoryData } = useFrappePostCall('gms.api.conversation.history');
+
+    const { data: conversationHistoryData, error: conversationHistoryError , isLoading } = useFrappeGetCall(
+        'gms.api.conversation.history',
+        { conversation_id: currentConversaionId }
+    );
+    console.log(conversationHistoryData)
+    // useEffect(() => {
+    //     if (currentConversaionId) {
+    //         fetchHistory({ conversation_id: currentConversaionId });
+    //     } else {
+    //          setMessages([]);
+    //     }
+    // }, [currentConversaionId, fetchHistory, setMessages]);
+
+    useEffect(() => {
+        if (conversationHistoryData?.message) {
+            const transformedMessages = conversationHistoryData.message.map((msg: { name: string; role: string; content?: string; message?: string }, index: number) => ({
+                id: msg.name || `msg-${index}`,
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                parts: [
+                    {
+                        type: 'text',
+                        text: msg.content || msg.message || ''
+                    }
+                ]
+            }));
+            
+            setMessages(transformedMessages);
+        }
+    }, [conversationHistoryData, setMessages]);
+
+
+    const { data: conversationListData } = useFrappeGetDocList<Conversation>('AI Conversation', {
+        fields: ['name', 'title'],
+        orderBy: {
+            field: 'creation',
+            order: 'desc'
+        },
+        limit: 50
+    });
+
+
+    const handleNewChat = async () => {
+        const doc = await createDoc('AI Conversation', {
+        // optional fields
+        title: 'New Conversation',
+        });
+        setCurrentConversaionId(doc.name);
+        console.log('Conversation ID:', doc.name);
+
+    };
+
+    const handleConversationClick = (conversationId: string) => {
+        setCurrentConversaionId(conversationId);
+    };
+
     const handleSend = (text: string) => {
-        if (text.trim() && status === 'ready') {
+        // if (text.trim() && status === 'ready') {
+        if (text.trim()) {
             sendMessage({ text });
             setInput('');
         }
@@ -45,18 +120,41 @@ const ChatPanel: React.FC = () => {
                         <span className="text-orange-500 font-medium">Alkam</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" className="h-8 gap-1 text-sm bg-secondary">
+                        <Button variant="ghost" size="sm" className="h-8 gap-1 text-sm bg-secondary" onClick={() => handleNewChat()}>
                             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor">
                                 <path d="M8 4v8M4 8h8" strokeWidth="2" strokeLinecap="round"/>
                             </svg>
                             New Chat
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 bg-secondary">
-                            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                                <path d="M14 8a6 6 0 11-12 0 6 6 0 0112 0z" strokeWidth="1.5"/>
-                                <path d="M8 4v4l2 2" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-secondary">
+                                    <Clock className="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[400px]">
+                                <DropdownMenuLabel className="text-muted-foreground text-sm font-normal">
+                                    Chat History
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {conversationListData && conversationListData.length > 0 ? (
+                                    conversationListData.map((conversation) => (
+                                        <DropdownMenuItem 
+                                            key={conversation.name}
+                                            className="flex items-center gap-3 py-3 px-3 cursor-pointer"
+                                            onClick={() => handleConversationClick(conversation.name)}
+                                        >
+                                            <MessageSquare className="w-5 h-5 shrink-0" />
+                                            <span className="flex-1 truncate">{conversation.title}</span>
+                                        </DropdownMenuItem>
+                                    ))
+                                ) : (
+                                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                                        No conversations yet
+                                    </div>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                             variant="ghost"
                             size="icon"
@@ -168,13 +266,13 @@ const ChatPanel: React.FC = () => {
                                     type="text"
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    disabled={status !== 'ready'}
+                                    // disabled={status !== 'ready'}
                                     placeholder="Ask me about the project"
                                     className="flex-1 text-sm text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:outline-none disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"
-                                    disabled={status !== 'ready' || !input.trim()}
+                                    // disabled={status !== 'ready' || !input.trim()}
                                     className="p-0 border-none bg-transparent cursor-pointer disabled:opacity-50"
                                 >
                                     <svg className="w-5 h-5 text-orange-500 shrink-0" viewBox="0 0 20 20" fill="none">
