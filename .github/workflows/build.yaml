@@ -48,18 +48,13 @@ jobs:
 
       - name: Delete huge unnecessary tools folder
         run: rm -rf /opt/hostedtoolcache
-        
-      - uses: actions/checkout@v4
-        with:
-          repository: frappe/frappe_docker
-          path: builds
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
           context: builds
-          file: builds/images/layered/Containerfile
+          file: docker/Containerfile
           tags: >
             ghcr.io/${{ github.repository }}:${{ github.ref_name }},
             ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
