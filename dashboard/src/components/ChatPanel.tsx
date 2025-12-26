@@ -5,8 +5,7 @@ import { X, Clock, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useFrappeCreateDoc, useFrappeGetDocList, useFrappeGetCall } from 'frappe-react-sdk';
 import {
     DropdownMenu,
@@ -110,12 +109,10 @@ const ChatPanel: React.FC = () => {
         // First message: store it and wait
         setInitialMessage(text);
         setInput('');
-        setIsCreatingConversation(true);
+
 
         // Case 2: No conversation → create it first
-        await initializeConversation().then(() => {
-            setIsCreatingConversation(false);
-        })
+        await initializeConversation()
     };
 
     useEffect(() => {
@@ -128,12 +125,22 @@ const ChatPanel: React.FC = () => {
 
 
     return (
-        <div
-            className={cn(
-                'fixed top-0 right-0 h-screen min-w-[447px] bg-background   transition-transform duration-300 ease-in-out z-50',
-                isChatOpen ? 'translate-x-0' : 'translate-x-full'
+        <>
+            {/* Backdrop - only visible on screens below 1280px */}
+            {isChatOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 xl:hidden"
+                    onClick={closeChat}
+                />
             )}
-        >
+            
+            {/* Chat Panel */}
+            <div
+                className={cn(
+                    'fixed top-0 right-0 h-screen min-w-[447px] bg-background transition-transform duration-300 ease-in-out z-50',
+                    isChatOpen ? 'translate-x-0' : 'translate-x-full'
+                )}
+            >
             <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3  h-16">
@@ -210,7 +217,7 @@ const ChatPanel: React.FC = () => {
                     <div className="flex-1 flex flex-col w-[399px] overflow-y-auto bg-muted rounded-md p-4">
                         {messages.length === 0 ? (
                             <div className="flex flex-col items-end text-right mt-auto mb-2">
-                                {/* <h3 className="text-sm font-semibold text-foreground mb-2">Quick suggestion to ask.</h3>
+                                <h3 className="text-sm font-semibold text-foreground mb-2">Quick suggestion to ask.</h3>
                                 <p className="text-xs text-muted-foreground mb-4">You can pick can from below or ask anything in chat.</p>
 
                                 <div className="w-full space-y-2">
@@ -238,7 +245,7 @@ const ChatPanel: React.FC = () => {
                                     >
                                         Summarise Goals and Impact of the CoE
                                     </Button>
-                                </div> */}
+                                </div>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-6">
@@ -259,12 +266,10 @@ const ChatPanel: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="text-sm text-foreground leading-relaxed w-full">
-                                                <div className="prose prose-sm max-w-none dark:prose-invert">
+                                                <div className="prose prose-sm max-w-none dark:prose-invert prose-table:border-collapse prose-table:w-full prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-2 prose-th:text-left prose-td:border prose-td:border-border prose-td:p-2">
                                                     {message.parts.map((part, index) =>
                                                         part.type === 'text' ? (
-                                                            <ReactMarkdown key={index} remarkPlugins={[remarkGfm]}>
-                                                                {part.text}
-                                                            </ReactMarkdown>
+                                                            <MarkdownRenderer key={index} content={part.text} />
                                                         ) : null,
                                                     )}
                                                 </div>
@@ -319,6 +324,7 @@ const ChatPanel: React.FC = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

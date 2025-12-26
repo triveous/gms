@@ -134,7 +134,8 @@ export default function Project() {
 
     const { data: projectsRes, mutate } = useFrappeGetCall<{ message: { project: ProjectMilestoneData } }>(
         'gms.api.project.get_grant_projects_by_quarter',
-        { project_id: id, quarter_value: effectiveSelectedPeriod }
+        { project_id: id, quarter_value: effectiveSelectedPeriod },
+        effectiveSelectedPeriod ? undefined : null
     );
 
     const { data: comparisonRes } = useFrappeGetCall(

@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode, useEffect, useState } from 'react';
 import { useChatContext } from '@/contexts/ChatContext';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,16 @@ const DashboardWrapper: React.FC<DashboardWrapperProps> = ({
     containerClassName 
 }) => {
     const { isChatOpen } = useChatContext();
+    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1280);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsLargeScreen(window.innerWidth >= 1280);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     return (
         <div 
@@ -22,9 +32,9 @@ const DashboardWrapper: React.FC<DashboardWrapperProps> = ({
                 className
             )}
             style={{
-                maxWidth: isChatOpen ? 'calc(100vw - 464px)' : '100%',
+                maxWidth: (isChatOpen && isLargeScreen) ? 'calc(100vw - 464px)' : '100%',
                 transition: 'max-width 300ms ease-in-out',
-                borderRadius: isChatOpen ? '12px' : '0'
+                borderRadius: (isChatOpen && isLargeScreen) ? '12px' : '0'
             }}
         >
             <div 

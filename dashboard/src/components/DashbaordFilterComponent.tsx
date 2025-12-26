@@ -101,7 +101,7 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
         </Select>
 
         {/* ---------------- SECOND SELECT ---------------- */}
-        <Select disabled={!selectedPeriod} onValueChange={setComparisonQuarter} value={comparisonQuarter}>
+        <Select disabled={!selectedPeriod || secondSelectOptions.length === 0} onValueChange={setComparisonQuarter} value={comparisonQuarter}>
           <SelectTrigger className="h-10 bg-card">
             <SelectValue placeholder="Compare to" />
           </SelectTrigger>

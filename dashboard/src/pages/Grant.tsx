@@ -86,7 +86,8 @@ export default function Grant() {
 
     const { data: projectsRes, isLoading: projectsLoading, mutate } = useFrappeGetCall(
         'gms.api.projects.get_grant_projects_by_quarter',
-        { grant_id: id, quarter_value: effectiveSelectedPeriod }
+        { grant_id: id, quarter_value: effectiveSelectedPeriod },
+        effectiveSelectedPeriod ? undefined : null
     );
     console.log('DATA ---> ',projectsRes)
 
@@ -311,7 +312,7 @@ export default function Grant() {
             {/* Breadcrumb */}
             <div className="mb-6">
                 <button 
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/dashboard')}
                     className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
                     Home <span>›</span>
@@ -386,7 +387,7 @@ export default function Grant() {
 
 
             {/* Conditional rendering based on projects data */}
-            {projectsData.length === 0 ? (
+            {Number(grantData.totalProjects) === 0 ? (
                 <EmptyState />
             ) : (
                 <>
