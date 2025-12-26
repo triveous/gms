@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         username: email,
         password
       })
-      window.location.href = '/'
+      window.location.href = '/dashboard'
     } catch {
       throw new Error('Invalid email or password')
     }

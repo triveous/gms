@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -14,6 +14,16 @@ import { useAuth } from '@/contexts/AuthContext';
 const TopBar: React.FC = () => {
     const { isChatOpen } = useChatContext();
     const { logout } = useAuth();
+    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1280);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsLargeScreen(window.innerWidth >= 1280);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -36,7 +46,7 @@ const TopBar: React.FC = () => {
                 </div>
 
                 {/* Right side buttons */}
-                <div className="flex items-center gap-6" style={{ marginRight: isChatOpen ? '380px' : '0', transition: 'margin-right 300ms ease-in-out' }}>
+                <div className="flex items-center gap-6" style={{ marginRight: (isChatOpen && isLargeScreen) ? '380px' : '0', transition: 'margin-right 300ms ease-in-out' }}>
                     {/* User Dropdown Menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

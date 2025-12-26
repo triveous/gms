@@ -102,10 +102,14 @@ def get_single_grant_info(grant_id):
 	# ----------- Fetch Projects ----------
 	projects = frappe.get_all(
 		"Grant Project",
-		fields=["name"],
+		fields=["name", "grant"],
 		filters={"grant": grant_id},
 	)
 	project_ids = [p["name"] for p in projects]
+ 
+	project_count = {}
+	for p in projects:
+		project_count[p["grant"]] = project_count.get(p["grant"], 0) + 1
 
 	# ----------- Fetch Milestones ----------
 	milestones = []
@@ -285,7 +289,7 @@ def get_single_grant_info(grant_id):
 	# Convert quarterStartDate → string format
 	for item in budget_utilization_list:
 		item["quarterStartDate"] = item["quarterStartDate"].strftime("%Y-%m-%d")
-
+	grant_data["total_projects"] = project_count.get(grant_id, 0)
 	# Assign final result
 	grant_data["budget_utilization"] = budget_utilization_list
 

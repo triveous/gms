@@ -107,7 +107,7 @@ export function ProjectCard({
                     <h3 className="text-[#020617] font-sans text-[20px] font-semibold leading-[120%] tracking-[-0.4px]">
                         {title}
                     </h3>
-                    <div className="flex items-center gap-4 text-[#334155] font-sans text-base font-normal leading-[150%]">
+                    <div className="flex flex-wrap items-center gap-4 text-[#334155] font-sans text-base font-normal leading-[150%]">
                         <span>Project Lead: {projectLead}</span>
                         <span className="bg-[#E2E8F0] w-[1px] h-[24px]"></span>
                         <span>Active Since: {activeSince}</span>
@@ -133,28 +133,28 @@ export function ProjectCard({
             </div>
 
             {/* Project Metrics */}
-            <div className="flex gap-4 items-end">
+            <div className="flex flex-wrap gap-4 items-stretch">
                 <MetricItem
                     label="TRL"
                     value={tblDisplay.value}
                     change={tblDisplay.change}
                     isPositive={tblDisplay.isPositive}
                 />
-                <div className="w-px h-22 bg-border" />
+                <div className="w-px self-stretch bg-border" />
                 <MetricItem
                     label="MRL"
                     value={mrlDisplay.value}
                     change={mrlDisplay.change}
                     isPositive={mrlDisplay.isPositive}
                 />
-                <div className="w-px h-22 bg-border" />
+                <div className="w-px self-stretch bg-border" />
                 <MetricItem
                     label="CRL"
                     value={crlDisplay.value}
                     change={crlDisplay.change}
                     isPositive={crlDisplay.isPositive}
                 />
-                <div className="w-px h-22 bg-border" />
+                <div className="w-px self-stretch bg-border" />
                 <MetricItem
                     label="SIRL"
                     value={sirlDisplay.value}
@@ -162,8 +162,8 @@ export function ProjectCard({
                     isPositive={sirlDisplay.isPositive}
                 />
 
-                <div className="flex-1" />
-
+                <div className="flex-1 block min-w-[80px]" />
+                
                 {/* Q2 Budget Spent */}
                 <div className="flex flex-col gap-4 px-[16px] py-[12px] items-end">
                     <div className="text-neutral-500 text-right font-inter text-base font-medium leading-6">Q2 Budget Spent</div>

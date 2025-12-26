@@ -164,7 +164,7 @@ export default function Grants() {
                                     {grant.name}
                                 </h2>
 
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                     <span>Lead Institute: {grant.leadInstitute}</span>
                                     <span className="text-border">|</span>
                                     <span>Timeline: {grant.timeline}</span>
