@@ -110,12 +110,10 @@ const ChatPanel: React.FC = () => {
         // First message: store it and wait
         setInitialMessage(text);
         setInput('');
-        setIsCreatingConversation(true);
+        // setIsCreatingConversation(true);
 
         // Case 2: No conversation → create it first
-        await initializeConversation().then(() => {
-            setIsCreatingConversation(false);
-        })
+        await initializeConversation()
     };
 
     useEffect(() => {
