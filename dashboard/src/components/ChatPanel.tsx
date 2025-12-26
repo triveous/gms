@@ -110,7 +110,6 @@ const ChatPanel: React.FC = () => {
         setInitialMessage(text);
         setInput('');
 
-
         // Case 2: No conversation → create it first
         await initializeConversation()
     };
