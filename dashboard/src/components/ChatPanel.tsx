@@ -27,6 +27,9 @@ const ChatPanel: React.FC = () => {
     const { createDoc } = useFrappeCreateDoc();
     const [input, setInput] = useState('');
     const [currentConversaionId, setCurrentConversaionId] = useState('');
+    const [initialMessage, setInitialMessage] = useState<string | null>(null);
+    const [isHistoryRequested, setIsHistoryRequested] = useState(false);
+
 
     const { messages, sendMessage, status, setMessages } = useChat({
         id: currentConversaionId,
@@ -38,37 +41,28 @@ const ChatPanel: React.FC = () => {
         }),
     });
 
-    // const { call: fetchHistory, result: conversationHistoryData } = useFrappePostCall('gms.api.conversation.history');
+    console.log('MESSAGES -----> ', messages)
 
-    const { data: conversationHistoryData, error: conversationHistoryError , isLoading } = useFrappeGetCall(
+    const { data: conversationHistoryData } = useFrappeGetCall(
         'gms.api.conversation.history',
-        { conversation_id: currentConversaionId }
+        { conversation_id: currentConversaionId },
+        (currentConversaionId && isHistoryRequested) ? undefined : null
     );
     console.log(conversationHistoryData)
-    // useEffect(() => {
-    //     if (currentConversaionId) {
-    //         fetchHistory({ conversation_id: currentConversaionId });
-    //     } else {
-    //          setMessages([]);
-    //     }
-    // }, [currentConversaionId, fetchHistory, setMessages]);
+
 
     useEffect(() => {
-        if (conversationHistoryData?.message) {
-            const transformedMessages = conversationHistoryData.message.map((msg: { name: string; role: string; content?: string; message?: string }, index: number) => ({
-                id: msg.name || `msg-${index}`,
-                role: msg.role === 'user' ? 'user' : 'assistant',
-                parts: [
-                    {
-                        type: 'text',
-                        text: msg.content || msg.message || ''
-                    }
-                ]
+        if (conversationHistoryData?.message && !initialMessage) {
+            const transformedMessages = conversationHistoryData.message.map((msg: any) => ({
+                id: msg.id,
+                role: msg.role,
+                parts: msg.parts
             }));
             
             setMessages(transformedMessages);
+            setIsHistoryRequested(false);
         }
-    }, [conversationHistoryData, setMessages]);
+    }, [conversationHistoryData, setMessages, initialMessage]);
 
 
     const { data: conversationListData } = useFrappeGetDocList<Conversation>('AI Conversation', {
@@ -80,28 +74,58 @@ const ChatPanel: React.FC = () => {
         limit: 50
     });
 
+    
 
-    const handleNewChat = async () => {
+    const initializeConversation = async () => {
         const doc = await createDoc('AI Conversation', {
-        // optional fields
-        title: 'New Conversation',
+            title: 'New Conversation',
         });
         setCurrentConversaionId(doc.name);
-        console.log('Conversation ID:', doc.name);
+        setIsHistoryRequested(false);
+        console.log('Created new conversation:', doc.name);
+        return doc.name;
+    };
 
+    const handleNewChat = async () => {
+        if (messages.length === 0) return;
+        await initializeConversation();
     };
 
     const handleConversationClick = (conversationId: string) => {
         setCurrentConversaionId(conversationId);
+        setIsHistoryRequested(true);
     };
 
-    const handleSend = (text: string) => {
-        // if (text.trim() && status === 'ready') {
-        if (text.trim()) {
+
+    const handleSend = async (text: string) => {
+        if (!text.trim()) return;
+
+        // Case 1: Conversation already exists → send immediately
+        if (currentConversaionId) {
             sendMessage({ text });
             setInput('');
+            return;
         }
+
+        // First message: store it and wait
+        setInitialMessage(text);
+        setInput('');
+        setIsCreatingConversation(true);
+
+        // Case 2: No conversation → create it first
+        await initializeConversation().then(() => {
+            setIsCreatingConversation(false);
+        })
     };
+
+    useEffect(() => {
+        if (currentConversaionId && initialMessage) {
+            console.log('Sending initial message:', currentConversaionId);
+            sendMessage({ text: initialMessage });
+            setInitialMessage(null);
+        }
+    }, [currentConversaionId]);
+
 
     return (
         <div
@@ -120,7 +144,7 @@ const ChatPanel: React.FC = () => {
                         <span className="text-orange-500 font-medium">Alkam</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" className="h-8 gap-1 text-sm bg-secondary" onClick={() => handleNewChat()}>
+                        <Button variant="outline" size="sm" className="h-8 gap-2 text-sm" onClick={() => handleNewChat()}>
                             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor">
                                 <path d="M8 4v8M4 8h8" strokeWidth="2" strokeLinecap="round"/>
                             </svg>
@@ -128,7 +152,7 @@ const ChatPanel: React.FC = () => {
                         </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 bg-secondary">
+                                <Button variant="outline" size="icon" className="h-8 w-8">
                                     <Clock className="w-4 h-4" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -156,10 +180,10 @@ const ChatPanel: React.FC = () => {
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="icon"
                             onClick={closeChat}
-                            className="h-8 w-8 bg-secondary"
+                            className="h-8 w-8 "
                         >
                             <X className="w-4 h-4" />
                         </Button>
@@ -169,7 +193,7 @@ const ChatPanel: React.FC = () => {
                 {/* Main Content Container */}
                 <div className="flex flex-col gap-4 p-6 flex-1 overflow-hidden">
                     {/* Reference Section */}
-                    <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                         <span className="text-sm">Ref:</span>
                             <Button
                                 variant="outline"
@@ -180,7 +204,7 @@ const ChatPanel: React.FC = () => {
                                 </svg>
                                 AICoE Health & AI
                             </Button>
-                    </div>
+                    </div> */}
 
                     {/* Chat Content Area */}
                     <div className="flex-1 flex flex-col w-[399px] overflow-y-auto bg-muted rounded-md p-4">
@@ -218,6 +242,7 @@ const ChatPanel: React.FC = () => {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-6">
+                                
                                 {messages.map(message => (
                                     <div
                                         key={message.id}
@@ -247,6 +272,15 @@ const ChatPanel: React.FC = () => {
                                         )}
                                     </div>
                                 ))}
+                                {status === 'submitted' && (
+                                    <div className="flex flex-col w-full items-start">
+                                        <div className="flex gap-1 items-center p-2">
+                                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -266,13 +300,13 @@ const ChatPanel: React.FC = () => {
                                     type="text"
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
-                                    // disabled={status !== 'ready'}
+                                    disabled={status !== 'ready' || initialMessage !== null}
                                     placeholder="Ask me about the project"
                                     className="flex-1 text-sm text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:outline-none disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"
-                                    // disabled={status !== 'ready' || !input.trim()}
+                                    disabled={status !== 'ready' || initialMessage !== null || !input.trim()}
                                     className="p-0 border-none bg-transparent cursor-pointer disabled:opacity-50"
                                 >
                                     <svg className="w-5 h-5 text-orange-500 shrink-0" viewBox="0 0 20 20" fill="none">
