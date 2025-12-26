@@ -6,10 +6,11 @@ from gms.ai.agents.base.knowledge_base import KnowledgeBase
 from gms.ai.doctype.ai_document.ai_document import AIDocument
 
 
-def on_update(doc: AIDocument, method):
+def after_insert(doc: AIDocument, method):
     frappe.enqueue(
         "gms.api.ai_document.index_ai_document",
         ai_document_id=doc.name,
+        forced=False,
         queue="long",
         job_id=doc.name,
         at_front=True,
@@ -29,7 +30,26 @@ def after_delete(doc: AIDocument, method):
     frappe.log(f"Queueed ai document unindexing for {doc.name}")
 
 
-def index_ai_document(ai_document_id: str):
+@frappe.whitelist()
+def retry_indexing():
+    ai_document_id = frappe.form_dict.get("ai_document_id")
+    ai_document = frappe.get_doc("AI Document", ai_document_id)
+    if ai_document.processing_status == "Success":
+        frappe.log("Document already processed")
+        return
+
+    # Enqueue indexing
+    frappe.enqueue(
+        "gms.api.ai_document.index_ai_document",
+        ai_document_id=ai_document_id,
+        queue="long",
+        job_id=ai_document,
+        forced=True,
+        at_front=True,
+    )
+
+
+def index_ai_document(ai_document_id: str, forced: bool):
     """
     Index the AI Document into the Knowledgebase and udpate the indexing status
     """
@@ -37,6 +57,10 @@ def index_ai_document(ai_document_id: str):
     ai_document = frappe.get_doc("AI Document", ai_document_id)
     if ai_document.processing_status == "Success":
         frappe.log("Document already processed")
+        return
+
+    if ai_document.processing_attempts >= 20 and not forced:
+        frappe.log("Max Retry Attempted")
         return
 
     file_id = ai_document.file
@@ -55,16 +79,25 @@ def index_ai_document(ai_document_id: str):
 
         if file.attached_to_doctype == "Grant Project":
             project_id = file.attached_to_name
-            grant_id = frappe.get_value("Grant Project", project_id, fieldname="grant")
+            project = frappe.get_doc("Grant Project", project_id)
+            grant_id = project.grant
+            if not grant_id:
+                return False
+
+            doc_meta["grant_id"] = grant_id
+            doc_meta["project_id"] = project_id
 
         if file.attached_to_doctype == "Grant Project Milestone":
             milestone_id = file.attached_to_name
-            project_id = frappe.get_doc(
-                "Grant Project Milestone", milestone_id, fieldname="project"
-            )
+            project_milestone = frappe.get_doc("Grant Project Milestone", milestone_id)
+            project_id = project_milestone.project
             if not project_id:
-                return
-            grant_id = frappe.get_value("Grant Project", project_id, fieldname="grant")
+                return False
+
+            project = frappe.get_doc("Grant Project", project_id)
+            grant_id = project.grant
+            if not grant_id:
+                return False
             doc_meta["grant_id"] = grant_id
             doc_meta["project_id"] = project_id
             doc_meta["project_milestone_id"] = milestone_id
@@ -112,10 +145,3 @@ def remove_from_index(ai_document_id: str, file_id: str):
         expr=f'ai_document_id == "{ai_document_id}" or file_id == "{file_id}"',
     )
     frappe.log("Unindexed")
-
-
-@frappe.whitelist(allow_guest=True)
-def remove_from_index2():
-    ai_document_id = frappe.form_dict.get("ai_document_id")
-    file_id = frappe.form_dict.get("file_id")
-    remove_from_index(ai_document_id=ai_document_id, file_id=file_id)

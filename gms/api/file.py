@@ -29,8 +29,10 @@ def create_ai_document(doc: File):
     if doc.file_type != "PDF":
         return False
 
-    ai_document = frappe.get_doc({"doctype": "AI Document", "file": doc.name})
-    ai_document.insert(ignore_permissions=True)
+    if not frappe.db.exists("AI Document", {"file": doc.name}):
+        ai_document = frappe.get_doc({"doctype": "AI Document", "file": doc.name})
+        ai_document.insert(ignore_permissions=True)
+        frappe.log("AI Document added")
 
 
 def delete_ai_document(doc: File):
