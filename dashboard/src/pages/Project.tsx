@@ -272,8 +272,8 @@ export default function Project() {
             {/* Breadcrumb */}
             <div className="mb-6 flex items-center gap-2">
                 <div 
-                    
-                    className="text-sm text-muted-foreground  flex items-center gap-1"
+                    onClick={() => navigate('/dashboard')}
+                    className="cursor-pointer text-sm text-muted-foreground  flex items-center gap-1"
                 >
                     Home <span>›</span>
                 </div>

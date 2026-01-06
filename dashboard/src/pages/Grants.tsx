@@ -128,7 +128,7 @@ export default function Grants() {
     }, [formattedGrants]);
 
     const handleGrantClick = (grantId: string) => {
-        navigate(`/grant/${grantId}`);
+        navigate(`/dashboard/grant/${grantId}`);
     };
 
     return (

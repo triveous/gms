@@ -62,7 +62,7 @@ export function ProjectCard({
     const navigate = useNavigate();
     
     const handleProjectClick = (projectId: string) => {
-        navigate(`/project/${projectId}`);
+        navigate(`/dashboard/project/${projectId}`);
     };
 
     const getMetricDisplay = (key: 'tbl' | 'mrl' | 'crl' | 'sirl', name: keyof ComparisonResult['metrics']) => {
