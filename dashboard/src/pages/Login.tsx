@@ -21,8 +21,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 relative">
-      <img src={SideImage1} alt="" className='absolute top-0 right-0 w-[370px]'/>
-      <img src={SideImage2} alt="" className='absolute bottom-0 right-0 h-[380px]'/>
+      <img src={SideImage1} alt="" className='absolute top-0 right-0 sm:w-[23vw] md:w-[25vw] lg:w-[20vw]'/>
+      <img src={SideImage2} alt="" className='absolute bottom-0 right-0 sm:w-[23vw] md:w-[30vw] lg:w-[25vw]'/>
       
       <div className="w-full max-w-xl z-10">
         {/* Logo and Title */}

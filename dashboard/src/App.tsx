@@ -9,18 +9,19 @@ import { ChatProvider } from './contexts/ChatContext'
 import { AuthProvider } from './contexts/AuthContext'
 import ChatPanel from './components/ChatPanel'
 import ProtectedRoute from './components/ProtectedRoute'
+import DesktopOnly from './components/DesktopOnly'
 
 function App() {
 	return (
 		<FrappeProvider>
-			
+			<DesktopOnly />
 				<ChatProvider>
-					<Router>
+					<Router basename="/dashboard">
 						<AuthProvider>
 						<Routes>
 							<Route path="/login" element={<Login />} />
 							<Route 
-								path="/dashboard" 
+								path="/" 
 								element={
 									<ProtectedRoute>
 										<Grants />

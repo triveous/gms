@@ -249,6 +249,10 @@ ignore_links_on_delete = ["AI Document"]
 
 
 website_route_rules = [
+    # Handle root URL
+    {"from_route": "/", "to_route": "index"},
+    
+    # Existing dashboard routing (KEEP THIS)
     {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}
 ]
 
