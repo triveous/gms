@@ -312,7 +312,7 @@ export default function Grant() {
             {/* Breadcrumb */}
             <div className="mb-6">
                 <button 
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/')}
                     className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
                     Home <span>›</span>
