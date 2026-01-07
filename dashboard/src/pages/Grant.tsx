@@ -48,7 +48,7 @@ interface Project {
 
 export default function Grant() {
     const navigate = useNavigate();
-    const { id } = useParams<{ id: string }>();
+    const { grantId } = useParams<{ grantId: string }>();
     const [grantData, setGrantData] = useState<GrantUI>({} as GrantUI);
     const [selectedPeriod, setSelectedPeriod] = useState('');
     const [comparisonQuarter, setComparisonQuarter] = useState('');
@@ -56,7 +56,7 @@ export default function Grant() {
 
     const { data, error, isLoading } = useFrappeGetCall(
         'gms.api.grant.get_single_grant_info',
-        { grant_id: id }
+        { grant_id: grantId }
     );
 
     // Helper to find latest quarter for year
@@ -86,7 +86,7 @@ export default function Grant() {
 
     const { data: projectsRes, isLoading: projectsLoading, mutate } = useFrappeGetCall(
         'gms.api.projects.get_grant_projects_by_quarter',
-        { grant_id: id, quarter_value: effectiveSelectedPeriod },
+        { grant_id: grantId, quarter_value: effectiveSelectedPeriod },
         effectiveSelectedPeriod ? undefined : null
     );
     console.log('DATA ---> ',projectsRes)
@@ -134,7 +134,7 @@ export default function Grant() {
     const { data: comparisonRes } = useFrappeGetCall(
         'gms.api.projects.compare_quarter_metrics_grant_project_spesific',
         {
-            grant_id: id,
+            grant_id: grantId,
             quarter_value: effectiveSelectedPeriod,
             compare_with: effectiveComparisonQuarter
         },
@@ -144,7 +144,7 @@ export default function Grant() {
     const { data: forecastComparisonRes } = useFrappeGetCall(
         'gms.api.projects.compare_quarter_metrics_grant_forcast',
         {
-            grant_id: id,
+            grant_id: grantId,
             quarter_value: effectiveSelectedPeriod,
             compare_with: effectiveComparisonQuarter
         },

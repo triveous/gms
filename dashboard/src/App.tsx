@@ -1,56 +1,45 @@
-import './App.css'
 import { FrappeProvider } from 'frappe-react-sdk'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Grants from './pages/Grants'
-import Grant from './pages/Grant'
-import Project from './pages/Project'
-import Login from './pages/Login'
-import { ChatProvider } from './contexts/ChatContext'
-import { AuthProvider } from './contexts/AuthContext'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
+import './App.css'
 import ChatPanel from './components/ChatPanel'
-import ProtectedRoute from './components/ProtectedRoute'
 import DesktopOnly from './components/DesktopOnly'
+import ProtectedRoute from './components/ProtectedRoute'
+import { AuthProvider } from './contexts/AuthContext'
+import { ChatProvider } from './contexts/ChatContext'
+import Grant from './pages/Grant'
+import Grants from './pages/Grants'
+import Login from './pages/Login'
+import NotFound from './pages/NotFound'
+import Project from './pages/Project'
+
+function DashboardLayout() {
+	return <ProtectedRoute>
+		<ChatProvider>
+			<Outlet />
+			<ChatPanel />
+		</ChatProvider>
+	</ProtectedRoute>
+
+}
 
 function App() {
-	return (
-		<FrappeProvider>
-			<DesktopOnly />
-				<ChatProvider>
-					<Router basename="/dashboard">
-						<AuthProvider>
-						<Routes>
-							<Route path="/login" element={<Login />} />
-							<Route 
-								path="/" 
-								element={
-									<ProtectedRoute>
-										<Grants />
-									</ProtectedRoute>
-								} 
-							/>
-							<Route 
-								path="/grant/:id" 
-								element={
-									<ProtectedRoute>
-										<Grant />
-									</ProtectedRoute>
-								} 
-							/>
-							<Route 
-								path="/project/:id" 
-								element={
-									<ProtectedRoute>
-										<Project />
-									</ProtectedRoute>
-								} 
-							/>
-						</Routes>
-						<ChatPanel />
-						</AuthProvider>
-					</Router>
-				</ChatProvider>
-		</FrappeProvider>
-	)
+	return <FrappeProvider>
+		<DesktopOnly />
+		<AuthProvider>
+			<BrowserRouter basename='dashboard'>
+				<Routes>
+					{/* Dashboard layout */}
+					<Route path="login" element={<Login />} />
+					<Route path="/" element={<DashboardLayout />}>
+						<Route index element={<Grants />} />
+						<Route path=":grantId" element={<Grant />} />
+						<Route path=":grantId/:projectId" element={<Project />} />
+					</Route>
+					<Route path="*" element={<NotFound />} />
+				</Routes>
+			</BrowserRouter>
+		</AuthProvider>
+	</FrappeProvider>
 }
 
 export default App

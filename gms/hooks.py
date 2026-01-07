@@ -1,9 +1,12 @@
 app_name = "gms"
-app_title = "Grant Management System"
+app_title = "AIKAM"
 app_publisher = "Triveous"
 app_description = "Manages your grant effectively"
+# app_icon_url = "/assets/logo_url.png"
 app_email = "tech@triveous.in"
 app_license = "mit"
+app_icon_route = "/gms"
+app_color = "purple"
 
 # Apps
 # ------------------

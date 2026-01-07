@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
   const { isLoggedIn, loading } = useAuth()
 
   if (loading) return <div>Loading...</div>
-  if (!isLoggedIn) return <Navigate to="/dashboard/login" replace />
+  if (!isLoggedIn) return <Navigate to="/login" replace />
 
   return children
 }

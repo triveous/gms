@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
+import { Navigate } from 'react-router-dom'
 import SideImage1 from '../assets/SVG.png'
 import SideImage2 from '../assets/sideimage2.png'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, isLoggedIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -18,22 +19,25 @@ export default function Login() {
       setError('Invalid email or password')
     }
   }
+  if (isLoggedIn) {
+    return <Navigate to={"/"} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 relative">
-      <img src={SideImage1} alt="" className='absolute top-0 right-0 sm:w-[23vw] md:w-[25vw] lg:w-[20vw]'/>
-      <img src={SideImage2} alt="" className='absolute bottom-0 right-0 sm:w-[23vw] md:w-[30vw] lg:w-[25vw]'/>
-      
+      <img src={SideImage1} alt="" className='absolute top-0 right-0 sm:w-[23vw] md:w-[25vw] lg:w-[20vw]' />
+      <img src={SideImage2} alt="" className='absolute bottom-0 right-0 sm:w-[23vw] md:w-[30vw] lg:w-[25vw]' />
+
       <div className="w-full max-w-xl z-10">
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <svg 
-              className="w-12 h-12 text-teal-700" 
-              fill="currentColor" 
+            <svg
+              className="w-12 h-12 text-teal-700"
+              fill="currentColor"
               viewBox="0 0 24 24"
             >
-              <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4 10h2v4h-2v-4zm4-8h2v12h-2V9zm4-6h2v18h-2V3z"/>
+              <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4 10h2v4h-2v-4zm4-8h2v12h-2V9zm4-6h2v18h-2V3z" />
             </svg>
           </div>
           <h1 className="text-4xl font-bold text-teal-700 tracking-wide">AIKAM</h1>
@@ -54,7 +58,6 @@ export default function Login() {
               </label>
               <input
                 id="email"
-                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="aicpmu@iitjammu.ac.in"
