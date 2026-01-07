@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import ChatToggleButton from '@/components/ChatToggleButton';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -6,14 +6,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, ChevronDown, ChartNoAxesCombined } from 'lucide-react';
-import ChatToggleButton from '@/components/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useFrappeAuth } from 'frappe-react-sdk';
+import { ChartNoAxesCombined, ChevronDown, User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 const TopBar: React.FC = () => {
     const { isChatOpen } = useChatContext();
-    const { logout } = useAuth();
+    const { logout } = useFrappeAuth();
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1280);
 
     useEffect(() => {
@@ -62,10 +62,10 @@ const TopBar: React.FC = () => {
                             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    
+
                     {/* Separator */}
                     <div className="h-6 w-px bg-border" />
-                    
+
                     {!isChatOpen && <ChatToggleButton />}
                 </div>
             </div>

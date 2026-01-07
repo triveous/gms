@@ -13,6 +13,11 @@ def get_context(context):
     Get context for index.html template.
     Injects Frappe boot data and CSRF token for React app.
     """
+    
+    if frappe.session.user == "Guest":
+        frappe.local.flags.redirect_location = "/login"
+        raise frappe.Redirect
+    
     # Get CSRF token first to ensure session is initialized
     csrf_token = frappe.sessions.get_csrf_token()
     frappe.db.commit()  # nosemgrep

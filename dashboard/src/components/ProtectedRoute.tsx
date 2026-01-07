@@ -1,12 +1,19 @@
-import { Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import type { JSX } from 'react'
+import { useFrappeAuth } from 'frappe-react-sdk'
+import { useEffect, type JSX } from 'react'
+import { useLocation } from 'react-router'
 
 export default function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const { isLoggedIn, loading } = useAuth()
+  const { currentUser, isLoading, isValidating } = useFrappeAuth()
+  const location = useLocation()
 
-  if (loading) return <div>Loading...</div>
-  if (!isLoggedIn) return <Navigate to="/login" replace />
+  useEffect(() => {
+    if (!currentUser && !isLoading && !isValidating) {
+      window.location.href = `/login?redirect-to=${location.pathname}`
+    }
 
+  }, [currentUser])
+
+  if (isLoading || isValidating) return <div>Loading...</div>
+  if (!currentUser) return <div>Loggin out</div>
   return children
 }
