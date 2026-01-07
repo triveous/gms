@@ -28,8 +28,8 @@ function App() {
 				{/* Dashboard layout */}
 				<Route path="dashboard" element={<DashboardLayout />}>
 					<Route index element={<Grants />} />
-					<Route path="dashboard/:grantId" element={<Grant />} />
-					<Route path=":dashboard/grantId/:projectId" element={<Project />} />
+					<Route path=":grantId" element={<Grant />} />
+					<Route path=":grantId/:projectId" element={<Project />} />
 				</Route>
 				<Route path="*" element={<NotFound />} />
 			</Routes>

@@ -14,15 +14,15 @@ app_color = "purple"
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "gms",
-# 		"logo": "/assets/gms/logo.png",
-# 		"title": "Grant Management System",
-# 		"route": "/gms",
-# 		"has_permission": "gms.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "gms",
+		"logo": "/assets/gms/logo.png",
+		"title": "AIKAM",
+		"route": "/dashboard",
+        "has_permission": "gms.api.permission.has_app_permission"
+    }
+]
 
 fixtures = [{"dt": "Grant Project Milestone Type"}]
 
