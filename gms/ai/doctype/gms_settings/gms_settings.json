@@ -1,18 +1,18 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-01-08 20:45:52.078339",
+ "creation": "2026-01-08 22:08:24.659760",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "ai_section",
+  "rag_section",
   "rag_agent"
  ],
  "fields": [
   {
-   "fieldname": "ai_section",
+   "fieldname": "rag_section",
    "fieldtype": "Section Break",
-   "label": "AI"
+   "label": "RAG"
   },
   {
    "fieldname": "rag_agent",
@@ -25,10 +25,10 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-08 20:46:29.677125",
+ "modified": "2026-01-08 22:08:46.766374",
  "modified_by": "Administrator",
- "module": "GMS",
- "name": "GMS Setting",
+ "module": "AI",
+ "name": "GMS Settings",
  "owner": "Administrator",
  "permissions": [
   {

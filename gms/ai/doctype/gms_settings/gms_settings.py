@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class GMSSetting(Document):
+class GMSSettings(Document):
 	pass

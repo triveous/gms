@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestGMSSetting(FrappeTestCase):
+class TestAISubAgent(FrappeTestCase):
 	pass
