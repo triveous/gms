@@ -23,10 +23,10 @@ function DashboardLayout() {
 function App() {
 	return <FrappeProvider>
 		<DesktopOnly />
-		<BrowserRouter>
+		<BrowserRouter basename='dashboard'>
 			<Routes>
 				{/* Dashboard layout */}
-				<Route path="dashboard" element={<DashboardLayout />}>
+				<Route element={<DashboardLayout />}>
 					<Route index element={<Grants />} />
 					<Route path=":grantId" element={<Grant />} />
 					<Route path=":grantId/:projectId" element={<Project />} />

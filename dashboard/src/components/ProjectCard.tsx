@@ -30,6 +30,7 @@ interface ComparisonResult {
 interface ProjectCardProps {
     title: string;
     id: string;
+    grantId:string;
     projectLead: string;
     activeSince: string;
     lastUpdated: string;
@@ -50,6 +51,7 @@ interface ProjectCardProps {
 export function ProjectCard({
     title,
     id,
+    grantId,
     projectLead,
     activeSince,
     lastUpdated,
@@ -62,7 +64,7 @@ export function ProjectCard({
     const navigate = useNavigate();
     
     const handleProjectClick = (projectId: string) => {
-        navigate(`/project/${projectId}`);
+        navigate(`/${grantId}/${projectId}`);
     };
 
     const getMetricDisplay = (key: 'tbl' | 'mrl' | 'crl' | 'sirl', name: keyof ComparisonResult['metrics']) => {

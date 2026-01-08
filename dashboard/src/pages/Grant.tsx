@@ -408,6 +408,7 @@ export default function Grant() {
                         {projectsData.map((project) => (
                             <ProjectCard
                                 key={project.id}
+                                grantId={grantId as string}
                                 title={project.title}
                                 id={project.id}
                                 projectLead={project.projectLead}

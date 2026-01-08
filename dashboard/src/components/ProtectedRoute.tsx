@@ -12,8 +12,5 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
     }
 
   }, [currentUser])
-
-  if (isLoading || isValidating) return <div>Loading...</div>
-  if (!currentUser) return <div>Loggin out</div>
   return children
 }
