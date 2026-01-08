@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-08 20:38:14.892800",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_section",
+  "agent_name",
+  "model",
+  "model_settings",
+  "instruction_tab",
+  "main_section",
+  "instruction",
+  "system_specific_instruction_section",
+  "add_current_time_instruction",
+  "user_specific_instruction_section",
+  "add_user_name_instruction",
+  "tools_tab",
+  "agent_tools_section",
+  "enable_knowledgebase_tool",
+  "knowledgebase_total_retrieval",
+  "enable_reflect_tool",
+  "sub_agents_tab",
+  "basic_info_section",
+  "sub_agents"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_section",
+   "fieldtype": "Section Break",
+   "label": "Basic"
+  },
+  {
+   "fieldname": "agent_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Agent Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "model",
+   "fieldtype": "Select",
+   "label": "Model",
+   "options": "google-gla:gemini-2.5-flash\ngoogle-gla:gemini-2.5-pro\ngoogle-gla:gemini-3-flash-preview\ngoogle-gla:gemini-3-pro-preview",
+   "reqd": 1
+  },
+  {
+   "description": "Sample JSON: {\"temperature\": 0.1}",
+   "documentation_url": "https://ai.pydantic.dev/models/google/#model-settings",
+   "fieldname": "model_settings",
+   "fieldtype": "JSON",
+   "label": "Model Settings"
+  },
+  {
+   "fieldname": "instruction",
+   "fieldtype": "Markdown Editor",
+   "label": "Instruction"
+  },
+  {
+   "fieldname": "instruction_tab",
+   "fieldtype": "Tab Break",
+   "label": "Instruction"
+  },
+  {
+   "fieldname": "main_section",
+   "fieldtype": "Section Break",
+   "label": "Main"
+  },
+  {
+   "fieldname": "system_specific_instruction_section",
+   "fieldtype": "Section Break",
+   "label": "System Specific Instruction"
+  },
+  {
+   "default": "1",
+   "fieldname": "add_current_time_instruction",
+   "fieldtype": "Check",
+   "label": "Add Current Time Instruction"
+  },
+  {
+   "fieldname": "user_specific_instruction_section",
+   "fieldtype": "Section Break",
+   "label": "User Specific Instruction"
+  },
+  {
+   "default": "1",
+   "fieldname": "add_user_name_instruction",
+   "fieldtype": "Check",
+   "label": "Add User Name Instruction"
+  },
+  {
+   "fieldname": "tools_tab",
+   "fieldtype": "Tab Break",
+   "label": "Tools"
+  },
+  {
+   "fieldname": "agent_tools_section",
+   "fieldtype": "Section Break",
+   "label": "Agent Tools"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_knowledgebase_tool",
+   "fieldtype": "Check",
+   "label": "Enable KnowledgeBase Tool"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_reflect_tool",
+   "fieldtype": "Check",
+   "label": "Enable Reflect Tool"
+  },
+  {
+   "default": "20",
+   "fieldname": "knowledgebase_total_retrieval",
+   "fieldtype": "Int",
+   "label": "KnowledgeBase Total Retrieval"
+  },
+  {
+   "fieldname": "sub_agents_tab",
+   "fieldtype": "Tab Break",
+   "label": "Sub Agents"
+  },
+  {
+   "fieldname": "basic_info_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Info"
+  },
+  {
+   "fieldname": "sub_agents",
+   "fieldtype": "Table",
+   "label": "Sub Agents",
+   "options": "AI Sub Agent"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-09 00:25:49.907190",
+ "modified_by": "Administrator",
+ "module": "AI",
+ "name": "AI Agent",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "agent_name",
+ "track_changes": 1
+}

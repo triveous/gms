@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-08 22:03:50.357685",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "info_section",
+  "tool_name",
+  "agent",
+  "tool_description"
+ ],
+ "fields": [
+  {
+   "fieldname": "info_section",
+   "fieldtype": "Section Break",
+   "label": "Info"
+  },
+  {
+   "fieldname": "agent",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Agent",
+   "options": "AI Agent",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tool_description",
+   "fieldtype": "Markdown Editor",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Tool Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tool_name",
+   "fieldtype": "Data",
+   "label": "Tool Name",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-08 23:23:16.614522",
+ "modified_by": "Administrator",
+ "module": "AI",
+ "name": "AI Sub Agent",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
