@@ -6,12 +6,14 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { SectionWrapper } from '@/components/SectionWrapper';
 import { useFrappeGetCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface GrantUI {
     id: string;
     name: string;
     leadInstitute: string;
     timeline: string;
+    alias: string;
     totalBudget: string | number;
     budgetSpend: string | number;
     budgetSpendPercent: string | number;
@@ -21,6 +23,7 @@ interface GrantUI {
 
 export default function Grants() {
     const navigate = useNavigate();
+    const { setGrantsList } = useAppContext();
 
     const { data, error, isLoading } = useFrappeGetCall(
         'gms.api.grants.get_grants_with_related',
@@ -114,7 +117,7 @@ export default function Grants() {
             leadInstitute: safe(g.organization.title),
             timeline:formatTimeline(g.start_date, g.end_date),
             totalBudget: formatIndianAmount(g.approved_amount),
-
+            alias: safe(g.alias),
             // Fields we DON'T have yet → default "--"
             budgetSpend: formatIndianAmount(g.budget_spent),
             budgetSpendPercent: calculateBudgetSpendPercent(g.approved_amount, g.budget_spent),
@@ -125,7 +128,14 @@ export default function Grants() {
 
     useEffect(() => {
         setGrants(formattedGrants);
-    }, [formattedGrants]);
+        if (formattedGrants.length > 0) {
+            const simplifiedGrants = formattedGrants.map(g => ({
+                id: g.id,
+                alias: g.alias // Assuming 'name' in formattedGrants is the title/alias we want to show
+            }));
+            setGrantsList(simplifiedGrants);
+        }
+    }, [formattedGrants, setGrantsList]);
 
     const handleGrantClick = (grantId: string) => {
         navigate(`/${grantId}`);

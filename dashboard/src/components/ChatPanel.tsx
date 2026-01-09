@@ -213,7 +213,7 @@ const ChatPanel: React.FC = () => {
                     </div> */}
 
                     {/* Chat Content Area */}
-                    <div className="flex-1 flex flex-col w-[399px] overflow-y-auto bg-muted rounded-md p-4">
+                    <div className="flex-1 flex flex-col w-[399px] overflow-y-auto bg-[#F8FAFC] rounded-md p-4">
                         {messages.length === 0 ? (
                             <div className="flex flex-col items-end text-right mt-auto mb-2">
                                 <h3 className="text-sm font-semibold text-foreground mb-2">Quick suggestion to ask.</h3>
@@ -222,7 +222,7 @@ const ChatPanel: React.FC = () => {
                                 <div className="w-full space-y-2">
                                     <Button
                                         variant="outline"
-                                        className="w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal"
+                                        className="w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal shadow-none"
                                         onClick={() => handleSend('How much budget utilised by each project')}
                                         disabled={status !== 'ready'}
                                     >
@@ -230,7 +230,7 @@ const ChatPanel: React.FC = () => {
                                     </Button>
                                     <Button
                                         variant='outline'
-                                        className='w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal'
+                                        className='w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal shadow-none'
                                         onClick={() => handleSend('Projects having more than 5 MRL Metric')}
                                         disabled={status !== 'ready'}
                                     >
@@ -238,7 +238,7 @@ const ChatPanel: React.FC = () => {
                                     </Button>
                                     <Button
                                         variant='outline'
-                                        className='w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal'
+                                        className='w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal shadow-none'
                                         onClick={() => handleSend('Summarise Goals and Impact of the CoE')}
                                         disabled={status !== 'ready'}
                                     >
@@ -258,7 +258,7 @@ const ChatPanel: React.FC = () => {
                                         )}
                                     >
                                         {message.role === 'user' ? (
-                                            <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 max-w-[85%] shadow-sm">
+                                            <div className="bg-white border border-slate-200 rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]">
                                                 {message.parts.map((part, index) =>
                                                     part.type === 'text' ? <span key={index}>{part.text}</span> : null,
                                                 )}
@@ -297,8 +297,8 @@ const ChatPanel: React.FC = () => {
                         }}
                         className="relative"
                     >
-                        <div className="relative rounded-lg p-[2px] bg-gradient-to-r from-orange-400 to-pink-400">
-                            <div className="relative bg-white rounded-lg flex items-center gap-2 px-4 py-2.5">
+                        <div className="relative rounded-lg p-[1px] bg-gradient-to-r from-orange-400 to-pink-400">
+                            <div className="relative bg-white rounded-[9px] flex items-center gap-2 px-3 py-3">
                                 {/* <Plus className="w-4 h-4 text-orange-500 shrink-0" /> */}
                                 <input
                                     type="text"
@@ -306,12 +306,12 @@ const ChatPanel: React.FC = () => {
                                     onChange={(e) => setInput(e.target.value)}
                                     disabled={status !== 'ready' || initialMessage !== null}
                                     placeholder="Ask me about the project"
-                                    className="flex-1 text-sm text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:outline-none disabled:opacity-50"
+                                    className="flex-1 text-[14px] font-normal tracking-[0.07px] text-foreground placeholder:text-muted-foreground bg-transparent border-none outline-none focus:outline-none disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"
                                     disabled={status !== 'ready' || initialMessage !== null || !input.trim()}
-                                    className="p-0 border-none bg-transparent cursor-pointer disabled:opacity-50"
+                                    className="p-0 border-none bg-[#FEF2F2] cursor-pointer disabled:opacity-50 h-[36px] w-[36px] flex items-center justify-center rounded-md"
                                 >
                                     <svg className="w-5 h-5 text-orange-500 shrink-0" viewBox="0 0 20 20" fill="none">
                                         <path d="M3 10L17 10M17 10L11 4M17 10L11 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -328,3 +328,5 @@ const ChatPanel: React.FC = () => {
 };
 
 export default ChatPanel;
+
+

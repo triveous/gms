@@ -1,4 +1,6 @@
 import { FrappeProvider } from 'frappe-react-sdk'
+import { AppProvider } from './contexts/AppContext'
+import { AuthProvider } from './contexts/AuthContext'
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import './App.css'
 import ChatPanel from './components/ChatPanel'
@@ -20,20 +22,26 @@ function DashboardLayout() {
 
 }
 
+
+
 function App() {
 	return <FrappeProvider>
-		<DesktopOnly />
-		<BrowserRouter basename='dashboard'>
-			<Routes>
-				{/* Dashboard layout */}
-				<Route element={<DashboardLayout />}>
-					<Route index element={<Grants />} />
-					<Route path=":grantId" element={<Grant />} />
-					<Route path=":grantId/:projectId" element={<Project />} />
-				</Route>
-				<Route path="*" element={<NotFound />} />
-			</Routes>
-		</BrowserRouter>
+		<AppProvider>
+			<AuthProvider>
+				<DesktopOnly />
+				<BrowserRouter basename='dashboard'>
+					<Routes>
+						{/* Dashboard layout */}
+						<Route element={<DashboardLayout />}>
+							<Route index element={<Grants />} />
+							<Route path=":grantId" element={<Grant />} />
+							<Route path=":grantId/:projectId" element={<Project />} />
+						</Route>
+						<Route path="*" element={<NotFound />} />
+					</Routes>
+				</BrowserRouter>
+			</AuthProvider>
+		</AppProvider>
 	</FrappeProvider>
 }
 

@@ -54,7 +54,7 @@ export function BudgetUtilizationChart({
 
   return (
     <div className="pt-0">
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent className="px-0 ">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"
@@ -86,7 +86,7 @@ export function BudgetUtilizationChart({
                 />
               </linearGradient>
             </defs>
-            <CartesianGrid vertical={false} strokeDasharray="3 3"/>
+            <CartesianGrid vertical={false} />
             <XAxis
               dataKey="quarter"
               tickLine={false}
@@ -113,7 +113,12 @@ export function BudgetUtilizationChart({
                   indicator="dot"
                   formatter={(value, name) => (
                       <div className="flex gap-2 text-xs">
-                        {/* <div className={'w-2 h-2 bg-['+name==='Actual'?'#2E93FA]':'#00E396]'}></div> */}
+                        <div 
+                            className="w-3 h-3 rounded-[3px] shrink-0" 
+                            style={{ 
+                                backgroundColor: chartConfig[name as keyof typeof chartConfig]?.color 
+                            }}
+                        />
                         <span className="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}:</span>
                         <span className="font-bold">₹ {Number(value).toLocaleString('en-IN')} Cr.</span>
                       </div>

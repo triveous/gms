@@ -6,16 +6,18 @@ interface DashboardLayoutProps {
     children: ReactNode;
     className?: string;
     containerClassName?: string;
+    showGrantSwitcher?: boolean;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
     children, 
     className,
-    containerClassName 
+    containerClassName,
+    showGrantSwitcher = false,
 }) => {
     return (
         <>
-            <TopBar />
+            <TopBar showGrantSwitcher={showGrantSwitcher} />
             <DashboardWrapper className={className} containerClassName={containerClassName}>
                 {children}
             </DashboardWrapper>
