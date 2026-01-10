@@ -1,10 +1,11 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useFrappeGetCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CircleCheckBig, BadgeInfo, Link } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
@@ -96,7 +97,6 @@ interface ProjectDetails {
 
 
 export default function Project() {
-    const navigate = useNavigate();
     const { projectId } = useParams<{ projectId: string }>();
     const [projectData, setProjectData] = useState<ProjectDetails | null>(null);
     const [projectMilestoneData, setProjectMilestoneData] = useState<ProjectMilestoneData | null>(null);
@@ -268,19 +268,9 @@ export default function Project() {
 
 
     return (
-        <DashboardLayout>
+        <DashboardLayout showGrantSwitcher={true}>
             {/* Breadcrumb */}
-            <div className="mb-6 flex items-center gap-2">
-                <div
-                    onClick={() => navigate('/dashboard')}
-                    className="cursor-pointer text-sm text-muted-foreground  flex items-center gap-1"
-                >
-                    Home <span>›</span>
-                </div>
-                <div onClick={() => navigate(-1)} className=" cursor-pointer text-sm text-foreground flex items-center gap-1">
-                    Projects
-                </div>
-            </div>
+            <AppBreadcrumb />
 
             {/* Page Header */}
             <div className="mb-6">
@@ -587,8 +577,8 @@ export default function Project() {
                 title="Budget Utilisation"
                 contentClassName="flex flex-col gap-6"
             >
-                <div className="p-6 bg-card border border-border rounded">
-                    <BudgetUtilizationChart budgetUtilization={projectData.budget_utilization} />
+                <div className="p-6 pl-0 bg-card border border-border rounded">
+                    <BudgetUtilizationChart budgetUtilization={projectData.budget_utilization}/>
                 </div>
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-4 gap-4">

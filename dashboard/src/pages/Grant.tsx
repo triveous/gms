@@ -1,8 +1,9 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 
 import { TrendingUp, TrendingDown, CircleCheckBig, BadgeInfo } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
+import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { ProjectCard } from '@/components/ProjectCard';
 import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
@@ -13,6 +14,7 @@ import { useFrappeGetCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface GrantUI {
     id: string;
@@ -47,12 +49,13 @@ interface Project {
 }
 
 export default function Grant() {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const { grantId } = useParams<{ grantId: string }>();
     const [grantData, setGrantData] = useState<GrantUI>({} as GrantUI);
     const [selectedPeriod, setSelectedPeriod] = useState('');
     const [comparisonQuarter, setComparisonQuarter] = useState('');
     const [projectsData, setProjectData] = useState<Project[]>([]);
+    const { setLastVisitedGrant } = useAppContext();
 
     const { data, error, isLoading } = useFrappeGetCall(
         'gms.api.grant.get_single_grant_info',
@@ -114,7 +117,10 @@ export default function Grant() {
 
     useEffect(() => {
         setGrantData(formattedGrant);
-    }, [formattedGrant]);
+        if (formattedGrant.id && formattedGrant.alias) {
+            setLastVisitedGrant({ id: formattedGrant.id, alias: formattedGrant.alias });
+        }
+    }, [formattedGrant, setLastVisitedGrant]);
 
     useEffect(() => {
     if (grantData.quartersList && grantData.quartersList.length > 0 && grantData.quartersList[0].items && grantData.quartersList[0].items.length > 0) {
@@ -288,7 +294,7 @@ export default function Grant() {
     }, [projectsRes]);
 
     return (
-        <DashboardLayout>
+        <DashboardLayout showGrantSwitcher={true}>
             {isLoading && (
                 <div className="text-center text-muted-foreground py-6">
                     Loading grant details...
@@ -310,14 +316,7 @@ export default function Grant() {
             {!isLoading && grantData.id && (
                 <>
             {/* Breadcrumb */}
-            <div className="mb-6">
-                <button 
-                    onClick={() => navigate('/')}
-                    className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-                >
-                    Home <span>›</span>
-                </button>
-            </div>
+            <AppBreadcrumb />
 
             {/* Page Header */}
             <div className="mb-6">
@@ -467,7 +466,7 @@ export default function Grant() {
                         title="Budget Utilisation"
                         contentClassName="flex flex-col gap-6"
                     >
-                        <div className="p-6 bg-card border border-border rounded">
+                        <div className="p-6 pl-0 bg-card border border-border rounded">
                             <BudgetUtilizationChart budgetUtilization={grantData.budget_utilization}/>
                         </div>
                         {/* Metrics Grid */}

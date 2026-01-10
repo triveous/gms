@@ -8,7 +8,7 @@ def get_grants_with_related(limit=50):
 	# ----------------------------
 	grants = frappe.get_all(
 		"Grant",
-		fields=["name", "title", "start_date", "end_date", "approved_amount", "lead_organization"],
+		fields=["name", "title", "start_date", "end_date", "approved_amount", "lead_organization", "alias"],
 		limit=limit,
 	)
 
