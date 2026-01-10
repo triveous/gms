@@ -11,7 +11,6 @@ from gms.ai.doctype.ai_subagent.ai_subagent import AISubAgent as AISubAgentConf
 
 @dataclass
 class SupportDependencies:
-    kb: Any
     search_grant: str = None
     search_project: str = None
     search_project_milestone: str = None
@@ -23,6 +22,9 @@ def read_knowledge_base(ctx: RunContext[SupportDependencies], query: str):
     :type query: str
     :returns Document talking about the query including the source
     """
+    from gms.ai.kb.knowledge_base import KnowledgeBase
+
+    kb = KnowledgeBase()
 
     print(f"Performing search {query}")
     print("=" * 50)
@@ -44,7 +46,7 @@ def read_knowledge_base(ctx: RunContext[SupportDependencies], query: str):
     if len(expr_part) > 0:
         expr = " or ".join(expr_part)
 
-    documents = ctx.deps.kb.retrieve_raw(query, expr=expr)
+    documents = kb.retrieve_raw(query, expr=expr)
 
     if len(documents) == 0:
         return "No result for the query"

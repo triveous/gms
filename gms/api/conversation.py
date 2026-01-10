@@ -18,8 +18,6 @@ def build_rag_agent():
 
 @frappe.whitelist()
 def run():
-    from gms.ai.agents.knowledge_base import KnowledgeBase
-
     if not frappe.request.data:
         frappe.throw("Missing details to initiate a chat")
         return
@@ -44,7 +42,7 @@ def run():
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
     agent = build_rag_agent()
     adapter = VercelAIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = SupportDependencies(kb=KnowledgeBase())
+    deps = SupportDependencies()
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
@@ -68,7 +66,6 @@ def run():
 
 @frappe.whitelist()
 def run_a2ui():
-    from gms.ai.agents.knowledge_base import KnowledgeBase
     from pydantic_ai.ui.ag_ui import AGUIAdapter
 
     if not frappe.request.data:
@@ -95,7 +92,7 @@ def run_a2ui():
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
     agent = build_rag_agent()
     adapter = AGUIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = SupportDependencies(kb=KnowledgeBase())
+    deps = SupportDependencies()
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
