@@ -17,6 +17,8 @@ class AIAgent(Document):
 
     enable_knowledgebase_tool: bool
     enable_reflect_tool: bool
+    enable_planing_tools: bool
+    enable_todo_tools: bool
 
     sub_agents: list["AIAgent"]
 

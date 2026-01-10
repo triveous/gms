@@ -1,5 +1,6 @@
 import frappe
-from gms.ai.agents.agent_builder import SupportDependencies, build_agent
+from gms.ai.agents.builder import build_agent
+from gms.ai.agents.state import AgentState
 from gms.ai.doctype.ai_conversation.ai_conversation import AIConversation
 from gms.utils.iterator import stream_async_iterator
 from pydantic import ValidationError
@@ -13,7 +14,8 @@ from werkzeug.wrappers import Response
 # Build RAG agent
 def build_rag_agent():
     rag_agent_name = frappe.get_single_value("GMS Settings", "rag_agent")
-    return build_agent(rag_agent_name)
+    agent_conf = frappe.get_doc("AI Agent", rag_agent_name)
+    return agent_conf, build_agent(agent_conf)
 
 
 @frappe.whitelist()
@@ -40,9 +42,9 @@ def run():
 
     # Create a convertor which convert the model response to UIMessage responnse
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
-    agent = build_rag_agent()
+    agent_conf, agent = build_rag_agent()
     adapter = VercelAIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = SupportDependencies()
+    deps = AgentState(agent_conf=agent_conf)
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
@@ -90,9 +92,9 @@ def run_a2ui():
 
     # Create a convertor which convert the model response to UIMessage responnse
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
-    agent = build_rag_agent()
+    agent_conf, agent = build_rag_agent()
     adapter = AGUIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = SupportDependencies()
+    deps = AgentState(agent_conf=agent_conf)
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,

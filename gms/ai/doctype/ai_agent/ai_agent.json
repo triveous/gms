@@ -20,7 +20,8 @@
   "agent_tools_section",
   "enable_knowledgebase_tool",
   "knowledgebase_total_retrieval",
-  "enable_reflect_tool",
+  "enable_planing_tools",
+  "enable_todo_tools",
   "sub_agents_tab",
   "basic_info_section",
   "sub_agents"
@@ -106,12 +107,6 @@
    "label": "Enable KnowledgeBase Tool"
   },
   {
-   "default": "1",
-   "fieldname": "enable_reflect_tool",
-   "fieldtype": "Check",
-   "label": "Enable Reflect Tool"
-  },
-  {
    "default": "20",
    "fieldname": "knowledgebase_total_retrieval",
    "fieldtype": "Int",
@@ -132,12 +127,24 @@
    "fieldtype": "Table",
    "label": "Sub Agents",
    "options": "AI Sub Agent"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_planing_tools",
+   "fieldtype": "Check",
+   "label": "Enable Planing Tools"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_todo_tools",
+   "fieldtype": "Check",
+   "label": "Enable Todo Tools"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-09 00:25:49.907190",
+ "modified": "2026-01-11 00:38:23.889558",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Agent",
