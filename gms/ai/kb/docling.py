@@ -2,6 +2,7 @@ import base64
 import json
 import os
 from io import BytesIO
+import asyncio
 
 import frappe
 import requests
@@ -139,9 +140,10 @@ class DoclingIngestionManager:
         self.google_api_key = os.environ.get("GOOGLE_API_KEY")
         self.kb = KnowledgeBase()
 
-    def request_docling_document(self, original_file: File):
-        server_url = frappe.get_single_value("GMS Settings", "docling_serve_url")
-        # 1. Read the file and encode to base64
+    def get_docling_document_remote(self,original_file:File):
+        server_url = frappe.get_single_value("AI Settings", "docling_serve_url")
+        
+         # 1. Read the file and encode to base64
         with open(original_file.get_full_path(), "rb") as file:
             encoded_string = base64.b64encode(file.read()).decode("utf-8")
 
@@ -181,8 +183,37 @@ class DoclingIngestionManager:
         response.raise_for_status()
         docling_result = response.json()
         docling_dict = docling_result["document"]["json_content"]
+        
+        return docling_dict
+    
+    def request_docling_document(self, original_file: File,ai_document:Document):
+        if ai_document.transformed_file is None:
+            docling_dict = self.get_docling_document_remote(original_file)
+            self.save_docling_json(
+                docling_dict, original_file, ai_document.name
+            )
+        else:
+            transformed_file = frappe.get_doc("File", ai_document.transformed_file)
+            with open(transformed_file.get_full_path(), "r", encoding="utf-8") as f:
+                docling_dict = json.load(f)
+       
         self.process_docling_dict(docling_dict, original_file)
 
+    def save_docling_json(
+        self, docling_dict: dict, original_file: File, ai_document_id: str
+    ):
+        json_bytes = json.dumps(docling_dict, indent=4).encode("utf-8")
+        
+        file_doc = frappe.new_doc("File")
+        file_doc.file_name = "{original_file.file_name}_docling.json"
+        file_doc.content = json_bytes
+        
+        file_doc.attached_to_doctype = "AI Document"
+        file_doc.attached_to_name = ai_document_id
+        file_doc.attached_to_field = "transformed_file"
+        file_doc.save()
+        frappe.db.commit()
+        
     def process_docling_dict(
         self, docling_dict: dict, original_file: File, doc_meta: dict = dict()
     ):
@@ -200,7 +231,7 @@ class DoclingIngestionManager:
             file_name=original_file.file_name,
             document=document,
             chunks=chunks,
-        ).run()
+        ).run_sync()
         print("Contextualization done")
 
         self.kb.add_documents(chunks)
@@ -236,7 +267,7 @@ class ChunkContextualizer:
                     "parts": [{"text": f"<document> {document} </document> "}],
                 }
             ],
-            "ttl": "900s",
+            "ttl": "3600s",
         }
 
         response = requests.post(URL, headers=headers, data=json.dumps(data))
@@ -247,18 +278,29 @@ class ChunkContextualizer:
         print(f"Cache created: {cache_name}")
         return cache_name
 
-    def run(self):
+    def run_sync(self):
+        asyncio.run(self.run())
+        
+    async def run(self):
         cache_name = self.create_cache()
         agent = Agent(
             model="google-gla:gemini-2.0-flash",
             model_settings={"google_cached_content": cache_name},
         )
-        for idx, chunk in enumerate(self.chunks):
-            frappe.log(f"Contextualizing chunk {idx + 1} / {len(self.chunks)}")
-            result = agent.run_sync(
+        
+        import asyncio
+        frappe.log(f"Using cache: {cache_name}")
+        frappe.log(f"Contextualizing {len(self.chunks)} chunks")
+        lock = asyncio.Semaphore(5)
+        tasks = [asyncio.create_task(self.chunk(idx, agent, chunk, lock)) for idx, chunk in enumerate(self.chunks)]
+        results = await asyncio.gather(*tasks)
+        
+    
+    async def chunk(self,idx:int, agent:Agent, chunk: Document,lock: asyncio.Semaphore):
+        async with lock:
+            frappe.log(f"Contextualizing chunk {idx + 1}")
+            result = await agent.run(
                 f"""Here is the chunk we want to situate within the whole document <chunk> {chunk.page_content} </chunk> Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else."""
             )
             chunk.metadata["summary"] = result.output
             chunk.metadata["raw_text"] = chunk.page_content
-            chunk.page_content = f"{result.output}\n\n{chunk.page_content}"
-        pass

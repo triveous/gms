@@ -22,6 +22,7 @@ def read_knowledge_base(ctx: RunContext[SupportDependencies], query: str):
     :type query: str
     :returns Document talking about the query including the source
     """
+    print("KB Trigged")
     from gms.ai.kb.knowledge_base import KnowledgeBase
 
     kb = KnowledgeBase()

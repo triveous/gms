@@ -102,7 +102,7 @@ def index_ai_document(ai_document_id: str, forced: bool):
             doc_meta["project_milestone_id"] = milestone_id
 
         frappe.log("Ingesting")
-        DoclingIngestionManager().request_docling_document(original_file=file)
+        DoclingIngestionManager().request_docling_document(original_file=file,ai_document=ai_document)
         frappe.log("Ingested")
         return True, None
 

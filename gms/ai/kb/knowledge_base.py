@@ -24,14 +24,19 @@ class KnowledgeBase:
     _ingest_store: VectorStore
     _query_store: VectorStore
 
-    def __init__(self, name: str = "documents"):
-        milvus_url = frappe.get_single_value("GMS Settings", "milvus_db_url")
-        self._ingest_store = self._create_store(milvus_url, name, self.ingest_embedding)
-        self._query_store = self._create_store(milvus_url, name, self.query_embedding)
+    def __init__(self):
+        ai_settings = frappe.get_single("AI Settings")
+        milvus_url = ai_settings.milvus_db_url
+        milvus_token = ai_settings.milvus_db_token
+        milvus_kb_collection = ai_settings.milvus_kb_collection
+        
+        self._ingest_store = self._create_store(milvus_url,milvus_token, milvus_kb_collection, self.ingest_embedding)
+        self._query_store = self._create_store(milvus_url,milvus_token, milvus_kb_collection, self.query_embedding)
 
     @staticmethod
     def _create_store(
         uri: str,
+        token:str|None,
         collection_name: str,
         embedding_model: Embeddings,
         drop_old=False,
@@ -45,7 +50,7 @@ class KnowledgeBase:
             builtin_function=BM25BuiltInFunction(),
             vector_field=["dense", "sparse"],
             enable_dynamic_field=True,
-            connection_args={"uri": uri},
+            connection_args={"uri": uri,"token": token},
             index_params=[dense_index_param, sparse_index_param],
             drop_old=drop_old,
         )

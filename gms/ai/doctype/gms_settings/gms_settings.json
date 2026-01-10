@@ -6,9 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "rag_section",
-  "rag_agent",
-  "docling_serve_url",
-  "milvus_db_url"
+  "rag_agent"
  ],
  "fields": [
   {
@@ -21,23 +19,13 @@
    "fieldtype": "Link",
    "label": "RAG Agent",
    "options": "AI Agent"
-  },
-  {
-   "fieldname": "docling_serve_url",
-   "fieldtype": "Data",
-   "label": "Docling Serve Url"
-  },
-  {
-   "fieldname": "milvus_db_url",
-   "fieldtype": "Data",
-   "label": "Milvus DB Url"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-10 06:08:03.633734",
+ "modified": "2026-01-10 14:47:24.899520",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "GMS Settings",
