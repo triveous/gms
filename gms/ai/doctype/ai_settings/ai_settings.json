@@ -9,7 +9,10 @@
   "milvus_db_url",
   "milvus_db_token",
   "docling_serve_url",
-  "milvus_kb_collection"
+  "milvus_kb_collection",
+  "contextual_chunking_model_config",
+  "contextual_chunking_model",
+  "contextualization_prompt"
  ],
  "fields": [
   {
@@ -36,13 +39,29 @@
    "fieldname": "milvus_kb_collection",
    "fieldtype": "Data",
    "label": "Milvus KB Collection"
+  },
+  {
+   "fieldname": "contextual_chunking_model_config",
+   "fieldtype": "JSON",
+   "label": "Contextual Chunking Model Config"
+  },
+  {
+   "fieldname": "contextual_chunking_model",
+   "fieldtype": "Select",
+   "label": "Contextual Chunking Model",
+   "options": "gemini-2.0-flash\ngemini-2.5-flash"
+  },
+  {
+   "fieldname": "contextualization_prompt",
+   "fieldtype": "Markdown Editor",
+   "label": "Contextualization Prompt"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-10 16:41:38.705271",
+ "modified": "2026-01-10 18:13:30.374024",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Settings",

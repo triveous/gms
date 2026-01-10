@@ -56,13 +56,14 @@ def index_ai_document(ai_document_id: str, forced: bool):
     """
 
     ai_document = frappe.get_doc("AI Document", ai_document_id)
-    if ai_document.processing_status == "Success":
-        frappe.log("Document already processed")
-        return
+    if not forced:
+        if ai_document.processing_status == "Success":
+         frappe.log("Document already processed")
+         return
 
-    if ai_document.processing_attempts >= 20 and not forced:
-        frappe.log("Max Retry Attempted")
-        return
+        if ai_document.processing_attempts >= 20 and not forced:
+            frappe.log("Max Retry Attempted")
+            return
 
     file_id = ai_document.file
     file = frappe.get_doc("File", ai_document.file)
@@ -141,8 +142,3 @@ def remove_from_index(ai_document_id: str, file_id: str):
         expr=f'ai_document_id == "{ai_document_id}" or file_id == "{file_id}"',
     )
     frappe.log("Unindexed")
-
-
-def receive_transformed_docling_json():
-    # Store it
-    pass
