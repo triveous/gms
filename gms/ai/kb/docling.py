@@ -1,7 +1,10 @@
+import base64
 import json
+import os
 from io import BytesIO
 
 import frappe
+import requests
 from docling_core.transforms.chunker import DocMeta, HybridChunker
 from docling_core.transforms.chunker.base import BaseChunk
 from docling_core.transforms.chunker.hierarchical_chunker import (
@@ -16,11 +19,12 @@ from docling_core.transforms.serializer.markdown import (
 from docling_core.types.doc import DocItemLabel, ImageRefMode
 from docling_core.types.doc.document import DoclingDocument, ImageRef
 from docling_core.types.io import DocumentStream
+from frappe.core.doctype.file.file import File
 from langchain_core.document_loaders import BaseLoader
 from langchain_core.documents import Document
+from pydantic_ai import Agent
 
 from gms.ai.kb.knowledge_base import KnowledgeBase
-from frappe.core.doctype.file.file import File
 
 
 class MarkdownChunkingSerializerProvider(ChunkingSerializerProvider):
@@ -129,16 +133,13 @@ class DoclingCustomLoader(BaseLoader):
 # Respponsible for ingestion flow
 class DoclingIngestionManager:
     kb: KnowledgeBase
+    google_api_key: str
 
     def __init__(self):
+        self.google_api_key = os.environ.get("GOOGLE_API_KEY")
         self.kb = KnowledgeBase()
 
     def request_docling_document(self, original_file: File):
-        import base64
-        import os
-
-        import requests
-
         server_url = frappe.get_single_value("GMS Settings", "docling_serve_url")
         # 1. Read the file and encode to base64
         with open(original_file.get_full_path(), "rb") as file:
@@ -154,9 +155,7 @@ class DoclingIngestionManager:
                 "abort_on_error": True,
                 "picture_description_api": {
                     "concurrency": 2,
-                    "headers": {
-                        "Authorization": f"Bearer {os.environ.get('GOOGLE_API_KEY')}"
-                    },
+                    "headers": {"Authorization": f"Bearer {self.google_api_key}"},
                     "params": {"model": "gemini-2.0-flash-lite"},
                     "prompt": "Describe this image in a few sentences.",
                     "timeout": 20,
@@ -196,4 +195,70 @@ class DoclingIngestionManager:
 
         chunks = list(loader.lazy_load())
         print(f"Generated {len(chunks)} chunks")
+
+        ChunkContextualizer(
+            file_name=original_file.file_name,
+            document=document,
+            chunks=chunks,
+        ).run()
+        print("Contextualization done")
+
         self.kb.add_documents(chunks)
+
+
+class ChunkContextualizer:
+    document: DoclingDocument
+    chunks: list[Document]
+    api_key: str
+    cache_display_name: str
+
+    def __init__(
+        self, file_name: str, document: DoclingDocument, chunks: list[Document]
+    ):
+        self.document = document
+        self.chunks = chunks
+        self.cache_display_name = file_name
+        self.api_key = os.environ.get("GOOGLE_API_KEY")
+
+    def create_cache(self):
+        document = self.document.export_to_text()
+
+        URL = "https://generativelanguage.googleapis.com/v1beta/cachedContents"
+        headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}
+
+        # Define the cache configuration
+        data = {
+            "model": "models/gemini-2.0-flash",
+            "displayName": f"{self.cache_display_name}_cache",
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": f"<document> {document} </document> "}],
+                }
+            ],
+            "ttl": "900s",
+        }
+
+        response = requests.post(URL, headers=headers, data=json.dumps(data))
+        cache_info = response.json()
+
+        # The 'name' field is required for Pydantic AI (e.g., 'cachedContents/abcdef123')
+        cache_name = cache_info.get("name")
+        print(f"Cache created: {cache_name}")
+        return cache_name
+
+    def run(self):
+        cache_name = self.create_cache()
+        agent = Agent(
+            model="google-gla:gemini-2.0-flash",
+            model_settings={"google_cached_content": cache_name},
+        )
+        for idx, chunk in enumerate(self.chunks):
+            frappe.log(f"Contextualizing chunk {idx + 1} / {len(self.chunks)}")
+            result = agent.run_sync(
+                f"""Here is the chunk we want to situate within the whole document <chunk> {chunk.page_content} </chunk> Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else."""
+            )
+            chunk.metadata["summary"] = result.output
+            chunk.metadata["raw_text"] = chunk.page_content
+            chunk.page_content = f"{result.output}\n\n{chunk.page_content}"
+        pass
