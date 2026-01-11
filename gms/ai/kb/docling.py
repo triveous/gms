@@ -186,7 +186,9 @@ class DoclingIngestionManager:
 
         return docling_dict
 
-    def request_docling_document(self, original_file: File, ai_document: Document):
+    def request_docling_document(
+        self, original_file: File, ai_document: Document, doc_meta: dict
+    ):
         if ai_document.transformed_file is None:
             frappe.log("Requesting Docling Document from remote server")
             docling_dict = self.get_docling_document_remote(original_file)
@@ -197,7 +199,9 @@ class DoclingIngestionManager:
             with open(transformed_file.get_full_path(), "r", encoding="utf-8") as f:
                 docling_dict = json.load(f)
 
-        self.process_docling_dict(docling_dict, original_file)
+        self.process_docling_dict(
+            ai_document.name, docling_dict, original_file, doc_meta=doc_meta
+        )
 
     def save_docling_json(
         self, docling_dict: dict, original_file: File, ai_document_id: str
@@ -215,18 +219,31 @@ class DoclingIngestionManager:
         frappe.db.commit()
 
     def process_docling_dict(
-        self, docling_dict: dict, original_file: File, doc_meta: dict = dict()
+        self,
+        doc_id: str,
+        docling_dict: dict,
+        original_file: File,
+        doc_meta: dict = dict(),
     ):
         frappe.log("Processing Docling Document")
         document = DoclingDocument.model_validate(docling_dict)
+
         loader = DoclingCustomLoader(
-            document, original_file.file_name, original_file.file_type, doc_meta
+            document,
+            original_file.file_name,
+            original_file.file_type,
+            doc_meta,
         )
 
         # Support: File Upload
 
         chunks = list(loader.lazy_load())
         print(f"Generated {len(chunks)} chunks")
+
+        # Append additonal metadata for the chunks
+        for idx, chunk in enumerate(chunks):
+            chunk.id = f"{doc_id}_{idx}"
+            chunk.metadata.update(doc_meta)
 
         ChunkContextualizer(
             file_name=original_file.file_name,
@@ -252,14 +269,14 @@ class ChunkContextualizer:
         self.cache_display_name = file_name
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         ai_settings = frappe.get_single("AI Settings")
-        self.model = ai_settings.contextual_chunking_model or "gemini-2.0-flash"
+        self.model = ai_settings.contextual_chunking_model or "gemini-2.5-flash"
         self.model_config = json.loads(
             ai_settings.contextual_chunking_model_config or "{}"
         )
         self.prompt = ai_settings.contextualization_prompt
 
     def create_cache(self):
-        document = self.document.export_to_text()
+        document = self.document.export_to_markdown()
 
         URL = "https://generativelanguage.googleapis.com/v1beta/cachedContents"
         headers = {"Content-Type": "application/json", "x-goog-api-key": self.api_key}

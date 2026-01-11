@@ -20,7 +20,6 @@
   "agent_tools_section",
   "enable_knowledgebase_tool",
   "knowledgebase_total_retrieval",
-  "enable_planing_tools",
   "enable_todo_tools",
   "enable_data_overview_tool",
   "sub_agents_tab",
@@ -131,12 +130,6 @@
   },
   {
    "default": "0",
-   "fieldname": "enable_planing_tools",
-   "fieldtype": "Check",
-   "label": "Enable Planing Tools"
-  },
-  {
-   "default": "0",
    "fieldname": "enable_todo_tools",
    "fieldtype": "Check",
    "label": "Enable Todo Tools"
@@ -151,7 +144,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-11 13:40:53.081526",
+ "modified": "2026-01-11 16:37:54.055167",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Agent",

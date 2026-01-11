@@ -69,7 +69,6 @@ class KnowledgeBase:
         self,
         query: str,
         k: int,
-        rrf_ranker_param: (float, float) = (0.7, 0.3),
         expr: str = None,
     ):
         results = self._query_store.similarity_search(
@@ -78,6 +77,6 @@ class KnowledgeBase:
             ranker_type="rrf",
             expr=expr,
             # Check params: https://milvus.io/docs/multi-vector-search.md
-            ranker_params={"weights": list(rrf_ranker_param)},
+            ranker_params={"k": k},
         )
         return results

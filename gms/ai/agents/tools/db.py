@@ -21,11 +21,20 @@ def data_overview(ctx: RunContext[AgentState]):
     )
     results["projects"] = frappe.get_list(
         "Grant Project",
-        fields=["grant", "title", "alias", "start_date", "end_date"],
+        fields=["name", "grant", "title", "alias", "start_date", "end_date"],
     )
 
     results["milestone_updates"] = frappe.get_list(
-        "Grant Project Milestone", fields="*"
+        "Grant Project Milestone",
+        fields=[
+            "name",
+            "title",
+            "project",
+            "milestone_type",
+            "submitted_at",
+            "period_start",
+            "period_end",
+        ],
     )
 
     print(f"Data Overview {results}")

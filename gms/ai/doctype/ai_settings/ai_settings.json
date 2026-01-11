@@ -12,7 +12,8 @@
   "milvus_kb_collection",
   "contextual_chunking_model_config",
   "contextual_chunking_model",
-  "contextualization_prompt"
+  "contextualization_prompt",
+  "chunk_token_size"
  ],
  "fields": [
   {
@@ -55,13 +56,18 @@
    "fieldname": "contextualization_prompt",
    "fieldtype": "Markdown Editor",
    "label": "Contextualization Prompt"
+  },
+  {
+   "fieldname": "chunk_token_size",
+   "fieldtype": "Int",
+   "label": "Chunk Token Size"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-10 18:13:30.374024",
+ "modified": "2026-01-11 19:19:42.679139",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Settings",

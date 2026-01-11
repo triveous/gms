@@ -58,8 +58,8 @@ def index_ai_document(ai_document_id: str, forced: bool):
     ai_document = frappe.get_doc("AI Document", ai_document_id)
     if not forced:
         if ai_document.processing_status == "Success":
-         frappe.log("Document already processed")
-         return
+            frappe.log("Document already processed")
+            return
 
         if ai_document.processing_attempts >= 20 and not forced:
             frappe.log("Max Retry Attempted")
@@ -103,7 +103,9 @@ def index_ai_document(ai_document_id: str, forced: bool):
             doc_meta["project_milestone_id"] = milestone_id
 
         frappe.log("Ingesting")
-        DoclingIngestionManager().request_docling_document(original_file=file,ai_document=ai_document)
+        DoclingIngestionManager().request_docling_document(
+            original_file=file, ai_document=ai_document, doc_meta=doc_meta
+        )
         frappe.log("Ingested")
         return True, None
 

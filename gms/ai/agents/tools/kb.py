@@ -26,18 +26,6 @@ def read_knowledge_base(ctx: RunContext[AgentState], query: str):
         return "No result for the query"
 
     def document_content(doc: Document):
-        raw_text = doc.metadata.get("raw_text")
-        summary = doc.metadata.get("summary")
-        if raw_text and summary:
-            doc.metadata.pop("raw_text")
-            doc.metadata.pop("summary")
-            return f"""\
-            <document>
-                <content>{raw_text}</content>
-                <content>{doc.metadata}</content>
-            </document>
-            """
-
         return f"""\
             <document>
                 <content>{doc.page_content}</content>
