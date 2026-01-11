@@ -29,14 +29,18 @@ class KnowledgeBase:
         milvus_url = ai_settings.milvus_db_url
         milvus_token = ai_settings.milvus_db_token
         milvus_kb_collection = ai_settings.milvus_kb_collection
-        
-        self._ingest_store = self._create_store(milvus_url,milvus_token, milvus_kb_collection, self.ingest_embedding)
-        self._query_store = self._create_store(milvus_url,milvus_token, milvus_kb_collection, self.query_embedding)
+
+        self._ingest_store = self._create_store(
+            milvus_url, milvus_token, milvus_kb_collection, self.ingest_embedding
+        )
+        self._query_store = self._create_store(
+            milvus_url, milvus_token, milvus_kb_collection, self.query_embedding
+        )
 
     @staticmethod
     def _create_store(
         uri: str,
-        token:str|None,
+        token: str | None,
         collection_name: str,
         embedding_model: Embeddings,
         drop_old=False,
@@ -50,7 +54,7 @@ class KnowledgeBase:
             builtin_function=BM25BuiltInFunction(),
             vector_field=["dense", "sparse"],
             enable_dynamic_field=True,
-            connection_args={"uri": uri,"token": token},
+            connection_args={"uri": uri, "token": token},
             index_params=[dense_index_param, sparse_index_param],
             drop_old=drop_old,
         )
@@ -64,7 +68,7 @@ class KnowledgeBase:
     def retrieve_raw(
         self,
         query: str,
-        k=20,
+        k: int,
         rrf_ranker_param: (float, float) = (0.7, 0.3),
         expr: str = None,
     ):

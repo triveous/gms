@@ -5,6 +5,7 @@ from pydantic_ai import Agent, RunContext, Tool
 
 from gms.ai.agents.state import AgentState
 from gms.ai.agents.tools.todos import TODO_SYSTEM_INSTRUCTION, write_todos
+from gms.ai.agents.tools.db import data_overview, DATA_OVERVIEW_SYSTEM_INSTRUCTION
 from gms.ai.doctype.ai_agent.ai_agent import AIAgent as AIAgentConf
 from gms.ai.doctype.ai_subagent.ai_subagent import AISubAgent as AISubAgentConf
 
@@ -40,6 +41,9 @@ def prepare_tools(conf: AIAgentConf):
 
     if conf.enable_knowledgebase_tool:
         tools.append(Tool(read_knowledge_base, takes_ctx=True))
+
+    if conf.enable_data_overview_tool:
+        tools.append(Tool(data_overview, takes_ctx=True))
 
     tools = [
         *tools,
@@ -86,7 +90,10 @@ def build_agent(agent_conf: Document):
         instructions = []
         if agent_conf.enable_todo_tools:
             instructions.append(TODO_SYSTEM_INSTRUCTION)
-        
+
+        if agent_conf.enable_data_overview_tool:
+            instructions.append(DATA_OVERVIEW_SYSTEM_INSTRUCTION)
+
         instructions = "\n".join(instructions)
         return f"# TOOL Usage \n{instructions}"
 
