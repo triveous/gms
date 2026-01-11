@@ -60,13 +60,13 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                             <div className="p-6 text-center text-muted-foreground">No partners found</div>
                         )}
                     </CardContent>
-                    <CardFooter className="p-6">
+                    {/* <CardFooter className="p-6">
                         <Button variant="outline" className="w-full justify-between group h-12 text-base font-medium">
                             <span />
                             <span>View all</span>
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
                         </Button>
-                    </CardFooter>
+                    </CardFooter> */}
                 </Card>
 
                 <Card className="p-0 gap-0">
@@ -101,13 +101,13 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                              <div className="p-6 text-center text-muted-foreground">No contributors found</div>
                         )}
                     </CardContent>
-                    <CardFooter className="p-6">
+                    {/* <CardFooter className="p-6">
                         <Button variant="outline" className="w-full justify-between group h-12 text-base font-medium">
                             <span />
                             <span>View all</span>
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
                         </Button>
-                    </CardFooter>
+                    </CardFooter> */}
                 </Card>
             </SectionWrapper>
   )
