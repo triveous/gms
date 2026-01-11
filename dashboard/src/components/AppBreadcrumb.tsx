@@ -17,15 +17,25 @@ export const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({ items = [] }) => {
     const location = useLocation();
     const { lastVisitedGrant } = useAppContext();
 
-    const isProjectPage = location.pathname.includes('/project/');
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const grantId = pathParts[0];
+    const projectId = pathParts[1];
     
     let calculatedItems: BreadcrumbItem[] = [{ label: 'AIKAM', path: '/' }];
     
-    if (isProjectPage) {
-        calculatedItems = [
-            { label: 'AIKAM', path: '/' },
-            { label: lastVisitedGrant?.alias || 'Projects', action: () => navigate(-1) }
-        ];
+    if (grantId) {
+        const grantLabel = lastVisitedGrant?.alias || 'Grant';
+        if (projectId) {
+            calculatedItems = [
+                { label: 'AIKAM', path: '/' },
+                { label: grantLabel, path: `/${grantId}` }
+            ];
+        } else {
+            calculatedItems = [
+                { label: 'AIKAM', path: '/' },
+                // { label: grantLabel }
+            ];
+        }
     } else {
         calculatedItems = [{ label: 'AIKAM', path: '/' }];
     }

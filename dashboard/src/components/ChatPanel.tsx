@@ -43,7 +43,7 @@ const ChatPanel: React.FC = () => {
             },
         }),
         async onToolCall({ toolCall }) {
-            if (toolCall.toolName === 'simple-message-agent') {
+            if (toolCall.toolName === 'research-tool') {
                 // Type casting args as any to access query safely, assuming it matches the structure
                 const query = toolCall?.input?.query;
                 setActiveToolUI({ 
