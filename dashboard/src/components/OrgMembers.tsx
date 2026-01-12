@@ -34,9 +34,9 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                 <Card className="p-0 gap-0">
                     <CardHeader className="flex flex-row items-center justify-between p-6">
                         <CardTitle className="text-base font-bold text-muted-foreground">Academic & Industry Partners</CardTitle>
-                        <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
+                        {/* <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
                             Ask AI <FileText className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                     </CardHeader>
                     <div className="mx-6 h-px bg-border" />
                     <CardContent className="p-0">
@@ -72,9 +72,9 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                 <Card className="p-0 gap-0">
                     <CardHeader className="flex flex-row items-center justify-between p-6">
                         <CardTitle className="text-base font-bold text-muted-foreground">Lead Investigators and Partners</CardTitle>
-                        <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
+                        {/* <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
                             Ask AI <FileText className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                     </CardHeader>
                     <div className="mx-6 h-px bg-border" />
                     <CardContent className="p-0">

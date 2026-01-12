@@ -13,6 +13,7 @@ import OrgMembers, { type Partner, type Contributor } from '@/components/OrgMemb
 import DialogButton from '@/components/DialogButton';
 import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent, formatIndianNumber } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
+import { formatTextWithNumber } from '@/utils/textFormatters';
 
 interface BudgetUtilizationItem {
     quarter: string;
@@ -176,6 +177,11 @@ export default function Project() {
             setSelectedPeriod(projectData.quartersList[0].items[0].value);
         }
     }, [projectData])
+
+    // Scroll to top when component mounts
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
 
 
@@ -359,7 +365,7 @@ export default function Project() {
                 title="Key Highlights & Lowlights"
                 contentClassName="grid flex gap-6 flex-col"
             >
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 gap-6">
                     {/* Highlights */}
                     <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
                         <h3>Highlights</h3>
@@ -389,35 +395,6 @@ export default function Project() {
                             {(!projectMilestoneData?.milestone?.metrics?.['Low lights'] || projectMilestoneData.milestone.metrics['Low lights'].length === 0) && (
                                 <p className="text-sm italic">No lowlights recorded.</p>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Outcome Indicator */}
-                    <div className="flex flex-col gap-4">
-                        {/* Outcome Indicator */}
-                        <div className='h-[50%] p-6 bg-card border border-border rounded'>
-                            <div className="text-sm text-muted-foreground mb-3">Outcome Indicator</div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl font-semibold text-foreground">Good</span>
-                                <div className="w-6 h-6 rounded-md bg-green-500 flex items-center justify-center">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                        <path d="M11.667 3.5L5.25 9.917L2.333 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Impact Indicator */}
-                        <div className='h-[50%] p-6 bg-card border border-border rounded'>
-                            <div className="text-sm text-muted-foreground mb-3">Impact Indicator</div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl font-semibold text-foreground">Good</span>
-                                <div className="w-6 h-6 rounded-md bg-green-500 flex items-center justify-center">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                        <path d="M11.667 3.5L5.25 9.917L2.333 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -543,13 +520,13 @@ export default function Project() {
                             <div className="p-4 border border-orange-200 rounded-lg bg-orange-50/30">
                                 <div className="text-sm text-muted-foreground mb-2">Impact created</div>
                                 <div className="flex items-baseline gap-2 mb-2">
-                                    <span className="text-3xl font-bold text-foreground">{formatIndianNumber(projectMilestoneData?.milestone?.metrics?.['Impact Created'])}</span>
-                                    <span className="text-sm text-muted-foreground">citizens</span>
+                                    <span className="text-3xl font-bold text-foreground">{formatTextWithNumber(projectMilestoneData?.milestone?.metrics?.['Impact Created'] || '')}</span>
+                                    {/* <span className="text-sm text-muted-foreground">citizens</span> */}
                                 </div>
                                 {impactTrend && (
                                     <div className="flex items-center w-3 gap-2">
                                         <TrendingBadge change={impactTrend.change} isPositive={impactTrend.isPositive} />
-                                    </div>
+                                    </div>  
                                 )}
                             </div>
 

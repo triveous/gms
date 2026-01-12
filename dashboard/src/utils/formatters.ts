@@ -9,18 +9,11 @@ export const formatIndianAmount = (value: any) => {
 
     const amount = Number(value);
 
-    if (amount >= 1_00_00_000) {
-        // Crores (>= 1 Cr)
+    if (amount >= 1_00_000) {
+        // Display in Crores for amounts >= 1 Lakh
         return `₹ ${(amount / 1_00_00_000).toLocaleString('en-IN', {
             maximumFractionDigits: 2
         })} Cr`;
-    }
-
-    if (amount >= 1_00_000) {
-        // Lakhs
-        return `₹${(amount / 1_00_000).toLocaleString('en-IN', {
-            maximumFractionDigits: 2
-        })} Lakhs`;
     }
 
     // Default fallback (just number)
@@ -34,18 +27,11 @@ export const formatIndianNumber = (value: any) => {
 
     const amount = Number(value);
 
-    if (amount >= 1_00_00_000) {
-        // Crores (>= 1 Cr)
+    if (amount >= 1_00_000) {
+        // Display in Crores for amounts >= 1 Lakh
         return `${(amount / 1_00_00_000).toLocaleString('en-IN', {
             maximumFractionDigits: 2
         })} Cr`;
-    }
-
-    if (amount >= 1_00_000) {
-        // Lakhs
-        return `${(amount / 1_00_000).toLocaleString('en-IN', {
-            maximumFractionDigits: 2
-        })} Lakhs`;
     }
 
     // Default fallback (just number)
@@ -72,7 +58,8 @@ export const formatTimeline = (start: string, end: string) => {
     const startFormatted = `${months[s.getMonth()]} ${s.getFullYear()}`;
     const endFormatted = `${e.getDate()} ${months[e.getMonth()]} ${e.getFullYear()}`;
 
-    return `${years} year (${startFormatted} - ${endFormatted})`;
+    // return `${years} year (${startFormatted} - ${endFormatted})`;
+    return `${years} year`;
 };
 
 export const calculateBudgetSpendPercent = (total: any, spent: any) => {
