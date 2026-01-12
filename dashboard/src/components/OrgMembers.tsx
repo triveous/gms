@@ -34,9 +34,9 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                 <Card className="p-0 gap-0">
                     <CardHeader className="flex flex-row items-center justify-between p-6">
                         <CardTitle className="text-base font-bold text-muted-foreground">Academic & Industry Partners</CardTitle>
-                        <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
+                        {/* <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
                             Ask AI <FileText className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                     </CardHeader>
                     <div className="mx-6 h-px bg-border" />
                     <CardContent className="p-0">
@@ -60,21 +60,21 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                             <div className="p-6 text-center text-muted-foreground">No partners found</div>
                         )}
                     </CardContent>
-                    <CardFooter className="p-6">
+                    {/* <CardFooter className="p-6">
                         <Button variant="outline" className="w-full justify-between group h-12 text-base font-medium">
                             <span />
                             <span>View all</span>
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
                         </Button>
-                    </CardFooter>
+                    </CardFooter> */}
                 </Card>
 
                 <Card className="p-0 gap-0">
                     <CardHeader className="flex flex-row items-center justify-between p-6">
                         <CardTitle className="text-base font-bold text-muted-foreground">Lead Investigators and Partners</CardTitle>
-                        <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
+                        {/* <Button onClick={toggleChat} variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground font-normal">
                             Ask AI <FileText className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                     </CardHeader>
                     <div className="mx-6 h-px bg-border" />
                     <CardContent className="p-0">
@@ -101,13 +101,13 @@ const OrgMembers = ({ partners = [], contributors = [] }: OrgMembersProps) => {
                              <div className="p-6 text-center text-muted-foreground">No contributors found</div>
                         )}
                     </CardContent>
-                    <CardFooter className="p-6">
+                    {/* <CardFooter className="p-6">
                         <Button variant="outline" className="w-full justify-between group h-12 text-base font-medium">
                             <span />
                             <span>View all</span>
                             <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
                         </Button>
-                    </CardFooter>
+                    </CardFooter> */}
                 </Card>
             </SectionWrapper>
   )

@@ -32,7 +32,7 @@ const DashboardWrapper: React.FC<DashboardWrapperProps> = ({
                 className
             )}
             style={{
-                maxWidth: (isChatOpen && isLargeScreen) ? 'calc(100vw - 464px)' : '100%',
+                maxWidth: (isChatOpen && isLargeScreen) ? 'calc(100vw - 450px)' : '100%',
                 transition: 'max-width 300ms ease-in-out',
                 borderRadius: (isChatOpen && isLargeScreen) ? '12px' : '0'
             }}

@@ -120,4 +120,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .remove-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .remove-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }

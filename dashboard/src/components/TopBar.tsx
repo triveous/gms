@@ -30,13 +30,8 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
     const navigate = useNavigate();
     const { grantsList, lastVisitedGrant } = useAppContext();
     
-    // Extract grant ID from URL or context to find current name
-    let currentGrantId = '';
-    if (location.pathname.startsWith('/grant/')) {
-        currentGrantId = location.pathname.split('/grant/')[1];
-    } else {
-        currentGrantId = lastVisitedGrant?.id || '';
-    }
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const currentGrantId = pathParts[0] || lastVisitedGrant?.id || '';
 
     const currentGrantName = grantsList.find(g => g.id === currentGrantId)?.alias || 'Select CoE';
 

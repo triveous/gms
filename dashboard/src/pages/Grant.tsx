@@ -410,6 +410,7 @@ export default function Grant() {
                                 grantId={grantId as string}
                                 title={project.title}
                                 id={project.id}
+                                selectedPeriod={selectedPeriod}
                                 projectLead={project.projectLead}
                                 activeSince={project.activeSince}
                                 lastUpdated={project.lastUpdated}
@@ -433,13 +434,25 @@ export default function Grant() {
                                 <div className="flex gap-2 items-start">
                                     <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
                                     <p>
-                                        Received positive and encouraging reviews from Technology Advisors on the System Design
+                                        Rapid AI Model Validation: Across verticals (Diabetes, Chest X-Ray, AMR), AI models have achieved high diagnostic accuracy (88-94%) in validation phases, with the Diabetes Risk Stratification model completing training ahead of schedule.
                                     </p>
                                 </div>
                                 <div className="flex gap-2 items-start">
                                     <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
                                     <p>
-                                        Submitting a blue print for doing a user research / review studies at scale in India
+                                        Successful Field Deployment: Critical pilot programs are now operational on the ground, including the Voice-Bot for ASHA workers in 9 sites and the Cough-Against-TB app reaching recruitment targets, demonstrating effective lab-to-field translation.
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 items-start">
+                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Infrastructure & Compliance Readiness: Major backend milestones were met, including the integration of the Medically Aware LLM Master Agent, successful 3rd party security audits, and the installation of high-end imaging infrastructure (ZEISS CLARUS) at IISc.
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 items-start">
+                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Clinical Adoption Velocity: Strong clinical engagement is evident, with 100% of PHC staff trained for Diabetes management and automated AMR pipelines stabilizing in 4 critical care departments at AIIMS, exceeding initial adoption targets.
                                     </p>
                                 </div>
                             </div>
@@ -452,7 +465,25 @@ export default function Grant() {
                                 <div className="flex gap-2 items-start">
                                     <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
                                     <p>
-                                        Hardware and Software compatibility has been tuning out to be the major design revision factor than we anticipated. We are going ahead with the largest API/SDK distribution as per Android Developer's distribution page
+                                        Hardware Supply Chain Disruptions: Critical procurement delays (Tablets/Servers) have severely impacted the Oral Cancer screening timeline, causing a 75% shortfall in screening targets for the quarter.
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 items-start">
+                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Data Collection Bottlenecks: Multiple projects (STI/Leprosy, COPD, CARDIAC-India) are facing delays in data collection due to slow ethics approvals, unsigned consortium agreements, or patient device adherence issues.
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 items-start">
+                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Last-Mile Usability Issues: Field feedback indicates usability friction in rural settings, specifically regarding questionnaire length (Breast Cancer), non-intuitive app interfaces for older devices (Platform), and dialect recognition gaps (Conversational AI).
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 items-start">
+                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
+                                    <p>
+                                        Operational Lag in Multi-Center Projects: Large consortium projects like CARDIAC-India are struggling with administrative coordination, leading to significant under-utilization of budget and delayed deployment at partner sites.
                                     </p>
                                 </div>
                             </div>
