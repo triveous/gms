@@ -1,5 +1,3 @@
-from io import BytesIO
-
 import frappe
 from frappe.utils import now
 from gms.ai.doctype.ai_document.ai_document import AIDocument

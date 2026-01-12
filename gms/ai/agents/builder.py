@@ -58,7 +58,7 @@ def prepare_tools(conf: AIAgentConf):
 
 # Trigger a sub-agent as a tool call
 def prepare_sub_agent_tool(sub_agent_conf: AISubAgentConf) -> Tool:
-    agent = build_agent(sub_agent_conf.agent)
+    agent = build_agent_with_id(sub_agent_conf.agent)
 
     description = f"""{sub_agent_conf.tool_description}
     Args:
@@ -75,6 +75,11 @@ def prepare_sub_agent_tool(sub_agent_conf: AISubAgentConf) -> Tool:
         description=description,
         takes_ctx=True,
     )
+
+
+def build_agent_with_id(agent_id: str):
+    agent_conf = frappe.get_doc("AI Agent", agent_id)
+    return build_agent(agent_conf)
 
 
 # Prepare an agent and its tools as well all the sub-agents recursively
