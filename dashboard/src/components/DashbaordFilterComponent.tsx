@@ -25,12 +25,12 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
   // flatten for easier filtering
   const allQuarters = useMemo(() => {
     return quartersList
-      .filter(g => g.label !== "Yearly Wise")
+      .filter(g => g.label !== 'Yearly Wise')
       .flatMap(g => g.items);
   }, [quartersList]);
 
   const allYears = useMemo(() => {
-    const yearly = quartersList.find(g => g.label === "Yearly Wise");
+    const yearly = quartersList.find(g => g.label === 'Yearly Wise');
     return yearly ? yearly.items : [];
   }, [quartersList]);
 
@@ -39,8 +39,8 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
 
     let options = [];
 
-    // if it starts with "Q", it's quarter
-    if (selectedPeriod.startsWith("Q")) {
+    // if it starts with 'Q', it's quarter
+    if (selectedPeriod.startsWith('Q')) {
       options = allQuarters;
     } else {
       // else it's year
@@ -79,24 +79,26 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
           </SelectTrigger>
 
           <SelectContent>
-            {quartersList.map(group => (
-              <SelectGroup key={group.label}>
-                <SelectLabel>{group.label}</SelectLabel>
+            {quartersList
+              .filter(group => group.label !== 'Yearly Wise')
+              .map(group => (
+                <SelectGroup key={group.label}>
+                  <SelectLabel>{group.label}</SelectLabel>
 
-                {group.items.map(item => (
-                  <SelectItem key={item.title} value={item.value}>
-                    <div className="flex">
-                      <span className="text-foreground">{item.title}</span>
-                      {item.description && (
-                        <span className="text-muted-foreground/60 font-sans text-sm">
-                          ({item.description})
-                        </span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
+                  {group.items.map(item => (
+                    <SelectItem key={item.title} value={item.value}>
+                      <div className="flex">
+                        <span className="text-foreground">{item.title}</span>
+                        {item.description && (
+                          <span className="text-muted-foreground/60 font-sans text-sm">
+                            ({item.description})
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
           </SelectContent>
         </Select>
 
@@ -117,8 +119,8 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
       </div>
 
       {/* ---------------- THIRD SELECT (Download) ---------------- */}
-      <Select>
-        <SelectTrigger className="h-10 bg-card text-foreground">
+      <Select disabled={true}>
+        <SelectTrigger className="h-10 bg-card text-foreground" >
           <div className="flex items-center gap-2">
             <SelectValue placeholder="Download Reports" />
           </div>

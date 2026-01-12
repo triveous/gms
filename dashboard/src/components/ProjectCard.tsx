@@ -32,6 +32,7 @@ interface ProjectCardProps {
     id: string;
     grantId:string;
     projectLead: string;
+    selectedPeriod: string;
     activeSince: string;
     lastUpdated: string;
     metrics: {
@@ -55,6 +56,7 @@ export function ProjectCard({
     projectLead,
     activeSince,
     lastUpdated,
+    selectedPeriod,
     metrics,
     budgetSpent,
     progress,
@@ -168,7 +170,7 @@ export function ProjectCard({
                 
                 {/* Q2 Budget Spent */}
                 <div className="flex flex-col gap-4 px-[16px] py-[12px] items-end">
-                    <div className="text-neutral-500 text-right font-inter text-base font-medium leading-6">Q2 Budget Spent</div>
+                    <div className="text-neutral-500 text-right font-inter text-base font-medium leading-6">{selectedPeriod.slice(0,2)} Budget Spent</div>
                     <div className="text-[#020617] text-right font-inter text-2xl font-semibold leading-[120%] ">
                         {budgetSpent}
                     </div>
@@ -177,7 +179,7 @@ export function ProjectCard({
 
                 {/* Q2 Progress */}
                 <div className="flex flex-col gap-4 px-[16px] py-[12px] items-end">
-                    <div className="text-neutral-500 text-right font-inter text-base font-medium leading-6">Q2 Progress</div>
+                    <div className="text-neutral-500 text-right font-inter text-base font-medium leading-6">{selectedPeriod.slice(0,2)} Progress</div>
                     <div className="text-[#020617] text-right font-inter text-2xl font-semibold leading-[120%] ">
                         {progress}
                     </div>
