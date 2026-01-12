@@ -1,6 +1,7 @@
 import frappe
 from gms.ai.agents.builder import build_agent
 from gms.ai.agents.state import AgentState
+from gms.ai.agents.ui import CustomUIEventAdapter
 from gms.ai.doctype.ai_conversation.ai_conversation import AIConversation
 from gms.utils.iterator import stream_async_iterator
 from pydantic import ValidationError
@@ -43,19 +44,21 @@ def run():
     # Create a convertor which convert the model response to UIMessage responnse
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
     agent_conf, agent = build_rag_agent()
+    custom_ui_events_adapter = CustomUIEventAdapter()
+
     adapter = VercelAIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = AgentState(agent_conf=agent_conf)
-    event_stream = adapter.run_stream(
+    deps = AgentState(
+        agent_conf=agent_conf, events=custom_ui_events_adapter.get_sender()
+    )
+
+    ui_event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
         on_complete=lambda run: save_agent_run(converstion=conversation, run=run),
     )
 
-    # Serialized the [UIMessage] to string which text stream
-    sse_event_stream = adapter.encode_stream(event_stream)
-
     return Response(
-        stream_async_iterator(sse_event_stream),
+        custom_ui_events_adapter.run_sync(ui_event_stream, adapter.encode_stream),
         status=200,
         headers={
             "Content-Type": "text/event-stream",
@@ -95,6 +98,7 @@ def run_a2ui():
     agent_conf, agent = build_rag_agent()
     adapter = AGUIAdapter(agent=agent, run_input=run_input, accept=accept)
     deps = AgentState(agent_conf=agent_conf)
+
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,

@@ -22,6 +22,7 @@
   "knowledgebase_total_retrieval",
   "enable_todo_tools",
   "enable_data_overview_tool",
+  "enable_thinking_tool",
   "sub_agents_tab",
   "basic_info_section",
   "sub_agents"
@@ -139,12 +140,18 @@
    "fieldname": "enable_data_overview_tool",
    "fieldtype": "Check",
    "label": "Enable Data Overview Tool"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_thinking_tool",
+   "fieldtype": "Check",
+   "label": "Enable Thinking Tool"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-11 16:37:54.055167",
+ "modified": "2026-01-12 20:22:00.551237",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Agent",

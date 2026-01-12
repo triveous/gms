@@ -1,5 +1,7 @@
-from gms.ai.agents.state import AgentState, Todo
 from pydantic_ai import RunContext
+from pydantic_ai.ui.vercel_ai.response_types import DataChunk
+
+from gms.ai.agents.state import AgentState, Todo
 
 TODO_SYSTEM_INSTRUCTION = """## `write_todos`
 
@@ -16,10 +18,23 @@ Writing todos takes time and tokens, use it when it is helpful for managing comp
 - Don't be afraid to revise the To-Do list as you go. New information may reveal new tasks that need to be done, or old tasks that are irrelevant."""
 
 
-def write_todos(ctx: RunContext[AgentState], todos: list[Todo]):
+async def write_todos(ctx: RunContext[AgentState], todos: list[Todo]):
     """
     Use this tool to create and manage a structured task list for your current work session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
     """
-    ctx.deps.todos = todos
+    ctx.deps.planning.todos = todos
+    await ctx.deps.events.send_event(
+        DataChunk(type="data-todos", id="planning", data={"todos": todos})
+    )
+
+    in_progress_todo = [t for t in todos if t.status == "in_progress"]
+    if (len(in_progress_todo)) > 0:
+        last_todo = in_progress_todo[-1]
+        await ctx.deps.events.send_event(
+            DataChunk(
+                type="data-tool-in-progress", transient=True, data={"todo": last_todo}
+            )
+        )
+
     print(f"Updates the todos {todos}")
     return f"Todos Updated {todos}"

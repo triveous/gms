@@ -20,6 +20,7 @@ class AIAgent(Document):
     enable_planing_tools: bool
     enable_todo_tools: bool
     enable_data_overview_tool: bool
+    enable_thinking_tool: bool
 
     sub_agents: list["AIAgent"]
 

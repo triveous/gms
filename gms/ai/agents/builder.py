@@ -6,6 +6,7 @@ from pydantic_ai import Agent, RunContext, Tool
 from gms.ai.agents.state import AgentState
 from gms.ai.agents.tools.todos import TODO_SYSTEM_INSTRUCTION, write_todos
 from gms.ai.agents.tools.db import data_overview, DATA_OVERVIEW_SYSTEM_INSTRUCTION
+from gms.ai.agents.tools.thinking import thinking_tool, THINKING_TOOL_SYSTEM_INSTRUCTION
 from gms.ai.doctype.ai_agent.ai_agent import AIAgent as AIAgentConf
 from gms.ai.doctype.ai_subagent.ai_subagent import AISubAgent as AISubAgentConf
 
@@ -35,6 +36,9 @@ def merge_instruction(agent: Agent, conf: AIAgentConf):
 # Configure agent tools
 def prepare_tools(conf: AIAgentConf):
     tools = []
+
+    if conf.enable_thinking_tool:
+        tools.append(Tool(thinking_tool, takes_ctx=True))
 
     if conf.enable_todo_tools:
         tools.append(Tool(write_todos, takes_ctx=True))
@@ -83,6 +87,8 @@ def build_agent(agent_conf: Document):
         if agent_conf.instruction
         else BASE_PROMPT,
         tools=prepare_tools(agent_conf),
+        tool_timeout=300,
+        retries=5,
     )
 
     @agent.instructions
@@ -93,6 +99,9 @@ def build_agent(agent_conf: Document):
 
         if agent_conf.enable_data_overview_tool:
             instructions.append(DATA_OVERVIEW_SYSTEM_INSTRUCTION)
+
+        if agent_conf.enable_thinking_tool:
+            instructions.append(THINKING_TOOL_SYSTEM_INSTRUCTION)
 
         instructions = "\n".join(instructions)
         return f"# TOOL Usage \n{instructions}"
