@@ -54,7 +54,7 @@ def run():
     ui_event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
-        on_complete=lambda run: save_agent_run(converstion=conversation, run=run),
+        on_complete=lambda run: on_complete(converstion=conversation, run=run),
     )
 
     return Response(
@@ -102,7 +102,7 @@ def run_a2ui():
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
-        on_complete=lambda run: save_agent_run(converstion=conversation, run=run),
+        on_complete=lambda run: on_complete(converstion=conversation, run=run),
     )
 
     # Serialized the [UIMessage] to string which text stream
@@ -120,11 +120,21 @@ def run_a2ui():
     )
 
 
-def save_agent_run(converstion: AIConversation, run: AgentRun):
+def on_complete(converstion: AIConversation, run: AgentRun):
+    save_history(converstion, run)
+
+    if not converstion.title == "New Chat":
+        last_message = run.all_messages()[-1]
+        converstion.title = last_message.text[:20]
+        converstion.save()
+
+    frappe.db.commit()
+
+
+def save_history(converstion: AIConversation, run: AgentRun):
     messages_json = to_jsonable_python(run.all_messages_json())
     converstion.set_history(messages_json)
     converstion.save()
-    frappe.db.commit()
 
 
 @frappe.whitelist()
