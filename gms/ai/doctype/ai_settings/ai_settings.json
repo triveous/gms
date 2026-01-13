@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-10 14:44:25.373254",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "knowledgebase_section",
+  "milvus_db_url",
+  "milvus_db_token",
+  "docling_serve_url",
+  "milvus_kb_collection",
+  "contextual_chunking_model_config",
+  "contextual_chunking_model",
+  "contextualization_prompt",
+  "chunk_token_size"
+ ],
+ "fields": [
+  {
+   "fieldname": "knowledgebase_section",
+   "fieldtype": "Section Break",
+   "label": "KnowledgeBase"
+  },
+  {
+   "fieldname": "milvus_db_url",
+   "fieldtype": "Data",
+   "label": "Milvus DB Url"
+  },
+  {
+   "fieldname": "docling_serve_url",
+   "fieldtype": "Data",
+   "label": "Docling Serve Url"
+  },
+  {
+   "fieldname": "milvus_db_token",
+   "fieldtype": "Data",
+   "label": "Milvus DB Token"
+  },
+  {
+   "fieldname": "milvus_kb_collection",
+   "fieldtype": "Data",
+   "label": "Milvus KB Collection"
+  },
+  {
+   "fieldname": "contextual_chunking_model_config",
+   "fieldtype": "JSON",
+   "label": "Contextual Chunking Model Config"
+  },
+  {
+   "fieldname": "contextual_chunking_model",
+   "fieldtype": "Select",
+   "label": "Contextual Chunking Model",
+   "options": "gemini-2.0-flash\ngemini-2.5-flash"
+  },
+  {
+   "fieldname": "contextualization_prompt",
+   "fieldtype": "Markdown Editor",
+   "label": "Contextualization Prompt"
+  },
+  {
+   "fieldname": "chunk_token_size",
+   "fieldtype": "Int",
+   "label": "Chunk Token Size"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-01-11 19:19:42.679139",
+ "modified_by": "Administrator",
+ "module": "AI",
+ "name": "AI Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

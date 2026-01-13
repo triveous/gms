@@ -12,7 +12,8 @@
   "processing_last_attempted_at",
   "metadata",
   "error_log",
-  "failure_reason"
+  "failure_reason",
+  "transformed_file"
  ],
  "fields": [
   {
@@ -64,12 +65,18 @@
    "fieldname": "processing_last_attempted_at",
    "fieldtype": "Datetime",
    "label": "Processing Last Attempted At"
+  },
+  {
+   "fieldname": "transformed_file",
+   "fieldtype": "Link",
+   "label": "Transformed File",
+   "options": "File"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-21 17:46:55.777349",
+ "modified": "2026-01-10 04:43:34.505784",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Document",

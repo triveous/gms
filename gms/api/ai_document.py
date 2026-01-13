@@ -1,9 +1,8 @@
-from io import BytesIO
-
 import frappe
 from frappe.utils import now
-from gms.ai.agents.knowledge_base import KnowledgeBase
 from gms.ai.doctype.ai_document.ai_document import AIDocument
+from gms.ai.kb.docling import DoclingIngestionManager
+from gms.ai.kb.knowledge_base import KnowledgeBase
 
 
 def after_insert(doc: AIDocument, method):
@@ -55,21 +54,20 @@ def index_ai_document(ai_document_id: str, forced: bool):
     """
 
     ai_document = frappe.get_doc("AI Document", ai_document_id)
-    if ai_document.processing_status == "Success":
-        frappe.log("Document already processed")
-        return
+    if not forced:
+        if ai_document.processing_status == "Success":
+            frappe.log("Document already processed")
+            return
 
-    if ai_document.processing_attempts >= 20 and not forced:
-        frappe.log("Max Retry Attempted")
-        return
+        if ai_document.processing_attempts >= 20 and not forced:
+            frappe.log("Max Retry Attempted")
+            return
 
     file_id = ai_document.file
     file = frappe.get_doc("File", ai_document.file)
 
     def process():
         doc_meta = {"file_id": file_id, "ai_document_id": ai_document_id}
-        root_path = "Home/IndexedFiles"
-
         if file.file_type != "PDF":
             return False, "File Should be PDF Only"
 
@@ -102,11 +100,10 @@ def index_ai_document(ai_document_id: str, forced: bool):
             doc_meta["project_id"] = project_id
             doc_meta["project_milestone_id"] = milestone_id
 
-        # Assuming file_id always exist, it should be greater than 1
-        full_path = file.get_full_path()
-        buf = BytesIO(open(full_path, "rb").read())
-        kb = KnowledgeBase(root_path=root_path)
-        kb.ingest(buf, file.file_name, doc_meta=doc_meta)
+        frappe.log("Ingesting")
+        DoclingIngestionManager().request_docling_document(
+            original_file=file, ai_document=ai_document, doc_meta=doc_meta
+        )
         frappe.log("Ingested")
         return True, None
 
@@ -141,7 +138,7 @@ def index_ai_document(ai_document_id: str, forced: bool):
 
 def remove_from_index(ai_document_id: str, file_id: str):
     kb = KnowledgeBase()
-    kb.remove(
+    kb.remove_documents(
         expr=f'ai_document_id == "{ai_document_id}" or file_id == "{file_id}"',
     )
     frappe.log("Unindexed")

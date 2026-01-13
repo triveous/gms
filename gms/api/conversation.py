@@ -1,5 +1,7 @@
 import frappe
-from gms.ai.agents.agent_builder import SupportDependencies, build_agent
+from gms.ai.agents.builder import build_agent
+from gms.ai.agents.state import AgentState
+from gms.ai.agents.ui import CustomUIEventAdapter
 from gms.ai.doctype.ai_conversation.ai_conversation import AIConversation
 from gms.utils.iterator import stream_async_iterator
 from pydantic import ValidationError
@@ -13,13 +15,12 @@ from werkzeug.wrappers import Response
 # Build RAG agent
 def build_rag_agent():
     rag_agent_name = frappe.get_single_value("GMS Settings", "rag_agent")
-    return build_agent(rag_agent_name)
+    agent_conf = frappe.get_doc("AI Agent", rag_agent_name)
+    return agent_conf, build_agent(agent_conf)
 
 
 @frappe.whitelist()
 def run():
-    from gms.ai.agents.knowledge_base import KnowledgeBase
-
     if not frappe.request.data:
         frappe.throw("Missing details to initiate a chat")
         return
@@ -42,20 +43,22 @@ def run():
 
     # Create a convertor which convert the model response to UIMessage responnse
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
-    agent = build_rag_agent()
+    agent_conf, agent = build_rag_agent()
+    custom_ui_events_adapter = CustomUIEventAdapter()
+
     adapter = VercelAIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = SupportDependencies(kb=KnowledgeBase())
-    event_stream = adapter.run_stream(
-        deps=deps,
-        message_history=message_history,
-        on_complete=lambda run: save_agent_run(converstion=conversation, run=run),
+    deps = AgentState(
+        agent_conf=agent_conf, events=custom_ui_events_adapter.get_sender()
     )
 
-    # Serialized the [UIMessage] to string which text stream
-    sse_event_stream = adapter.encode_stream(event_stream)
+    ui_event_stream = adapter.run_stream(
+        deps=deps,
+        message_history=message_history,
+        on_complete=lambda run: on_complete(converstion=conversation, run=run),
+    )
 
     return Response(
-        stream_async_iterator(sse_event_stream),
+        custom_ui_events_adapter.run_sync(ui_event_stream, adapter.encode_stream),
         status=200,
         headers={
             "Content-Type": "text/event-stream",
@@ -68,7 +71,6 @@ def run():
 
 @frappe.whitelist()
 def run_a2ui():
-    from gms.ai.agents.knowledge_base import KnowledgeBase
     from pydantic_ai.ui.ag_ui import AGUIAdapter
 
     if not frappe.request.data:
@@ -93,13 +95,14 @@ def run_a2ui():
 
     # Create a convertor which convert the model response to UIMessage responnse
     accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
-    agent = build_rag_agent()
+    agent_conf, agent = build_rag_agent()
     adapter = AGUIAdapter(agent=agent, run_input=run_input, accept=accept)
-    deps = SupportDependencies(kb=KnowledgeBase())
+    deps = AgentState(agent_conf=agent_conf)
+
     event_stream = adapter.run_stream(
         deps=deps,
         message_history=message_history,
-        on_complete=lambda run: save_agent_run(converstion=conversation, run=run),
+        on_complete=lambda run: on_complete(converstion=conversation, run=run),
     )
 
     # Serialized the [UIMessage] to string which text stream
@@ -117,11 +120,21 @@ def run_a2ui():
     )
 
 
-def save_agent_run(converstion: AIConversation, run: AgentRun):
+def on_complete(converstion: AIConversation, run: AgentRun):
+    save_history(converstion, run)
+
+    if not converstion.title == "New Chat":
+        last_message = run.all_messages()[-1]
+        converstion.title = last_message.text[:20]
+        converstion.save()
+
+    frappe.db.commit()
+
+
+def save_history(converstion: AIConversation, run: AgentRun):
     messages_json = to_jsonable_python(run.all_messages_json())
     converstion.set_history(messages_json)
     converstion.save()
-    frappe.db.commit()
 
 
 @frappe.whitelist()
