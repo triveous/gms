@@ -40,9 +40,9 @@ interface Conversation {
 }
 
 const commonQuestions = [
-    'How much budget utilised by each project',
-    'Projects having more than 5 MRL Metric',
-    'Summarise Goals and Impact of the CoE'
+    'PI & Co-PI for Oral lesions project',
+    'Summarise goals & impact of TANUH projects',
+    'Projects having more than 5 TRL'
 ];
 
 const ChatPanel: React.FC = () => {
