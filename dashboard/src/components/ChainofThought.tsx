@@ -6,6 +6,7 @@ import {
   ChainOfThoughtHeader,
   ChainOfThoughtStep,
 } from '@/components/ai-elements/chain-of-thought';
+import { Shimmer } from '@/components/ai-elements/shimmer';
 
 interface Thought {
   title: string;
@@ -29,12 +30,11 @@ const ChainOfThoughtComponent = ({
 }) => {
   const isComplete = status === 'ready';
   const headerText = isComplete ? 'Thoughts' : 'Thinking';
-  const isOpen = isComplete ? false : open;
 
   return (
-    <ChainOfThought defaultOpen={isOpen}>
-      <ChainOfThoughtHeader>
-        {headerText}
+    <ChainOfThought key={isComplete ? 'complete' : 'active'} defaultOpen={isComplete ? false : open}>
+      <ChainOfThoughtHeader >
+        {headerText === 'Thinking' ? <Shimmer>{headerText}</Shimmer> : headerText}
       </ChainOfThoughtHeader>
       <ChainOfThoughtContent>
         {data?.thoughts && (
@@ -42,7 +42,7 @@ const ChainOfThoughtComponent = ({
             <ChainOfThoughtStep
               key={index}
               icon={<div className="rounded-xl bg-[#CBD5E1] h-[8px] w-[8px] mt-0.5"></div>}
-              className="text-[12px] text-[#475569] font-[400]"
+              className="text-[14px] text-[#475569] font-[400]"
               label={thought.title}
               // description={thought.thought}
               status="complete"
