@@ -375,11 +375,11 @@ const ChatPanel: React.FC = () => {
                 </div>
 
                 {/* Main Content Container */}
-                <div className="flex flex-col gap-4 p-6 pt-0 flex-1 overflow-hidden ">
+                <div className="flex flex-col gap-4 p-6 pt-0 flex-1 overflow-hidden">
                     
                     {/* Conversation Area */}
                     <Conversation className="relative flex-1 w-[399px] min-h-0 remove-scrollbar">
-                        <ConversationContent className='h-full w-full flex flex-col-reverse overflow-y-auto bg-[#F8FAFC] rounded-md p-4 remove-scrollbar'>
+                        <ConversationContent className='h-full max-w-[399px] flex flex-col-reverse overflow-y-auto bg-[#F8FAFC] rounded-md p-4 remove-scrollbar'>
                             {(status === 'error'||error) && (
                                 <div className="flex w-full justify-center py-2">
                                     <span className="text-sm text-red-500">Oops! Something went wrong. Please try again.</span>
@@ -421,7 +421,7 @@ const ChatPanel: React.FC = () => {
                             ) : (
                             ([...renderMessages].reverse().map((message) => (
                                 <MessageBranch defaultBranch={0} key={message.id}>
-                                    <MessageBranchContent  className="flex flex-col-reverse gap-6">
+                                    <MessageBranchContent  className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
                                         <Message
                                             from={message.role}
                                             key={message.id}
@@ -434,7 +434,7 @@ const ChatPanel: React.FC = () => {
                                                             'rounded-2xl px-4 py-2.5 transition-all duration-300',
                                                             message.role === 'user' 
                                                                 ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
-                                                                : 'rounded-tl-none p-1'
+                                                                : 'rounded-tl-none p-1 w-full max-w-full overflow-hidden'
                                                         )}>
                                                             {part.type === 'data-thinking' && (
                                                                 <ChainOfThoughtComponent open={true} data={part.data} status={status} />

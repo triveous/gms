@@ -42,7 +42,7 @@ const ChainOfThoughtComponent = ({
             <ChainOfThoughtStep
               key={index}
               icon={<div className="rounded-xl bg-[#CBD5E1] h-[8px] w-[8px] mt-0.5"></div>}
-              className="text-[12px] text-[#475569] font-[400]"
+              className="text-[14px] text-[#475569] font-[400]"
               label={thought.title}
               // description={thought.thought}
               status="complete"

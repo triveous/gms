@@ -128,4 +128,54 @@
   .remove-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  /* Handle wide tables in chat without stretching containers */
+  [data-streamdown] {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  [data-streamdown] table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+  }
+
+  [data-streamdown] table th,
+  [data-streamdown] table td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    max-width: 240px;
+    min-width: 60px;
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    vertical-align: top;
+    text-align: left;
+    font-size: 13px;
+  }
+
+  /* Specific handling for headers to ensure they don't stretch */
+  [data-streamdown] table th {
+    background-color: var(--secondary);
+    font-weight: 600;
+  }
+
+  /* Custom scrollbar for tables */
+  [data-streamdown] table::-webkit-scrollbar {
+    height: 4px;
+  }
+  [data-streamdown] table::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  [data-streamdown] table::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  [data-streamdown] table::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
