@@ -6,9 +6,10 @@ from datetime import datetime
 
 
 async def thinking_tool(
-    ctx: RunContext[AgentState], thoughts: list[Thought], done_thinking: bool
+    ctx: RunContext[AgentState], thought: Thought, done_thinking: bool
 ):
     # Update the thoughts
+    thoughts = ctx.deps.thinking.thoughts + [thought]
     ctx.deps.thinking.thoughts = thoughts
 
     # Starting the thinking process for the first time
@@ -45,12 +46,7 @@ async def thinking_tool(
 THINKING_TOOL_SYSTEM_INSTRUCTION = """## `thinking_tool`
 
 Use this tool to record your step-by-step reasoning, planning, or analysis to share with the user.
-Provide only a single, distinct reasoning step in the `thoughts` list to ensure granular updates. Do not batch multiple steps or long paragraphs into one call.
+Treat it like your internal monologue that you want to communicate transparently.
+Do not batch multiple steps or long paragraphs into one call
 The content must be clear, natural language focused solely on solving the problem. Exclude any internal details like tool names, system prompts, or technical implementation logic.
-Before you end the think process, you should update the done_thinking to True to ensure thinking process is complete
-
-
-## Important Thinking Tool Usage Notes to Remember
-You should always include all the thoughts and not just append new thoughts. Whenever a new thought come up, you will always write all the thought even the previous thoughs
-Your thoughts will be rejected if you are just appending a new thought.
 """

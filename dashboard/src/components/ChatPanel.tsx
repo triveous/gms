@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useChatContext } from '@/contexts/ChatContext';
 import { Button } from '@/components/ui/button';
 import { X, Clock, MessageSquare, Loader2 } from 'lucide-react';
@@ -54,12 +54,9 @@ const ChatPanel: React.FC = () => {
     const [isHistoryRequested, setIsHistoryRequested] = useState(false);
     const [activeToolUI, setActiveToolUI] = useState<{ tool: string; state: string; query?: string } | null>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    
+    // Synced directly with SDK messages
     const [renderMessages, setRenderMessages] = useState<any[]>([]);
-    const renderedAssistantIds = useRef<Set<string>>(new Set());
-    const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
-    const activeStreamRef = useRef<string | null>(null);
-    const [currentThinkingData, setCurrentThinkingData] = useState<any>(null);
-
 
     const { data: conversationListData, mutate: refetchConversationList } = useFrappeGetDocList<Conversation>('AI Conversation', {
         fields: ['name', 'title'],
@@ -68,7 +65,6 @@ const ChatPanel: React.FC = () => {
             order: 'desc'
         }
     });
-
 
     const { messages, sendMessage, status, setMessages, addToolOutput, error } = useChat({
         id: currentConversaionId,
@@ -82,14 +78,11 @@ const ChatPanel: React.FC = () => {
             if (dataPart.type === 'data-conversation-title') {
                 refetchConversationList();
             }
-            if (dataPart.type === 'data-thinking') {
-                setCurrentThinkingData(dataPart.data);
-            }
+            // Removed 'data-thinking' handling here because it's handled in the message loop
         },
 
         async onToolCall({ toolCall }) {
             if (toolCall.toolName === 'research-tool') {
-                // Type casting args as any to access query safely, assuming it matches the structure
                 const query = toolCall?.input?.query;
                 setActiveToolUI({ 
                     tool: 'research-tool', 
@@ -98,7 +91,6 @@ const ChatPanel: React.FC = () => {
                 });
             }
 
-            // Tool output can be empty – backend logic continues
             addToolOutput({
                 tool: toolCall.toolName,
                 toolCallId: toolCall.toolCallId,
@@ -106,30 +98,23 @@ const ChatPanel: React.FC = () => {
             });
         } 
     });
-    // Centralized auto-scroll - scrolls to bottom whenever content changes
+
+    // Centralized auto-scroll
     useEffect(() => {
         if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = 0; // 0 = top in flex-col-reverse = bottom visually
+            chatContainerRef.current.scrollTop = 0; 
         }
     }, [messages, activeToolUI]);
 
     useEffect(() => {
         if (status === 'ready') {
             setActiveToolUI(null);
-            setCurrentThinkingData(null);
         }
     }, [status]);
 
+    // Sync UI with SDK messages immediately
     useEffect(() => {
-        setTimeout(() => {
-            setRenderMessages(prev => {
-                const newUserMessages = messages.filter(m => 
-                    m.role === 'user' && !prev.some(pm => pm.id === m.id)
-                );
-                if (newUserMessages.length === 0) return prev;
-                return [...prev, ...newUserMessages];
-            });
-        }, 0);
+        setRenderMessages(messages);
     }, [messages]);
 
 
@@ -139,8 +124,7 @@ const ChatPanel: React.FC = () => {
         (currentConversaionId && isHistoryRequested) ? undefined : null
     );
 
-
-
+    // Handle History Loading
     useEffect(() => {
         if (conversationHistoryData?.message && !initialMessage) {
             const transformedMessages = conversationHistoryData.message
@@ -150,107 +134,16 @@ const ChatPanel: React.FC = () => {
                     parts: msg.parts
                 }))
                 .filter((msg: { id: string; role: string; parts: Record<string, unknown>[] }) => {
-                    // Always keep user messages
                     if (msg.role === 'user') return true;
-                    // For assistant messages, only keep if they contain actual text content
-                    return msg.parts?.some((p) => p['type'] === 'text');
+                    // Keep text or thinking parts
+                    return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-thinking');
                 });
             
-            setTimeout(() => {
-                // Mark all assistant messages from history as already rendered
-                transformedMessages.forEach((msg: { id: string; role: string }) => {
-                    if (msg.role === 'assistant') {
-                        renderedAssistantIds.current.add(msg.id);
-                    }
-                });
-                
-                setMessages(transformedMessages);
-                setRenderMessages(transformedMessages);
-                setIsHistoryRequested(false);
-            }, 0);
+            setMessages(transformedMessages);
+            setIsHistoryRequested(false);
         }
     }, [conversationHistoryData, setMessages, initialMessage, isHistoryRequested]);
 
-
-    const streamResponse = useCallback(
-        async (messageId: string, parts: any[]) => {
-            if (activeStreamRef.current === messageId) return;
-            activeStreamRef.current = messageId;
-            
-            const textPart = parts.find(p => p.type === 'text');
-            const otherParts = parts.filter(p => !['text', 'ui'].includes(p.type));
-            
-            const content = textPart?.text || '';
-            const words = content.split(' ');
-            let currentContent = '';
-            setStreamingMessageId(messageId);
-            
-            // Insert assistant message into renderMessages with other parts and empty text part
-            setRenderMessages(prev => [
-                ...prev,
-                {
-                    id: messageId,
-                    role: 'assistant',
-                    parts: [...otherParts, { type: 'text', text: '' }],
-                },
-            ]);
-
-            for (const word of words) {
-                // 🚫 cancel if another stream started
-                if (activeStreamRef.current !== messageId) return;
-                currentContent += (currentContent ? ' ' : '') + word;
-
-                setRenderMessages(prev =>
-                    prev.map(msg =>
-                    msg.id === messageId
-                        ? {
-                            ...msg,
-                            parts: [...otherParts, { type: 'text', text: currentContent }],
-                        }
-                        : msg
-                    )
-                );
-
-                await new Promise(res => setTimeout(res, Math.random() * 100 + 50));
-            }
-            activeStreamRef.current = null;
-            setStreamingMessageId(null);
-        },
-        []
-    );
-
-
-    useEffect(() => {
-        const last = messages.at(-1);
-        if (!last) return;
-
-        // Only act on assistant messages
-        if (last.role !== 'assistant') return;
-
-        // Only after model is done generating
-        if (status !== 'ready') return;
-
-        // Prevent re-streaming the same message
-        if (renderedAssistantIds.current.has(last.id)) return;
-
-        renderedAssistantIds.current.add(last.id);
-
-        const hasText = last.parts?.some(p => p.type === 'text');
-        
-        if (!hasText) {
-             // If no text, just set it in renderMessages directly (e.g. only thinking)
-             setTimeout(() => {
-                 setRenderMessages(prev => [...prev, last]);
-             }, 0);
-             return;
-        }
-
-        setTimeout(() => {
-             streamResponse(last.id, last.parts);
-        }, 0);
-    }, [messages, status, streamResponse]);
-
-    
 
     const initializeConversation = async () => {
         const doc = await createDoc('AI Conversation', {
@@ -263,14 +156,12 @@ const ChatPanel: React.FC = () => {
 
     const handleNewChat = async () => {
         if (messages.length === 0) return;
-        setRenderMessages([]); // Clear for new chat
-        renderedAssistantIds.current.clear();
+        setRenderMessages([]); 
         await initializeConversation();
     };
 
     const handleConversationClick = (conversationId: string) => {
-        setRenderMessages([]); // Clear before switching
-        renderedAssistantIds.current.clear();
+        setRenderMessages([]); 
         setCurrentConversaionId(conversationId);
         setIsHistoryRequested(true);
     };
@@ -281,17 +172,13 @@ const ChatPanel: React.FC = () => {
         if (!hasText) {
             return;
         }
-        // Case 1: Conversation already exists → send immediately
         if (currentConversaionId) {
             sendMessage({ text: message.text });
             setInput('');
             return;
         }
-                // First message: store it and wait
         setInitialMessage(message.text);
         setInput('');
-
-        // Case 2: No conversation → create it first
         await initializeConversation()
     };
 
@@ -305,7 +192,6 @@ const ChatPanel: React.FC = () => {
 
     return (
         <>
-            {/* Backdrop - only visible on screens below 1280px */}
             {isChatOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 xl:hidden"
@@ -313,7 +199,6 @@ const ChatPanel: React.FC = () => {
                 />
             )}
             
-            {/* Chat Panel */}
             <div
                 className={cn(
                     'fixed top-0 right-0 h-screen min-w-[447px] bg-background transition-transform duration-300 ease-in-out z-50',
@@ -386,18 +271,7 @@ const ChatPanel: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Real-time thinking display during streaming */}
-                            {(status === 'streaming' || status === 'submitted') && currentThinkingData && (
-                                <MessageBranch defaultBranch={0} key="current-thinking">
-                                    <MessageBranchContent className="flex flex-col-reverse gap-6">
-                                        <Message from="assistant" key="thinking-message">
-                                            <MessageContent className="rounded-2xl px-4 py-2.5 transition-all duration-300 rounded-tl-none p-1">
-                                                <ChainOfThoughtComponent open={true} data={currentThinkingData} status={status} />
-                                            </MessageContent>
-                                        </Message>
-                                    </MessageBranchContent>
-                                </MessageBranch>
-                            )}
+                            {/* REMOVED DUPLICATE THINKING BLOCK HERE */}
 
                             {renderMessages.length === 0 ? (
                                 <div className="flex flex-col items-end text-right mb-2">
@@ -426,29 +300,42 @@ const ChatPanel: React.FC = () => {
                                             from={message.role}
                                             key={message.id}
                                         >
-                                            {message.parts.map((part, index) => {
-                                                if (part.type === 'text' || part.type === 'data-thinking') {
-                                                    console.log('Part in loop:', part);
-                                                    return (
-                                                        <MessageContent key={index} className={cn(
-                                                            'rounded-2xl px-4 py-2.5 transition-all duration-300',
-                                                            message.role === 'user' 
-                                                                ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
-                                                                : 'rounded-tl-none p-1'
-                                                        )}>
-                                                            {part.type === 'data-thinking' && (
-                                                                <ChainOfThoughtComponent open={true} data={part.data} status={status} />
-                                                            )}
-                                                            {part.type === 'text' && (
-                                                                <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                                    {part.text}
-                                                                </MessageResponse>
-                                                            )}
-                                                        </MessageContent>
-                                                    );
-                                                }
-                                                return null;
-                                            })}
+                                            {/* This loop handles both TEXT and THINKING parts */}
+                                            {message.parts ? (
+                                                message.parts.map((part: any, index: number) => {
+                                                    if (part.type === 'text' || part.type === 'data-thinking') {
+                                                        return (
+                                                            <MessageContent key={index} className={cn(
+                                                                'rounded-2xl px-4 py-2.5 transition-all duration-300',
+                                                                message.role === 'user' 
+                                                                    ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
+                                                                    : 'rounded-tl-none p-1'
+                                                            )}>
+                                                                {part.type === 'data-thinking' && (
+                                                                    <ChainOfThoughtComponent open={true} data={part.data} status={status} />
+                                                                )}
+                                                                {part.type === 'text' && (
+                                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                        {part.text}
+                                                                    </MessageResponse>
+                                                                )}
+                                                            </MessageContent>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })
+                                            ) : (
+                                                <MessageContent className={cn(
+                                                    'rounded-2xl px-4 py-2.5 transition-all duration-300',
+                                                    message.role === 'user' 
+                                                        ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
+                                                        : 'rounded-tl-none p-1'
+                                                )}>
+                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                        {message.content}
+                                                    </MessageResponse>
+                                                </MessageContent>
+                                            )}
                                         </Message>
                                     </MessageBranchContent>
                                 </MessageBranch>
@@ -458,8 +345,8 @@ const ChatPanel: React.FC = () => {
                             <ConversationScrollButton />
                             <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-[#F8FAFC] to-transparent pointer-events-none rounded-t-md z-10" />
                         </Conversation>
-                    {/* Input Area */}
                     
+                    {/* Input Area */}
                     <div className="relative">
                         <div className="relative rounded-lg p-[1px] bg-gradient-to-r from-orange-400 to-pink-400">
                             <PromptInput 
@@ -495,14 +382,10 @@ const ChatPanel: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                
             </div>
-            
         </div>
         </>
     );
 };
 
 export default ChatPanel;
-
-
