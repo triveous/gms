@@ -39,11 +39,13 @@ interface Conversation {
     title: string;
 }
 
-const commonQuestions = [
-    'PI & Co-PI for Oral lesions project',
-    'Summarise goals & impact of TANUH projects',
-    'Projects having more than 5 TRL'
-];
+interface QuickQuestion {
+    name: string;
+    question: string;
+    creation: string;
+}
+
+
 
 const ChatPanel: React.FC = () => {
     const { isChatOpen, closeChat } = useChatContext();
@@ -99,6 +101,9 @@ const ChatPanel: React.FC = () => {
         } 
     });
 
+    const { data: quickQuestionsData } = useFrappeGetCall('gms.api.quick_questions.get_all_quick_questions');
+    const quickQuestions: QuickQuestion[] = quickQuestionsData?.message?.questions || [];
+    console.log('quickQuestions ----> ',quickQuestions)
     // Centralized auto-scroll
     useEffect(() => {
         if (chatContainerRef.current) {
@@ -279,15 +284,15 @@ const ChatPanel: React.FC = () => {
                                     <p className="text-xs text-muted-foreground mb-4">You can pick can from below or ask anything in chat.</p>
 
                                     <div className="w-full space-y-2">
-                                        {commonQuestions.map((q) => (
+                                        {quickQuestions.map((q: QuickQuestion) => (
                                             <Button
-                                                key={q}
+                                                key={q.name}
                                                 variant="outline"
                                                 className="w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal shadow-none"
-                                                onClick={() => handleSend({ text: q, files: [] })}
+                                                onClick={() => handleSend({ text: q.question, files: [] })}
                                                 disabled={status !== 'ready'}
                                             >
-                                                {q}
+                                                {q.question}
                                             </Button>
                                         ))}
                                     </div>

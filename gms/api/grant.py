@@ -294,3 +294,163 @@ def get_single_grant_info(grant_id):
 	grant_data["budget_utilization"] = budget_utilization_list
 
 	return grant_data
+
+
+@frappe.whitelist(allow_guest=True)
+def get_grant_kpi_metrics_by_quarter(grant_id, quarter_value):
+    if not grant_id or not quarter_value:
+        frappe.throw("Grant ID and quarter_value are required")
+
+    # ----------------------------
+    # Utility: Quarter range
+    # ----------------------------
+    def quarter_start_end(q, fy_start_year):
+        fy_end_year = fy_start_year + 1
+
+        if q == "Q1":
+            return date(fy_start_year, 4, 1), date(fy_start_year, 6, 30)
+        if q == "Q2":
+            return date(fy_start_year, 7, 1), date(fy_start_year, 9, 30)
+        if q == "Q3":
+            return date(fy_start_year, 10, 1), date(fy_start_year, 12, 31)
+        if q == "Q4":
+            return date(fy_end_year, 1, 1), date(fy_end_year, 3, 31)
+
+        return None, None
+
+    # ----------------------------
+    # STEP 1: Fetch all KPI Metric docs for grant
+    # ----------------------------
+    kpi_docs = frappe.get_all(
+        "Grant KPI Metrics",
+        fields=[
+            "name",
+            "title",
+            "grant",
+            "period_start",
+            "period_end",
+            "kpi_computed_at",
+            "creation",
+        ],
+        filters={"grant": grant_id},
+        order_by="creation desc",
+    )
+    print("kpi_docs ----> ",kpi_docs)
+ 
+    if not kpi_docs:
+        return {
+            "grant": grant_id,
+            "quarter_value": quarter_value,
+            "kpis": [],
+        }
+
+    # ----------------------------
+    # STEP 2: Filter by quarter / FY
+    # ----------------------------
+    filtered_kpi_ids = []
+
+    if quarter_value.startswith("Q"):
+        try:
+            parts = quarter_value.split("-")
+            q = parts[0]
+            fy_start_year = int(parts[1])
+        except Exception:
+            frappe.throw("Invalid quarter_value format")
+
+        start_date, end_date = quarter_start_end(q, fy_start_year)
+    else:
+        try:
+            fy_start_year = int(quarter_value.split("-")[0])
+            fy_end_year = int(quarter_value.split("-")[1])
+        except Exception:
+            frappe.throw("Invalid quarter_value format")
+
+        start_date = date(fy_start_year, 4, 1)
+        end_date = date(fy_end_year, 3, 31)
+
+    for kpi in kpi_docs:
+        ps = safe_parse_date(kpi.get("period_start"))
+        if ps and start_date <= ps <= end_date:
+            filtered_kpi_ids.append(kpi["name"])
+
+    if not filtered_kpi_ids:
+        return {
+            "grant": grant_id,
+            "quarter_value": quarter_value,
+            "kpis": [],
+        }
+
+    # ----------------------------
+    # STEP 3: Fetch KPI Metric Values (child table)
+    # ----------------------------
+    metric_rows = frappe.get_all(
+        "Grant Metric Value",
+        fields=[
+            "parent",
+            "title",
+            "type",
+            "data_string",
+            "data_int",
+            "data_float",
+            "data_boolean",
+        ],
+        filters={
+            "parenttype": "Grant KPI Metrics",
+            "parent": ["in", filtered_kpi_ids],
+        },
+    )
+
+    # ----------------------------
+    # STEP 4: Group KPI values per KPI document
+    # ----------------------------
+    metrics_map = {}
+
+    for row in metric_rows:
+        pid = row["parent"]
+        title = row["title"]
+
+        mtype = (row.get("type") or "").lower()
+        if mtype == "int":
+            value = row.get("data_int")
+        elif mtype == "float":
+            value = row.get("data_float")
+        elif mtype == "boolean":
+            value = row.get("data_boolean")
+        else:
+            value = row.get("data_string")
+
+        metrics_map.setdefault(pid, {})
+
+        # SPECIAL HANDLING: Highlights / Lowlights
+        if title in ("High lights", "Low lights"):
+            metrics_map[pid].setdefault(title, [])
+            if value:
+                metrics_map[pid][title].append(value)
+        else:
+            metrics_map[pid][title] = value
+
+    # ----------------------------
+    # STEP 5: Final response structure
+    # ----------------------------
+    result = []
+
+    for kpi in kpi_docs:
+        if kpi["name"] not in filtered_kpi_ids:
+            continue
+
+        result.append(
+            {
+                "kpi_id": kpi["name"],
+                "title": kpi.get("title"),
+                "period_start": kpi.get("period_start"),
+                "period_end": kpi.get("period_end"),
+                "kpi_computed_at": kpi.get("kpi_computed_at"),
+                "metrics": metrics_map.get(kpi["name"], {}),
+            }
+        )
+
+    return {
+        "grant": grant_id,
+        "quarter_value": quarter_value,
+        "kpis": result,
+    }

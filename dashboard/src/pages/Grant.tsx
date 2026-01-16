@@ -128,10 +128,38 @@ export default function Grant() {
     }
     },[grantData])
 
+    const { data: grantKpiMetrics, mutate: mutateKpiMetrics } = useFrappeGetCall(
+        'gms.api.grant.get_grant_kpi_metrics_by_quarter',
+        {
+            grant_id: grantId,
+            quarter_value: effectiveSelectedPeriod,
+        },
+        effectiveSelectedPeriod ? undefined : null
+    );
+
+    const metricsData = useMemo(() => {
+        const highlights: string[] = [];
+        const lowlights: string[] = [];
+
+        if (grantKpiMetrics?.message?.kpis) {
+            grantKpiMetrics.message.kpis.forEach((kpi: any) => {
+                if (kpi.metrics?.['High lights']) {
+                    highlights.push(...kpi.metrics['High lights']);
+                }
+                if (kpi.metrics?.['Low lights']) {
+                    lowlights.push(...kpi.metrics['Low lights']);
+                }
+            });
+        }
+
+        return { highlights, lowlights };
+    }, [grantKpiMetrics]);
+
 
     useEffect(() => {
         console.log('selectedPeriod ----> ',selectedPeriod)
         mutate()
+        mutateKpiMetrics()
     }, [selectedPeriod, effectiveSelectedPeriod]);
 
 
@@ -156,6 +184,8 @@ export default function Grant() {
         },
         comparisonQuarter ? undefined : null
     );
+
+
 
     const getForecastMetric = (key: 'Forecasted Amount' | 'Budget Spent' | 'Fund Utilization') => {
         if (forecastComparisonRes?.message?.metrics?.[key]) {
@@ -431,30 +461,16 @@ export default function Grant() {
                         <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
                             <h3>Highlights</h3>
                             <div className="flex flex-col gap-4">
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Rapid AI Model Validation: Across verticals (Diabetes, Chest X-Ray, AMR), AI models have achieved high diagnostic accuracy (88-94%) in validation phases, with the Diabetes Risk Stratification model completing training ahead of schedule.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Successful Field Deployment: Critical pilot programs are now operational on the ground, including the Voice-Bot for ASHA workers in 9 sites and the Cough-Against-TB app reaching recruitment targets, demonstrating effective lab-to-field translation.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Infrastructure & Compliance Readiness: Major backend milestones were met, including the integration of the Medically Aware LLM Master Agent, successful 3rd party security audits, and the installation of high-end imaging infrastructure (ZEISS CLARUS) at IISc.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Clinical Adoption Velocity: Strong clinical engagement is evident, with 100% of PHC staff trained for Diabetes management and automated AMR pipelines stabilizing in 4 critical care departments at AIIMS, exceeding initial adoption targets.
-                                    </p>
-                                </div>
+                                {metricsData.highlights.length > 0 ? (
+                                    metricsData.highlights.map((highlight, index) => (
+                                        <div key={index} className="flex gap-2 items-start">
+                                            <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
+                                            <p>{highlight}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm italic">No highlights available for this period.</p>
+                                )}
                             </div>
                         </div>
 
@@ -462,30 +478,16 @@ export default function Grant() {
                         <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
                             <h3>Lowlights</h3>
                             <div className="flex flex-col gap-4 ">
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Hardware Supply Chain Disruptions: Critical procurement delays (Tablets/Servers) have severely impacted the Oral Cancer screening timeline, causing a 75% shortfall in screening targets for the quarter.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Data Collection Bottlenecks: Multiple projects (STI/Leprosy, COPD, CARDIAC-India) are facing delays in data collection due to slow ethics approvals, unsigned consortium agreements, or patient device adherence issues.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Last-Mile Usability Issues: Field feedback indicates usability friction in rural settings, specifically regarding questionnaire length (Breast Cancer), non-intuitive app interfaces for older devices (Platform), and dialect recognition gaps (Conversational AI).
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Operational Lag in Multi-Center Projects: Large consortium projects like CARDIAC-India are struggling with administrative coordination, leading to significant under-utilization of budget and delayed deployment at partner sites.
-                                    </p>
-                                </div>
+                                {metricsData.lowlights.length > 0 ? (
+                                    metricsData.lowlights.map((lowlight, index) => (
+                                        <div key={index} className="flex gap-2 items-start">
+                                            <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
+                                            <p>{lowlight}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm italic">No lowlights available for this period.</p>
+                                )}
                             </div>
                         </div>
 
