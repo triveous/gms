@@ -2,12 +2,15 @@ import frappe
 from gms.ai.agents.tools.kb import read_knowledge_base
 from langchain_core.documents.base import Document
 from pydantic_ai import Agent, RunContext, Tool
+from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 from gms.ai.agents.state import AgentState
 from gms.ai.agents.tools.todos import TODO_SYSTEM_INSTRUCTION, write_todos
 from gms.ai.agents.tools.db import data_overview, DATA_OVERVIEW_SYSTEM_INSTRUCTION
 from gms.ai.agents.tools.thinking import thinking_tool, THINKING_TOOL_SYSTEM_INSTRUCTION
 from gms.ai.doctype.ai_agent.ai_agent import AIAgent as AIAgentConf
 from gms.ai.doctype.ai_subagent.ai_subagent import AISubAgent as AISubAgentConf
+from httpx import AsyncClient
 
 BASE_PROMPT = "In order to complete the objective that the user asks of you, you have access to a number of standard tools."
 
@@ -37,7 +40,7 @@ def prepare_tools(conf: AIAgentConf):
     tools = []
 
     if conf.enable_thinking_tool:
-        tools.append(Tool(thinking_tool, takes_ctx=True))
+        tools.append(Tool(thinking_tool, takes_ctx=True, sequential=True))
 
     if conf.enable_todo_tools:
         tools.append(Tool(write_todos, takes_ctx=True))
@@ -84,7 +87,10 @@ def build_agent_with_id(agent_id: str):
 # Prepare an agent and its tools as well all the sub-agents recursively
 def build_agent(agent_conf: Document):
     agent = Agent(
-        model=agent_conf.model,
+        model=GoogleModel(
+            agent_conf.model.split(":")[1],
+            provider=GoogleProvider(http_client=AsyncClient()),
+        ),
         deps_type=AgentState,
         model_settings=agent_conf.model_setting_dict,
         instructions=agent_conf.instruction + "\n\n" + BASE_PROMPT
