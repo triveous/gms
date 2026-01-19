@@ -15,12 +15,12 @@ app_color = "purple"
 
 # Each item in the list will be shown as an app in the apps page
 add_to_apps_screen = [
-	{
-		"name": "gms",
-		"logo": "/assets/gms/logo.png",
-		"title": "AIKAM",
-		"route": "/dashboard",
-        "has_permission": "gms.api.permission.has_app_permission"
+    {
+        "name": "gms",
+        "logo": "/assets/gms/logo.png",
+        "title": "AIKAM",
+        "route": "/dashboard",
+        "has_permission": "gms.api.permission.has_app_permission",
     }
 ]
 
@@ -126,9 +126,13 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
 # }
 #
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+has_permission = {
+    "Grant": "gms.permission.grant_has_permission",
+    "Grant Project": "gms.permission.grant_project_has_permission",
+    "Grant Project Milestone": "gms.permission.grant_project_milestone_has_permission",
+    "Grant Organization": "gms.permission.grant_organization_has_permission",
+    "Grant Organization Member": "gms.permission.grant_organization_member_has_permission",
+}
 
 # DocType Class
 # ---------------
@@ -254,9 +258,8 @@ ignore_links_on_delete = ["AI Document"]
 website_route_rules = [
     # Handle root URL
     {"from_route": "/", "to_route": "index"},
-    
     # Existing dashboard routing (KEEP THIS)
-    {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}
+    {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"},
 ]
 
 override_whitelisted_methods = {
