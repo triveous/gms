@@ -7,7 +7,8 @@
  "field_order": [
   "info_section",
   "user",
-  "organization"
+  "organization",
+  "is_admin"
  ],
  "fields": [
   {
@@ -30,12 +31,18 @@
    "label": "Organization",
    "options": "Grant Organization",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_admin",
+   "fieldtype": "Check",
+   "label": "Is Admin"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 20:28:24.667011",
+ "modified": "2026-01-20 02:46:07.106205",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant Organization Member",
