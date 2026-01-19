@@ -15,7 +15,11 @@
   "approval_identifier",
   "approved_amount",
   "lead_organization",
-  "dpr"
+  "dpr",
+  "manage_section",
+  "grantee_organization",
+  "coordinator",
+  "funder"
  ],
  "fields": [
   {
@@ -85,12 +89,38 @@
    "fieldname": "dpr",
    "fieldtype": "Attach",
    "label": "DPR"
+  },
+  {
+   "fieldname": "manage_section",
+   "fieldtype": "Section Break",
+   "label": "Managing Organization"
+  },
+  {
+   "fieldname": "grantee_organization",
+   "fieldtype": "Link",
+   "label": "Grantee",
+   "link_filters": "[[\"Grant Organization\",\"organization_type\",\"=\",\"Grantee\"]]",
+   "options": "Grant Organization"
+  },
+  {
+   "fieldname": "coordinator",
+   "fieldtype": "Link",
+   "label": "Coordinator",
+   "link_filters": "[[\"Grant Organization\",\"organization_type\",\"=\",\"Coordinator\"]]",
+   "options": "Grant Organization"
+  },
+  {
+   "fieldname": "funder",
+   "fieldtype": "Link",
+   "label": "Funder",
+   "link_filters": "[[\"Grant Organization\",\"organization_type\",\"=\",\"Funder\"]]",
+   "options": "Grant Organization"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-22 02:58:10.939360",
+ "modified": "2026-01-19 20:28:12.075218",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant",
@@ -106,6 +136,30 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS User",
    "share": 1,
    "write": 1
   }
