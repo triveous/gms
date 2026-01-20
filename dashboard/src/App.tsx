@@ -11,6 +11,8 @@ import Grant from './pages/Grant'
 import Grants from './pages/Grants'
 import NotFound from './pages/NotFound'
 import Project from './pages/Project'
+import PartnersList from './pages/PartnersList'
+import ContributorsList from './pages/ContributorsList'
 
 function DashboardLayout() {
 	return <ProtectedRoute>
@@ -35,7 +37,11 @@ function App() {
 						<Route element={<DashboardLayout />}>
 							<Route index element={<Grants />} />
 							<Route path=":grantId" element={<Grant />} />
+							<Route path=":grantId/partners" element={<PartnersList scope="grant" />} />
+							<Route path=":grantId/contributors" element={<ContributorsList scope="grant" />} />
 							<Route path=":grantId/:projectId" element={<Project />} />
+							<Route path=":grantId/:projectId/partners" element={<PartnersList scope="project" />} />
+							<Route path=":grantId/:projectId/contributors" element={<ContributorsList scope="project" />} />
 						</Route>
 						<Route path="*" element={<NotFound />} />
 					</Routes>
