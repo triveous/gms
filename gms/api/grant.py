@@ -294,3 +294,242 @@ def get_single_grant_info(grant_id):
 	grant_data["budget_utilization"] = budget_utilization_list
 
 	return grant_data
+
+
+@frappe.whitelist(allow_guest=True)
+def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
+	"""
+	Fetch DPR and milestone attachment files for a grant.
+	
+	Returns:
+	- DPR file from Grant document
+	- Milestone attachment files with types based on milestone type:
+	  * "Planning Update" -> "Yearly Plans"
+	  * "Progress Update" -> "Progress Report"
+	
+	Parameters:
+	- grant_id: Grant ID
+	- file_types: Comma-separated file types to filter (optional)
+	- sort_by: Sort by "file_name" (optional)
+	
+	Returns: List of all files (DPR + milestone attachments) with file_types list
+	"""
+	if not grant_id:
+		frappe.throw("Grant ID is required")
+	
+	# ----------------------------
+	# STEP 1: Verify grant exists
+	# ----------------------------
+	grant = frappe.db.get_value(
+		"Grant",
+		grant_id,
+		["name", "dpr"],
+		as_dict=True,
+	)
+	if not grant:
+		frappe.throw("Grant not found")
+	
+	files_list = []
+	file_types_set = set()
+	
+	# Parse file_types filter
+	file_types_filter = []
+	if file_types:
+		if isinstance(file_types, str):
+			file_types_filter = [ft.strip() for ft in file_types.split(",")]
+		else:
+			file_types_filter = file_types
+	
+	# ----------------------------
+	# STEP 2: Fetch DPR file if exists
+	# ----------------------------
+	dpr_file_name = grant.get("dpr")
+	
+	if dpr_file_name:
+		file_doc = frappe.db.get_value(
+			"File",
+			{"file_url": dpr_file_name},
+			["name", "file_name", "creation"],
+			as_dict=True,
+		)
+		
+		if file_doc:
+			file_name = file_doc.get("file_name")
+			creation_date = file_doc.get("creation")
+			file_id = file_doc.get("name")
+			
+			# Parse creation date
+			try:
+				if isinstance(creation_date, str):
+					uploaded_on = datetime.strptime(creation_date, "%Y-%m-%d %H:%M:%S.%f").strftime("%d-%m-%Y, %I:%M%p (IST)")
+				else:
+					uploaded_on = creation_date.strftime("%d-%m-%Y, %I:%M%p (IST)")
+			except Exception:
+				uploaded_on = str(creation_date)
+			
+			file_type = "DPR"
+			file_types_set.add(file_type)
+			
+			# Apply file_type filter
+			if file_types_filter and file_type not in file_types_filter:
+				pass
+			else:
+				files_list.append({
+					"file_id": file_id,
+					"file_name": file_name,
+					"uploaded_on": uploaded_on,
+					"file_type": file_type,
+					"milestone_id": None,
+					"milestone_type": None,
+					"download_link": dpr_file_name,
+				})
+	
+	# ----------------------------
+	# STEP 3: Fetch all projects for this grant
+	# ----------------------------
+	projects = frappe.get_all(
+		"Grant Project",
+		fields=["name"],
+		filters={"grant": grant_id},
+	)
+	
+	if projects:
+		project_ids = [p["name"] for p in projects]
+		
+		# ----------------------------
+		# STEP 4: Fetch all milestones for these projects with dates
+		# ----------------------------
+		milestones = frappe.get_all(
+			"Grant Project Milestone",
+			fields=["name", "milestone_type", "period_start", "period_end"],
+			filters={"project": ["in", project_ids]},
+		)
+		
+		if milestones:
+			milestone_ids = [m["name"] for m in milestones]
+			milestone_type_map = {m["name"]: m.get("milestone_type") for m in milestones}
+			milestone_dates_map = {
+				m["name"]: {
+					"start_date": m.get("period_start"),
+					"end_date": m.get("period_end")
+				} for m in milestones
+			}
+			
+			# ----------------------------
+			# STEP 5: Fetch all attachments for these milestones
+			# ----------------------------
+			milestone_files = frappe.get_all(
+				"File",
+				fields=["name", "file_name", "creation", "attached_to_name", "file_url"],
+				filters={
+					"attached_to_doctype": "Grant Project Milestone",
+					"attached_to_name": ["in", milestone_ids],
+				},
+				order_by="creation desc",
+			)
+			
+			# ----------------------------
+			# STEP 6: Add milestone files with appropriate file types and dates
+			# ----------------------------
+			for file_doc in milestone_files:
+				file_name = file_doc.get("file_name")
+				creation_date = file_doc.get("creation")
+				file_id = file_doc.get("name")
+				milestone_id = file_doc.get("attached_to_name")
+				file_url = file_doc.get("file_url")
+				
+				# Get milestone type and dates
+				milestone_type = milestone_type_map.get(milestone_id)
+				milestone_dates = milestone_dates_map.get(milestone_id, {})
+				start_date = milestone_dates.get("start_date")
+				end_date = milestone_dates.get("end_date")
+				
+				# Determine file_type based on milestone type
+				if milestone_type == "Planning Update":
+					file_type = "Yearly Plans"
+				elif milestone_type == "Progress Update":
+					file_type = "Progress Report"
+				else:
+					file_type = "Document"
+				
+				file_types_set.add(file_type)
+				
+				# Apply file_type filter
+				if file_types_filter and file_type not in file_types_filter:
+					continue
+				
+				# Parse creation date
+				try:
+					if isinstance(creation_date, str):
+						uploaded_on = datetime.strptime(creation_date, "%Y-%m-%d %H:%M:%S.%f").strftime("%d-%m-%Y, %I:%M%p (IST)")
+					else:
+						uploaded_on = creation_date.strftime("%d-%m-%Y, %I:%M%p (IST)")
+				except Exception:
+					uploaded_on = str(creation_date)
+				
+				# Format dates
+				try:
+					if isinstance(start_date, str):
+						start_date = start_date.split(" ")[0]  # Remove time if present
+					else:
+						start_date = str(start_date) if start_date else None
+				except Exception:
+					pass
+				
+				try:
+					if isinstance(end_date, str):
+						end_date = end_date.split(" ")[0]  # Remove time if present
+					else:
+						end_date = str(end_date) if end_date else None
+				except Exception:
+					pass
+				
+				files_list.append({
+					"file_id": file_id,
+					"file_name": file_name,
+					"uploaded_on": uploaded_on,
+					"file_type": file_type,
+					"milestone_id": milestone_id,
+					"milestone_type": milestone_type,
+					"start_date": start_date,
+					"end_date": end_date,
+					"download_link": file_url,
+				})
+	
+	# Define file type priority (DPR first, then Yearly Plans, then Progress Report)
+	file_type_priority = {
+		"DPR": 0,
+		"Yearly Plans": 1,
+		"Progress Report": 2,
+	}
+	
+	# Helper function to parse uploaded_on date for sorting
+	def parse_uploaded_date(date_str):
+		try:
+			# Format: "01-04-2025, 12:22PM (IST)"
+			date_part = date_str.split(",")[0]  # "01-04-2025"
+			time_part = date_str.split(",")[1].strip().replace(" (IST)", "")  # "12:22PM"
+			return datetime.strptime(f"{date_part} {time_part}", "%d-%m-%Y %I:%M%p")
+		except:
+			return datetime.min
+	
+	# Apply sorting
+	if sort_by == "file_name":
+		# Sort by type priority first, then by file name
+		files_list.sort(key=lambda x: (file_type_priority.get(x["file_type"], 3), x["file_name"].lower()))
+	else:
+		# Default: sort by type priority first, then by upload date (newest first)
+		files_list.sort(key=lambda x: (file_type_priority.get(x["file_type"], 3), -parse_uploaded_date(x["uploaded_on"]).timestamp()))
+	
+	# Convert file_types_set to sorted list
+	all_file_types = sorted(list(file_types_set))
+	
+	return {
+		"grant_id": grant_id,
+		"files": files_list,
+		"total_count": len(files_list),
+		"file_types": all_file_types,
+	}
+
+
+
