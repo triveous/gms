@@ -1,8 +1,11 @@
-from typing import AsyncIterator, Callable
 import asyncio
+from typing import Any, AsyncIterator, Callable
 
 from anyio import create_memory_object_stream
 from anyio.streams.memory import MemoryObjectSendStream
+from pydantic_ai.ui.vercel_ai import (
+    VercelAIAdapter as BaseVercelAIAdapter,
+)
 from pydantic_ai.ui.vercel_ai.response_types import BaseChunk
 
 
@@ -58,9 +61,7 @@ class CustomUIEventAdapter:
 
 def get_event_loop():
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            raise RuntimeError
+        loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -76,3 +77,77 @@ def stream_async_iterator(async_iter: AsyncIterator[str]):
             yield loop.run_until_complete(anext(async_iter))
     except StopAsyncIteration:
         return
+
+
+class VercelAIAdapterCustom(BaseVercelAIAdapter):
+    @staticmethod
+    def set_loop():
+        """Ensure that there is a running event loop."""
+        get_event_loop()
+
+    def run_encoded_sync(
+        self,
+        dep_builder: Callable[[MemoryObjectSendStream], Any],
+        message_history,
+        on_complete,
+    ):
+        return stream_async_iterator(
+            self.run_encoded(dep_builder, message_history, on_complete)
+        )
+
+    def run_encoded(
+        self,
+        dep_builder: Callable[[MemoryObjectSendStream], Any],
+        message_history,
+        on_complete,
+    ):
+        # This ensures that we have an event loop
+        get_event_loop()
+
+        send_stream, receive_stream = create_memory_object_stream()
+
+        # Pipe the encoded stream to the send stream
+        async def runner():
+            # Build the deps
+            deps = dep_builder(send_stream)
+
+            # Run the agent to generate UI Events
+            ui_stream = self.run_stream(
+                deps=deps, message_history=message_history, on_complete=on_complete
+            )
+
+            # Encoded the UI stream to SSE format
+            encoded_ui_stream = self.encode_stream(ui_stream)
+
+            # Till the stream is open, forward the encoded events to send_stream
+            # Other event which are to forwared to send_stream can be done in the tools using the same async await
+            async with send_stream:
+                async for event in encoded_ui_stream:
+                    await send_stream.send(event)
+
+        async def stream_generator() -> AsyncIterator[str]:
+            # FIX: Use asyncio.create_task instead of create_task_group.
+            # This schedules the runner on the loop without binding it
+            # to the specific Task ID of the first chunk's execution.
+            runner_task = asyncio.create_task(runner())
+
+            try:
+                async with receive_stream:
+                    async for event in receive_stream:
+                        yield event
+            except Exception as e:
+                print(e)
+                # If the WSGI client disconnects or an error occurs reading,
+                # cancel the runner to prevent orphaned tasks.
+                runner_task.cancel()
+                raise
+
+            # Optional: Await the runner to propagate any exceptions that happened inside it
+            # If the stream finished normally, this will return immediately.
+            try:
+                await runner_task
+            except Exception as e:
+                print(e)
+                raise
+
+        return stream_generator()

@@ -39,8 +39,8 @@ async def thinking_tool(
                 data={},
             )
         )
-    print(f"Thoughts saved {thoughts}")
-    return f"Thoughts saved {thoughts}"
+    print(f"Thoughts saved {thought}")
+    return f"Thoughts saved {thought}"
 
 
 THINKING_TOOL_SYSTEM_INSTRUCTION = """## `thinking_tool`
