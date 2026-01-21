@@ -16,10 +16,7 @@
   "approved_amount",
   "lead_organization",
   "dpr",
-  "manage_section",
-  "grantee_organization",
-  "coordinator",
-  "funder"
+  "contributors"
  ],
  "fields": [
   {
@@ -91,36 +88,16 @@
    "label": "DPR"
   },
   {
-   "fieldname": "manage_section",
-   "fieldtype": "Section Break",
-   "label": "Managing Organization"
-  },
-  {
-   "fieldname": "grantee_organization",
-   "fieldtype": "Link",
-   "label": "Grantee",
-   "link_filters": "[[\"Grant Organization\",\"organization_type\",\"=\",\"Grantee\"]]",
-   "options": "Grant Organization"
-  },
-  {
-   "fieldname": "coordinator",
-   "fieldtype": "Link",
-   "label": "Coordinator",
-   "link_filters": "[[\"Grant Organization\",\"organization_type\",\"=\",\"Coordinator\"]]",
-   "options": "Grant Organization"
-  },
-  {
-   "fieldname": "funder",
-   "fieldtype": "Link",
-   "label": "Funder",
-   "link_filters": "[[\"Grant Organization\",\"organization_type\",\"=\",\"Funder\"]]",
-   "options": "Grant Organization"
+   "fieldname": "contributors",
+   "fieldtype": "Table",
+   "label": "Contributors",
+   "options": "Grant Contributor"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 20:28:12.075218",
+ "modified": "2026-01-21 17:32:52.192264",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant",
