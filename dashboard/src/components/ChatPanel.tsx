@@ -138,7 +138,7 @@ const ChatPanel: React.FC = () => {
                     // Keep text or thinking parts
                     return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-thinking');
                 });
-            
+  
             setMessages(transformedMessages);
             setIsHistoryRequested(false);
         }
@@ -188,7 +188,6 @@ const ChatPanel: React.FC = () => {
             setTimeout(() => setInitialMessage(null), 0);
         }
     }, [currentConversaionId, initialMessage, sendMessage]);
-
 
     return (
         <>
@@ -293,53 +292,63 @@ const ChatPanel: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                            ([...renderMessages].reverse().map((message) => (
-                                <MessageBranch defaultBranch={0} key={message.id}>
-                                    <MessageBranchContent  className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
-                                        <Message
-                                            from={message.role}
-                                            key={message.id}
-                                        >
-                                            {/* This loop handles both TEXT and THINKING parts */}
-                                            {message.parts ? (
-                                                message.parts.map((part: any, index: number) => {
-                                                    if (part.type === 'text' || part.type === 'data-thinking') {
-                                                        return (
-                                                            <MessageContent key={index} className={cn(
+                                (() => {
+                                    const lastMessage = renderMessages[renderMessages.length - 1];
+                                    return [...renderMessages].reverse().map((message) => {
+                                        const isLastMessage = message.id === lastMessage?.id;
+                                        const isAssistant = message.role === 'assistant';
+                                        const messageStatus = (isLastMessage && isAssistant) ? status : 'ready';
+
+                                        return (
+                                            <MessageBranch defaultBranch={0} key={message.id}>
+                                                <MessageBranchContent className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
+                                                    <Message from={message.role} key={message.id}>
+                                                        {message.parts ? (
+                                                            message.parts.map((part: any, index: number) => {
+                                                                if (part.type === 'text' || part.type === 'data-thinking') {
+                                                                    return (
+                                                                        <MessageContent key={index} className={cn(
+                                                                            'rounded-2xl px-4 py-2.5 transition-all duration-300',
+                                                                            message.role === 'user' 
+                                                                                ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
+                                                                                : 'rounded-tl-none p-1'
+                                                                        )}>
+                                                                            {part.type === 'data-thinking' && (
+                                                                                <ChainOfThoughtComponent 
+                                                                                    key={`cot-${message.id}-${index}`}
+                                                                                    open={true} 
+                                                                                    data={part.data} 
+                                                                                    status={messageStatus} 
+                                                                                />
+                                                                            )}
+                                                                            {part.type === 'text' && (
+                                                                                <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                                    {part.text}
+                                                                                </MessageResponse>
+                                                                            )}
+                                                                        </MessageContent>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })
+                                                        ) : (
+                                                            <MessageContent className={cn(
                                                                 'rounded-2xl px-4 py-2.5 transition-all duration-300',
                                                                 message.role === 'user' 
                                                                     ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
                                                                     : 'rounded-tl-none p-1'
                                                             )}>
-                                                                {part.type === 'data-thinking' && (
-                                                                    <ChainOfThoughtComponent open={true} data={part.data} status={status} />
-                                                                )}
-                                                                {part.type === 'text' && (
-                                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                                        {part.text}
-                                                                    </MessageResponse>
-                                                                )}
+                                                                <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                    {message.content}
+                                                                </MessageResponse>
                                                             </MessageContent>
-                                                        );
-                                                    }
-                                                    return null;
-                                                })
-                                            ) : (
-                                                <MessageContent className={cn(
-                                                    'rounded-2xl px-4 py-2.5 transition-all duration-300',
-                                                    message.role === 'user' 
-                                                        ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
-                                                        : 'rounded-tl-none p-1'
-                                                )}>
-                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                        {message.content}
-                                                    </MessageResponse>
-                                                </MessageContent>
-                                            )}
-                                        </Message>
-                                    </MessageBranchContent>
-                                </MessageBranch>
-                            )))
+                                                        )}
+                                                    </Message>
+                                                </MessageBranchContent>
+                                            </MessageBranch>
+                                        );
+                                    });
+                                })()
                             )}
                             </ConversationContent>
                             <ConversationScrollButton />
