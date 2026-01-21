@@ -1,6 +1,7 @@
 
-import { FileText, Download } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { UploadedFilesDialog } from './UploadedFilesDialog';
 import {
   Select,
   SelectContent,
@@ -17,9 +18,18 @@ interface DashboardFilterProps {
   setSelectedPeriod: (value: string) => void;
   comparisonQuarter: string;
   setComparisonQuarter: (value: string) => void;
+  showUploadedFiles?: boolean;
 }
 
-const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPeriod, comparisonQuarter, setComparisonQuarter }: DashboardFilterProps) => {
+const DashboardFilterComponent = ({ 
+  quartersList, 
+  selectedPeriod, 
+  setSelectedPeriod, 
+  comparisonQuarter, 
+  setComparisonQuarter,
+  showUploadedFiles = true
+}: DashboardFilterProps) => {
+  const { projectId } = useParams();
 
 
   // flatten for easier filtering
@@ -118,69 +128,8 @@ const DashboardFilterComponent = ({ quartersList, selectedPeriod, setSelectedPer
         </Select>
       </div>
 
-      {/* ---------------- THIRD SELECT (Download) ---------------- */}
-      <Select disabled={true}>
-        <SelectTrigger className="h-10 bg-card text-foreground" >
-          <div className="flex items-center gap-2">
-            <SelectValue placeholder="Download Reports" />
-          </div>
-        </SelectTrigger>
-
-        <SelectContent align="end" className="w-[280px]">
-          <SelectGroup>
-            <SelectLabel className="font-normal text-xs text-muted-foreground py-2 px-3">Quarterly progress reports</SelectLabel>
-            {[
-              'Q2 Jul-Sep 2025',
-              'Q1 Apr-Jun 2025',
-              'Q4 Jan-Mar 2024',
-              'Q3 Oct-Dec 2024',
-              'Q2 Jul-Sep 2024',
-              'Q1 Apr-Jun 2024'
-            ].map((report) => (
-              <SelectItem key={report} value={report} className="cursor-pointer focus:bg-accent py-2 px-3">
-                <div className="flex items-center justify-between w-full gap-4">
-                  <div className="flex items-center gap-3 text-foreground font-medium text-sm">
-                    <FileText className="w-4 h-4 stroke-[1.5px]" />
-                    <span>{report}</span>
-                  </div>
-                  <Download className="w-4 h-4 text-muted-foreground stroke-[1.5px]" />
-                </div>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <div className="h-[1px] bg-border mx-1 my-1" />
-          <SelectGroup>
-            <SelectLabel className="font-normal text-xs text-muted-foreground py-2 px-3">Yearly Plans</SelectLabel>
-            {[
-              '2025 2026',
-              '2024 2025'
-            ].map((plan) => (
-              <SelectItem key={plan} value={plan} className="cursor-pointer focus:bg-accent py-2 px-3">
-                <div className="flex items-center justify-between w-full gap-4">
-                  <div className="flex items-center gap-3 text-foreground font-medium text-sm">
-                    <FileText className="w-4 h-4 stroke-[1.5px]" />
-                    <span>{plan}</span>
-                  </div>
-                  <Download className="w-4 h-4 text-muted-foreground stroke-[1.5px]" />
-                </div>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <div className="h-[1px] bg-border mx-1 my-1" />
-          <SelectGroup>
-            <SelectLabel className="font-normal text-xs text-muted-foreground py-2 px-3">Dashboard (Current view)</SelectLabel>
-            <SelectItem value="pdf" className="cursor-pointer focus:bg-accent py-2 px-3">
-              <div className="flex items-center justify-between w-full gap-4">
-                <div className="flex items-center gap-3 text-foreground font-medium text-sm">
-                  <FileText className="w-4 h-4 stroke-[1.5px]" />
-                  <span>Download as PDF</span>
-                </div>
-                <Download className="w-4 h-4 text-muted-foreground stroke-[1.5px]" />
-              </div>
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      {/* ---------------- THIRD SELECT (Uploaded Files) ---------------- */}
+      {!projectId && showUploadedFiles && <UploadedFilesDialog />}
 
     </div>
   );
