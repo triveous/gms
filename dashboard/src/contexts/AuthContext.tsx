@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     await frappeLogout()
-    window.location.href = '/login#login'
+    window.location.href = '/login'
   }
 
   return (
