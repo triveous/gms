@@ -211,7 +211,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
     total_budget_spent = 0
 
     if milestone_ids:
-        metric_rows = frappe.get_list(
+        metric_rows = frappe.get_all(
             "Grant Metric Value",
             fields=[
                 "parent",
@@ -558,7 +558,7 @@ def compare_quarter_metrics_grant_forcast(grant_id, quarter_value, compare_with)
                 "Budget Spent": 0,
             }
 
-        rows = frappe.get_list(
+        rows = frappe.get_all(
             "Grant Metric Value",
             fields=["parent", "title", "type", "data_string", "data_int", "data_float"],
             filters={"parent": ["in", milestone_ids]},
@@ -733,7 +733,7 @@ def compare_quarter_metrics_grant_project_spesific(
             if not milestone_ids:
                 return base
 
-            rows = frappe.get_list(
+            rows = frappe.get_all(
                 "Grant Metric Value",
                 fields=["title", "type", "data_int", "data_float", "data_string"],
                 filters={"parent": ["in", milestone_ids]},
