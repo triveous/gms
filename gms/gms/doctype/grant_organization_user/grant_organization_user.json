@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2026-01-19 16:40:12.297019",
+ "creation": "2026-01-21 16:35:06.886261",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -42,10 +42,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-20 02:46:07.106205",
+ "modified": "2026-01-21 16:36:59.510739",
  "modified_by": "Administrator",
  "module": "GMS",
- "name": "Grant Organization Member",
+ "name": "Grant Organization User",
  "owner": "Administrator",
  "permissions": [
   {
@@ -57,30 +57,6 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "GMS Admin",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "GMS User",
    "share": 1,
    "write": 1
   }

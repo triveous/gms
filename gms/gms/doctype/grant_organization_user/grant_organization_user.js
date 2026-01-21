@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Triveous and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("Grant Organization Member", {
+// frappe.ui.form.on("Grant Organization User", {
 // 	refresh(frm) {
 
 // 	},

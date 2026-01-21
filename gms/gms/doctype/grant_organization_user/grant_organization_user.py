@@ -3,17 +3,16 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe import _
 
 
-class GrantOrganizationMember(Document):
+class GrantOrganizationUser(Document):
     def validate(self):
         self.ensure_single_membership()
         self.validate_other_admins_exist()
 
     def ensure_single_membership(self):
         existing_member = frappe.db.exists(
-            "Grant Organization Member",
+            "Grant Organization User",
             {
                 "user": self.user,
                 "name": ["!=", self.name],
@@ -27,7 +26,7 @@ class GrantOrganizationMember(Document):
     def validate_other_admins_exist(self):
         if self.has_value_changed("is_admin") and not self.is_admin:
             other_admins = frappe.db.count(
-                "Grant Organization Member",
+                "Grant Organization User",
                 {
                     "organization": self.organization,
                     "is_admin": True,

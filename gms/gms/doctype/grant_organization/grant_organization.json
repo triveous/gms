@@ -8,8 +8,7 @@
   "info_section",
   "organization_name",
   "organization_logo",
-  "website",
-  "organization_type"
+  "website"
  ],
  "fields": [
   {
@@ -33,19 +32,13 @@
    "fieldname": "website",
    "fieldtype": "Data",
    "label": "Website"
-  },
-  {
-   "fieldname": "organization_type",
-   "fieldtype": "Select",
-   "label": "Organization Type",
-   "options": "Funder\nCoordinator\nGrantee"
   }
  ],
  "grid_page_length": 50,
  "icon": "organization_logo",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 19:01:58.595183",
+ "modified": "2026-01-21 16:31:04.778495",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant Organization",

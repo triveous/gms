@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestGrantOrganizationMember(FrappeTestCase):
+class TestGrantOrganizationUser(FrappeTestCase):
 	pass
