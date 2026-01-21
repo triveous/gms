@@ -139,7 +139,6 @@ def grant_project_milestone_query(user):
         fields=["name"],
     )
     project_names = [frappe.db.escape(project.name) for project in projects]
-    print(project_names)
     return f"`tabGrant Project Milestone`.project in ({', '.join(project_names)})"
 
 

@@ -128,7 +128,7 @@ def get_single_grant_info(grant_id):
     total_budget = 0.0
 
     if milestone_ids:
-        metric_rows = frappe.get_list(
+        metric_rows = frappe.get_all(
             "Grant Metric Value",
             fields=[
                 "title",

@@ -84,13 +84,13 @@ def get_grants_with_related(limit=50):
     budget_spent_per_grant = {}
 
     if milestone_ids:
-        metric_rows = frappe.get_list(
+        metric_rows = frappe.get_all(
             "Grant Metric Value",
             fields=["parent", "title", "data_string"],
             filters={"parent": ["in", milestone_ids]},
             limit_page_length=0,
         )
-        # print("MATRIC ---> ", metric_rows)
+        # print("MATRIC ---> ", metric_rows)do
         for row in metric_rows:
             if row.title != "Budget Spent":
                 continue
