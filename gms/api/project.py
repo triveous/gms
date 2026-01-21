@@ -185,7 +185,7 @@ def get_project_details(project_id):
 
         q, fy_label, title, value, quarter_start, fy_start = quarter_info_from_date(dt)
 
-        metric_rows = frappe.get_list(
+        metric_rows = frappe.get_all(
             "Grant Metric Value",
             fields=["title", "data_float"],
             filters={"parent": m["name"]},
@@ -284,7 +284,7 @@ def get_project_details(project_id):
         # -------------------------------------------------------------------
         # 1️⃣ BUDGET SPENT (comes from Grant Metric Value)
         # -------------------------------------------------------------------
-        metric_rows = frappe.get_list(
+        metric_rows = frappe.get_all(
             "Grant Metric Value",
             fields=[
                 "title",
@@ -454,7 +454,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
     milestone_map = {
         m["name"]: m for m in milestones if m["name"] in filtered_milestone_ids
     }
-    artifacts = frappe.get_list(
+    artifacts = frappe.get_all(
         "Grant Project Milestone Artifact",
         fields=["parent", "title", "link"],
         filters={"parent": ["in", filtered_milestone_ids]},
@@ -470,7 +470,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
     total_budget_spent = 0
 
     if filtered_milestone_ids:
-        metric_rows = frappe.get_list(
+        metric_rows = frappe.get_all(
             "Grant Metric Value",
             fields=[
                 "parent",
@@ -533,7 +533,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
 
     if filtered_milestone_ids:
         # Fetch Partners
-        partner_rows = frappe.get_list(
+        partner_rows = frappe.get_all(
             "Grant Project Milestone Partner",
             fields=["parent", "partner", "responsibility"],
             filters={
@@ -545,7 +545,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
         )
 
         # Fetch Contributors
-        contributor_rows = frappe.get_list(
+        contributor_rows = frappe.get_all(
             "Grant Project Milestone Contributor",
             fields=["parent", "team_member", "role"],
             filters={
@@ -571,7 +571,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
 
         # Fetch Grant Partner titles
         if partner_ids:
-            partners = frappe.get_list(
+            partners = frappe.get_all(
                 "Grant Partner",
                 fields=["name", "title"],
                 filters={"name": ["in", list(partner_ids)]},
@@ -581,7 +581,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
 
         # Fetch Grant Member titles
         if member_ids:
-            members = frappe.get_list(
+            members = frappe.get_all(
                 "Grant Member",
                 fields=["name", "name1 as title"],
                 filters={"name": ["in", list(member_ids)]},
@@ -805,7 +805,7 @@ def compare_quarter_metrics_grant(project_id, quarter_value, compare_with):
                 "AI Breakthroughs": 0,
             }
 
-        rows = frappe.get_list(
+        rows = frappe.get_all(
             "Grant Metric Value",
             fields=["parent", "title", "type", "data_string", "data_int", "data_float"],
             filters={"parent": ["in", milestone_ids]},

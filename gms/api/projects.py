@@ -100,7 +100,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
     # STEP 1 a: Fetch Projects Lead Organizations
     # ----------------------------
     partner_ids = [p["lead_organization"] for p in projects if p["lead_organization"]]
-    partners = frappe.get_list(
+    partners = frappe.get_all(
         "Grant Partner",
         filters={"name": ["in", partner_ids]},
         fields=["name", "title"],
@@ -263,7 +263,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
 
     if milestone_ids:
         # Fetch Partners
-        partner_rows = frappe.get_list(
+        partner_rows = frappe.get_all(
             "Grant Project Milestone Partner",
             fields=["parent", "partner", "responsibility"],
             filters={
@@ -275,7 +275,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
         )
 
         # Fetch Contributors
-        contributor_rows = frappe.get_list(
+        contributor_rows = frappe.get_all(
             "Grant Project Milestone Contributor",
             fields=["parent", "team_member", "role"],
             filters={
@@ -301,7 +301,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
 
         # Fetch Grant Partner titles
         if partner_ids:
-            partners = frappe.get_list(
+            partners = frappe.get_all(
                 "Grant Partner",
                 fields=["name", "title"],
                 filters={"name": ["in", list(partner_ids)]},
@@ -311,7 +311,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
 
         # Fetch Grant Member titles
         if member_ids:
-            members = frappe.get_list(
+            members = frappe.get_all(
                 "Grant Member",
                 fields=["name", "name1 as title"],
                 filters={"name": ["in", list(member_ids)]},
