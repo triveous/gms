@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-21 17:30:38.783476",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "info_section",
+  "contribution_type",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "info_section",
+   "fieldtype": "Section Break",
+   "label": "Info"
+  },
+  {
+   "columns": 2,
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Organization",
+   "options": "Grant Organization",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "contribution_type",
+   "fieldtype": "Select",
+   "label": "Contribution Type",
+   "options": "Funder\nCoordinator\nGrantee",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-21 17:35:19.944526",
+ "modified_by": "Administrator",
+ "module": "GMS",
+ "name": "Grant Contributor",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

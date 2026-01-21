@@ -126,7 +126,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "max_attachments": 5,
- "modified": "2025-12-17 20:22:44.371493",
+ "modified": "2026-01-19 20:27:39.635054",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant Project Milestone",
@@ -141,6 +141,30 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS User",
    "share": 1,
    "write": 1
   }

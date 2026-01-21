@@ -15,12 +15,12 @@ app_color = "purple"
 
 # Each item in the list will be shown as an app in the apps page
 add_to_apps_screen = [
-	{
-		"name": "gms",
-		"logo": "/assets/gms/logo.png",
-		"title": "AIKAM",
-		"route": "/dashboard",
-        "has_permission": "gms.api.permission.has_app_permission"
+    {
+        "name": "gms",
+        "logo": "/assets/gms/logo.png",
+        "title": "AIKAM",
+        "route": "/dashboard",
+        "has_permission": "gms.api.permission.has_app_permission",
     }
 ]
 
@@ -122,13 +122,19 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
+permission_query_conditions = {
+    "Grant": "gms.permission.grant_query",
+    "Grant Project": "gms.permission.grant_project_query",
+    "Grant Project Milestone": "gms.permission.grant_project_milestone_query",
+    "Grant Organization User": "gms.permission.grant_organization_user_query",
+}
 #
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+has_permission = {
+    "Grant": "gms.permission.grant_has_permission",
+    "Grant Project": "gms.permission.grant_project_has_permission",
+    "Grant Project Milestone": "gms.permission.grant_project_milestone_has_permission",
+    "Grant Organization User": "gms.permission.grant_organization_user_has_permission",
+}
 
 # DocType Class
 # ---------------
@@ -254,9 +260,8 @@ ignore_links_on_delete = ["AI Document"]
 website_route_rules = [
     # Handle root URL
     {"from_route": "/", "to_route": "index"},
-    
     # Existing dashboard routing (KEEP THIS)
-    {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"}
+    {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"},
 ]
 
 override_whitelisted_methods = {
