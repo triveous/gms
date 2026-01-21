@@ -123,11 +123,10 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-    # "Grant": "gms.permission.grant_query",
-    # "Grant Project": "gms.permission.grant_project_query",
-    # "Grant Project Milestone": "gms.permission.grant_project_milestone_query",
-    # "Grant Organization": "gms.permission.grant_organization_query",
-    # "Grant Organization User": "gms.permission.grant_organization_user_query",
+    "Grant": "gms.permission.grant_query",
+    "Grant Project": "gms.permission.grant_project_query",
+    "Grant Project Milestone": "gms.permission.grant_project_milestone_query",
+    "Grant Organization User": "gms.permission.grant_organization_user_query",
 }
 #
 has_permission = {

@@ -60,7 +60,7 @@ def fy_start_and_quarter_end(qval):
     return fy_start, q_end
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_grant_projects_by_quarter(grant_id, quarter_value):
     print(
         "get_grant_projects_by_quarter called with grant_id:",
@@ -444,7 +444,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
     }
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def compare_quarter_metrics_grant_forcast(grant_id, quarter_value, compare_with):
     # print("-----------> compare_quarter_metrics_grant called with grant_id:", grant_id, "quarter_value:", quarter_value, "compare_with:", compare_with)
     """
@@ -644,7 +644,7 @@ def compare_quarter_metrics_grant_forcast(grant_id, quarter_value, compare_with)
     return {"quarter": quarter_value, "compare_with": compare_with, "metrics": result}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def compare_quarter_metrics_grant_project_spesific(
     grant_id, quarter_value, compare_with
 ):

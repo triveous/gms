@@ -100,7 +100,7 @@ def quarter_info_from_date(dt):
     return q, fy_label, title, value, quarter_start, fy_start
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_project_details(project_id):
     """
     Return ALL data for a single project:
@@ -352,7 +352,7 @@ def get_project_details(project_id):
     }
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_grant_projects_by_quarter(project_id, quarter_value):
     print(
         "get_grant_projects_by_quarter called with project_id:",

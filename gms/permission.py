@@ -114,15 +114,41 @@ def grant_organization_user_has_permission(doc, user=None, ptype=None):
 
 
 def grant_query(user):
-    return ""
+    org_user = get_organization_user(user)
+    if org_user is None:
+        return ""
+    org = org_user.get("organization")
+    return f"name IN (select parent from `tabGrant Contributor` where `tabGrant Contributor`.organization={frappe.db.escape(org)})"
 
 
 def grant_project_query(user):
-    return ""
+    org_user = get_organization_user(user)
+    if org_user is None:
+        return ""
+    org = org_user.get("organization")
+    return f"`tabGrant Project`.grant IN (select parent from `tabGrant Contributor` where `tabGrant Contributor`.organization={frappe.db.escape(org)})"
 
 
 def grant_project_milestone_query(user):
-    return ""
+    org_user = get_organization_user(user)
+    if org_user is None:
+        return ""
+
+    projects = frappe.get_list(
+        "Grant Project",
+        fields=["name"],
+    )
+    project_names = [frappe.db.escape(project.name) for project in projects]
+    print(project_names)
+    return f"`tabGrant Project Milestone`.project in ({', '.join(project_names)})"
+
+
+def grant_organization_user_query(user):
+    org_user = get_organization_user(user)
+    if org_user is None:
+        return ""
+    org = org_user.get("organization")
+    return f"organization={frappe.db.escape(org)}"
 
 
 def get_organization_user(user: str = None) -> dict | None:
@@ -133,7 +159,7 @@ def get_organization_user(user: str = None) -> dict | None:
         return None
 
     # Get from cache
-    cache_key = f"gms:organization_userq:{user}"
+    cache_key = f"gms:organization_userqoll:{user}"
     org_user = frappe.cache().get_value(cache_key, expires=300)
     if org_user:
         return org_user

@@ -75,12 +75,13 @@ def quarter_info_from_date(dt):
     return q, fy_label, title, value, quarter_start, fy_start
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_single_grant_info(grant_id):
     if not grant_id:
         frappe.throw("Grant ID is required")
 
     grant = frappe.get_doc("Grant", grant_id)
+    grant.check_permission("read")
 
     grant_data = {
         "name": grant.name,

@@ -1,7 +1,7 @@
 import frappe
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_grants_with_related(limit=50):
     # ----------------------------
     # STEP 1: Fetch Grants
@@ -133,9 +133,6 @@ def get_grants_with_related(limit=50):
 
 @frappe.whitelist(allow_guest=True)
 def clone_grant_project_milestone(source_id, project_id):
-    print("SOURCE ID ---> ", source_id)
-    print("PROJECT ID ---> ", project_id)
-
     """
     Clone a Grant Project Milestone including all child table rows,
     but assign it to the provided project_id.
@@ -149,7 +146,7 @@ def clone_grant_project_milestone(source_id, project_id):
 
     # Fetch source doc
     source = frappe.get_doc("Grant Project Milestone", source_id)
-    print("SOURCE DOC ---> ", source.name)
+    source.check_permission("read")
 
     # Create new milestone
     new = frappe.new_doc("Grant Project Milestone")
@@ -208,7 +205,7 @@ def clone_grant_project_milestone(source_id, project_id):
         new.append("contributors", {"team_member": c.team_member, "role": c.role})
 
     # ----- SAVE -----
-    new.insert(ignore_permissions=True)
+    new.insert()
     frappe.db.commit()
 
     return {
