@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe import _
 
 
 class GrantOrganizationUser(Document):
@@ -34,8 +35,16 @@ class GrantOrganizationUser(Document):
                 },
             )
             if other_admins == 0:
-                frappe.throw(
-                    _(
-                        "You cannot delete the last admin of the organization. Please assign another user as the admin, or delete the organization instead."
-                    )
+                total_org_user_count = frappe.db.count(
+                    "Grant Organization User",
+                    {
+                        "organization": self.organization,
+                        "name": ["!=", self.name],
+                    },
                 )
+                if total_org_user_count > 0:
+                    frappe.throw(
+                        _(
+                            "At least one admin must exist for the organization {0}."
+                        ).format(self.organization)
+                    )

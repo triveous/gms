@@ -122,16 +122,19 @@ fixtures = [{"dt": "Grant Project Milestone Type"}]
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
+permission_query_conditions = {
+    # "Grant": "gms.permission.grant_query",
+    # "Grant Project": "gms.permission.grant_project_query",
+    # "Grant Project Milestone": "gms.permission.grant_project_milestone_query",
+    # "Grant Organization": "gms.permission.grant_organization_query",
+    # "Grant Organization User": "gms.permission.grant_organization_user_query",
+}
 #
 has_permission = {
     "Grant": "gms.permission.grant_has_permission",
     "Grant Project": "gms.permission.grant_project_has_permission",
     "Grant Project Milestone": "gms.permission.grant_project_milestone_has_permission",
-    "Grant Organization": "gms.permission.grant_organization_has_permission",
-    "Grant Organization Member": "gms.permission.grant_organization_member_has_permission",
+    "Grant Organization User": "gms.permission.grant_organization_user_has_permission",
 }
 
 # DocType Class
