@@ -49,7 +49,7 @@ class AgentState:
 
 ######### UTILS
 
-BlockType = Literal["PLAN", "STEP", "ASK_TEXT", "ASK_MARKDOWN", "SOURCES"]
+BlockType = Literal["PLAN", "STEP", "ASK_TEXT"]
 
 
 class Block(BaseModel):
@@ -110,7 +110,7 @@ class PlanBlockContent(Block.Content):
 
 class PlanBlock(Block):
     usage: Literal["PLAN"] = "PLAN"
-    plan_content: PlanBlockContent
+    plan_content: PlanBlockContent = Field(default_factory=PlanBlockContent)
 
 
 ######### PLAN #########
@@ -159,7 +159,7 @@ class StepBlockContent(Block.Content):
 
 class StepBlock(Block):
     usage: Literal["STEP"] = "STEP"
-    step_content: StepBlockContent
+    step_content: StepBlockContent = Field(default_factory=StepBlockContent)
 
     def add_step(self, step: Steps):
         steps = self.step_content.steps
@@ -193,19 +193,19 @@ class StepBlock(Block):
 ######### STEP #########
 
 
-######### ASK RESULT #########
+######### ASK TEXT RESULT #########
 class MarkdownBlockContent(Block.Content):
-    progress: Literal["DEFAULT", "IN_PROGRESS", "DONE", "ERROR"]
-    chunks: list[str]
+    progress: Literal["DEFAULT", "IN_PROGRESS", "DONE", "ERROR"] = "DEFAULT"
+    chunks: list[str] = Field(default_factory=list)
     chunk_starting_offset: int = Field(default=0)
-    answer: str
+    answer: str | None = None
 
 
 class AskResultBlock(Block):
-    answer_markdown_content: MarkdownBlockContent
+    answer_markdown_content: MarkdownBlockContent = Field(default_factory=MarkdownBlockContent)
 
 
-######### ASK RESULT #########
+######### ASK TEXT RESULT #########
 
 
 ######### ANSWER SOURCE #########
@@ -232,10 +232,24 @@ class AgentRunState(BaseModel):
         for b in self.blocks:
             if b.usage == "STEP":
                 return b
-        block = StepBlock(step_content=StepBlockContent())
+        block = StepBlock()
         self.blocks.append(block)
         return block
 
+    @property
+    def plan(self) -> PlanBlock:
+        for b in self.blocks:
+            if b.usage == "PLAN":
+                return b
+        block = PlanBlock()
+        self.blocks.append(block)
+        return block
 
-class AgentRun(StateDeps[AgentRunState]):
-    state: AgentRunState
+    @property
+    def ask_result(self) -> AskResultBlock:
+        for b in self.blocks:
+            if b.usage == "ASK_TEXT":
+                return b
+        block = AskResultBlock()
+        self.blocks.append(block)
+        return block
