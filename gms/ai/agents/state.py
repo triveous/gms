@@ -3,11 +3,11 @@ from datetime import datetime
 from typing import Any, Literal
 
 from frappe.model.document import Document
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, PrivateAttr
 from gms.ai.agents.ui import CustomUIEventSender
 from gms.ai.kb.knowledge_base import KnowledgeBase
 from pydantic_ai.ui import StateDeps
+import jsonpatch
 
 
 class Todo(BaseModel):
@@ -47,24 +47,32 @@ class AgentState:
     sources: list[Document] = field(default_factory=list)
 
 
-class Goal(BaseModel):
-    id: str
-    description: str
-    final: bool
-    pass
+######### UTILS
+
+BlockType = Literal["PLAN", "STEP", "ASK_TEXT", "ASK_MARKDOWN", "SOURCES"]
 
 
-class IntialQueryContent(BaseModel):
-    query: str
+class Block(BaseModel):
+    class Content(BaseModel):
+        pass
 
+    usage: BlockType
+    _previous: dict = PrivateAttr(default={})
 
-class SearchKBContent(BaseModel):
-    class Query(BaseModel):
-        query: str
-        limit: str
+    def diff(self):
+        model_dump = self.model_dump(exclude=["usage"])
 
-    goal_id: str
-    queries: list[Query]
+        diffs = []
+        for k, v in model_dump.items():
+            prev = self._previous.get(k)
+            patch = jsonpatch.make_patch(prev, v)
+            self._previous[k] = v
+            if len(patch.patch):
+                diffs.append(
+                    {"usage": self.usage, "diff": {"field": k, "patches": patch.patch}}
+                )
+
+        return diffs
 
 
 class Source(BaseModel):
@@ -74,84 +82,160 @@ class Source(BaseModel):
     is_from_kb: bool = Field(default=False)
 
 
-class KBResultContent(BaseModel):
-    goal_id: str
-    kb_result: list[Source]
+class SearchQuery(BaseModel):
+    query: str
+    limit: int
 
 
-class Step(BaseModel):
-    type: Literal["INTIAL_QUERY", "SEARCH_KB", "SEARCH_KB_RESULT"]
+######### PLAN #########
+
+
+class Goal(BaseModel):
     id: str
-    intial_query_content: IntialQueryContent | None = None
-    search_kb_content: SearchKBContent | None = None
-    kb_result_content: KBResultContent | None = None
+    description: str
+    final: bool
+    pass
 
 
-class Block(BaseModel):
-    type: Literal["PLAN", "STEP", "ASK_TEXT", "ASK_MARKDOWN", "SOURCES"]
-
-    class State(BaseModel):
-        pass
-
-
-class PlanBlockState(Block.State):
+class PlanBlockContent(Block.Content):
     goals: list[Goal] = Field(default_factory=list)
+
+    def get_content_fields(self):
+        return {"goals": self.goals}
 
     def add_goal(self, description: str):
         goal_id = len(self.add_goal)
         self.goals.append(Goal(id=str(goal_id), description=description))
 
 
-class StepBlockState(Block.State):
-    steps: list[Step] = Field(default_factory=list)
+class PlanBlock(Block):
+    usage: Literal["PLAN"] = "PLAN"
+    plan_content: PlanBlockContent
+
+
+######### PLAN #########
+
+
+######### STEP #########
+class IntialQueryStep(BaseModel):
+    class Content(BaseModel):
+        query: str
+
+    id: str = ""
+    type: Literal["INITIAL_QUERY"] = "INITIAL_QUERY"
+    intial_query: Content
+
+
+class KBSearchStep(BaseModel):
+    class Content(BaseModel):
+        goal_id: str
+        queries: list[SearchQuery]
+
+    id: str
+    type: Literal["KB_SEARCH"] = "KB_SEARCH"
+    kb_search: Content
+
+
+class BrowseKBResultStep(BaseModel):
+    class Content(BaseModel):
+        goal_id: str
+        kb_result: list[Source]
+
+    id: str
+    type: Literal["BROWSE_KB_RESULT"] = "BROWSE_KB_RESULT"
+    browse_kb_result: Content
+
+
+Steps = IntialQueryStep | KBSearchStep | BrowseKBResultStep
+
+
+class StepBlockContent(Block.Content):
+    steps: list[Steps] = Field(default_factory=list)
     progress: Literal["DEFAULT", "IN_PROGRESS", "DONE", "ERROR"] = Field(
         default="DEFAULT"
     )
     final: bool = False
 
+
+class StepBlock(Block):
+    usage: Literal["STEP"] = "STEP"
+    step_content: StepBlockContent
+
+    def add_step(self, step: Steps):
+        steps = self.step_content.steps
+        steps.append(step)
+        self.step_content.steps = steps
+
     def add_intial_query_step(self, query: str):
-        intial_query_step = Step(
-            id="",
-            type="INTIAL_QUERY",
-            intial_query_content=IntialQueryContent(query=query),
+        intial_query_step = IntialQueryStep(
+            intial_query=IntialQueryStep.Content(query=query),
         )
-        self.steps.append(intial_query_step)
+        self.add_step(intial_query_step)
 
-    def add_search_kb_step(self, goal_id: str, id: str, query: list[str], limit: int):
-        queries = [SearchKBContent(query=q, limit=limit) for q in query]
-        search_kb_step = Step(
+    def add_kb_search_step(self, goal_id: str, id: str, queries: list[str], limit: int):
+        queries = [SearchQuery(query=q, limit=limit) for q in queries]
+        search_kb_step = KBSearchStep(
             id=id,
-            type="SEARCH_KB",
-            search_kb_content=SearchKBContent(queries=queries, goal_id=goal_id),
+            kb_search=KBSearchStep.Content(queries=queries, goal_id=goal_id),
         )
-        self.steps.append(search_kb_step)
+        self.add_step(search_kb_step)
 
-    def add_search_kb_result(
-        self, goal_id: str, id: str, results: list[KBResultContent.Result]
-    ):
-        search_kb_result_step = Step(
+    def add_browse_kb_result_step(self, goal_id: str, id: str, results: list[Source]):
+        search_kb_result_step = BrowseKBResultStep(
             id=id,
-            type="SEARCH_KB_RESULT",
-            kb_result_content=KBResultContent(kb_result=results, goal_id=goal_id),
+            kb_result_content=BrowseKBResultStep.Content(
+                kb_result=results, goal_id=goal_id
+            ),
         )
-        self.steps.append(search_kb_result_step)
+        self.add_step(search_kb_result_step)
 
 
-class MarkdownBlockState(Block.State):
+######### STEP #########
+
+
+######### ASK RESULT #########
+class MarkdownBlockContent(Block.Content):
     progress: Literal["DEFAULT", "IN_PROGRESS", "DONE", "ERROR"]
     chunks: list[str]
     chunk_starting_offset: int = Field(default=0)
     answer: str
 
 
-class AnswerSourceState(Block.State):
+class AskResultBlock(Block):
+    answer_markdown_content: MarkdownBlockContent
+
+
+######### ASK RESULT #########
+
+
+######### ANSWER SOURCE #########
+class AnswerSourceContent(BaseModel):
     sources: list[Source] = Field(default_factory=[])
 
 
+class AnswerSourceBlock(Block):
+    usage: Literal["PLAN"] = "PLAN"
+    answer_source_content: AnswerSourceContent
+
+
+######### ANSWER SOURCE #########
+
+
 class AgentRunState(BaseModel):
-    blocks: list[Block] = Field(default_factory=[])
+    blocks: list[Block] = Field(default=[])
+
+    def get_diff(self):
+        return [d for b in self.blocks for d in b.diff()]
+
+    @property
+    def step(self) -> StepBlock:
+        for b in self.blocks:
+            if b.usage == "STEP":
+                return b
+        block = StepBlock(step_content=StepBlockContent())
+        self.blocks.append(block)
+        return block
 
 
 class AgentRun(StateDeps[AgentRunState]):
-    kb: KnowledgeBase = field(default_factory=KnowledgeBase)
     state: AgentRunState
