@@ -1,8 +1,8 @@
+import asyncio
 import base64
 import json
 import os
 from io import BytesIO
-import asyncio
 
 import frappe
 import requests
