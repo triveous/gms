@@ -118,11 +118,15 @@ def get_project_details(project_id):
     # ----------------------------
     # STEP 1: Fetch the project
     # ----------------------------
-    project = frappe.get_doc(
-        "Grant Project",
-        project_id,
-        ["name", "title", "alias", "start_date", "end_date", "lead_organization"],
-    ).as_dict()
+    try:
+        project = frappe.get_value(
+            "Grant Project",
+            project_id,
+            ["name", "title", "alias", "start_date", "end_date", "lead_organization"],
+            as_dict=True,
+        )
+    except Exception as e:
+        frappe.throw(f"Error fetching project: {str(e)}")
 
     if not project:
         frappe.throw("Invalid project ID")
