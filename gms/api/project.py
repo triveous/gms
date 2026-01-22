@@ -916,7 +916,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
 	# ----------------------------
 	# STEP 6: Prepare final single project result
 	# ----------------------------
-	final_project = {**project, "milestone": {}}
+    final_project = {**project, "milestone": {}}
 
     for m in milestones:
         if m["name"] not in filtered_milestone_ids:

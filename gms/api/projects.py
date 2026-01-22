@@ -715,11 +715,11 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
 	# ----------------------------
 	# STEP 6: Build Final Project Objects
 	# ----------------------------
-	full_projects = []
-	for p in projects:
-		pid = p["name"]
-		if pid not in project_to_milestones:
-			continue  # skip projects with no milestones in this quarter
+    full_projects = []
+    for p in projects:
+        pid = p["name"]
+        if pid not in project_to_milestones:
+            continue  # skip projects with no milestones in this quarter
 
         proj_obj = {**p, "milestones": []}
 
