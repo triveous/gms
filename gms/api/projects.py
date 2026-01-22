@@ -242,7 +242,17 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
         else:
             value = row.get("data_string")
 
-        milestone_metrics.setdefault(mid, {})[title] = value
+        milestone_metrics.setdefault(mid, {})
+        
+        # ----------------------------
+        # SPECIAL HANDLING: Highlights / Lowlights
+        # ----------------------------
+        if title in ("High lights", "Low lights"):
+            milestone_metrics[mid].setdefault(title, [])
+            if value:
+                milestone_metrics[mid][title].append(value)
+        else:
+            milestone_metrics[mid][title] = value
 
         if title == "Budget Spent":
             try:
