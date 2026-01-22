@@ -151,7 +151,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-12 20:22:00.551237",
+ "modified": "2026-01-19 18:33:51.848159",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Agent",
@@ -168,6 +168,27 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS User",
+   "share": 1
   }
  ],
  "row_format": "Dynamic",

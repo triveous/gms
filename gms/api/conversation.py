@@ -148,6 +148,8 @@ def save_history(converstion: AIConversation, run: AgentRun):
 def history():
     conversation_id = frappe.form_dict.get("conversation_id")
     conversation: AIConversation = frappe.get_doc("AI Conversation", conversation_id)
+    conversation.check_permission("read")
+
     if conversation.messages is not None:
         message_history = ModelMessagesTypeAdapter.validate_json(conversation.messages)
         history = VercelAIAdapter.dump_messages(message_history)

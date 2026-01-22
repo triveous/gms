@@ -6,36 +6,40 @@ from gms.ai.agents.state import AgentState
 
 def data_overview(ctx: RunContext[AgentState]):
     results = {}
-    results["grants"] = frappe.get_list(
-        "Grant",
-        fields=[
-            "name",
-            "title",
-            "alias",
-            "start_date",
-            "end_date",
-            "description",
-            "approval_identifier",
-            "approved_amount",
-        ],
-    )
-    results["projects"] = frappe.get_list(
-        "Grant Project",
-        fields=["name", "grant", "title", "alias", "start_date", "end_date"],
-    )
 
-    results["milestone_updates"] = frappe.get_list(
-        "Grant Project Milestone",
-        fields=[
-            "name",
-            "title",
-            "project",
-            "milestone_type",
-            "submitted_at",
-            "period_start",
-            "period_end",
-        ],
-    )
+    try:
+        results["grants"] = frappe.get_list(
+            "Grant",
+            fields=[
+                "name",
+                "title",
+                "alias",
+                "start_date",
+                "end_date",
+                "description",
+                "approval_identifier",
+                "approved_amount",
+            ],
+        )
+        results["projects"] = frappe.get_list(
+            "Grant Project",
+            fields=["name", "grant", "title", "alias", "start_date", "end_date"],
+        )
+
+        results["milestone_updates"] = frappe.get_list(
+            "Grant Project Milestone",
+            fields=[
+                "name",
+                "title",
+                "project",
+                "milestone_type",
+                "submitted_at",
+                "period_start",
+                "period_end",
+            ],
+        )
+    except frappe.PermissionError:
+        return "User doens't have permission get the data overview information."
 
     print(f"Data Overview {results}")
     return frappe.as_json(results)

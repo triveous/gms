@@ -109,13 +109,13 @@ class KnowledgeBase:
         filter_params = filter_params or {}
         return self._get_ingest_store().delete(expr=expr, filter_params=filter_params)
 
-    def retrieve_raw(
+    async def retrieve_raw(
         self,
         query: str,
         k: int,
         expr: str | None = None,
     ):
-        return self._get_query_store().similarity_search(
+        return await self._get_query_store().asimilarity_search(
             query,
             k=k,
             ranker_type="rrf",
