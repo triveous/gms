@@ -5,7 +5,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useFrappeAuth } from 'frappe-react-sdk';
 import React, { useEffect, useState } from 'react';
 import { User, ChevronsUpDown, ChevronDown, LayoutDashboard } from 'lucide-react';
 import ChatToggleButton from '@/components/ChatToggleButton';
@@ -21,8 +20,7 @@ interface TopBarProps {
 
 const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
     const { isChatOpen } = useChatContext();
-    const { logout } = useFrappeAuth();
-    const { userData } = useAuth();
+    const { logout, userData } = useAuth();
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1280);
     
     // Grant Switcher Logic

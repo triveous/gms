@@ -15,7 +15,8 @@
   "approval_identifier",
   "approved_amount",
   "lead_organization",
-  "dpr"
+  "dpr",
+  "contributors"
  ],
  "fields": [
   {
@@ -85,12 +86,18 @@
    "fieldname": "dpr",
    "fieldtype": "Attach",
    "label": "DPR"
+  },
+  {
+   "fieldname": "contributors",
+   "fieldtype": "Table",
+   "label": "Contributors",
+   "options": "Grant Contributor"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-22 02:58:10.939360",
+ "modified": "2026-01-21 17:32:52.192264",
  "modified_by": "Administrator",
  "module": "GMS",
  "name": "Grant",
@@ -106,6 +113,30 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "GMS User",
    "share": 1,
    "write": 1
   }
