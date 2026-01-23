@@ -49,7 +49,7 @@ export const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({ items = [] }) => {
         } else {
             calculatedItems = [
                 { label: 'AIKAM', path: '/' },
-                { label: grantLabel } // Current page (Grant Dashboard)
+                { label: grantLabel, path: `/${grantId}` } // Current page (Grant Dashboard)
             ];
         }
     } else {

@@ -119,16 +119,17 @@ def get_project_details(project_id):
     # STEP 1: Fetch the project
     # ----------------------------
     try:
-        project = frappe.get_value(
-            "Grant Project",
-            project_id,
-            ["name", "title", "alias", "start_date", "end_date", "lead_organization"],
-            as_dict=True,
-        )
-    except Exception as e:
-        frappe.throw(f"Error fetching project: {str(e)}")
-
-    if not project:
+        project = frappe.get_doc("Grant Project", project_id)
+        project = {
+			"name": project.name,
+			"title": project.title,
+			"alias": project.alias,
+			"start_date": project.start_date,
+			"end_date": project.end_date,
+			"lead_organization": project.lead_organization,
+		}
+    except frappe.PermissionError:
+        frappe.throw("You do not have permission to access this project")
         frappe.throw("Invalid project ID")
 
     if project and project.get("lead_organization"):
@@ -750,14 +751,20 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
     # ----------------------------
     # STEP 1: Fetch this single project
     # ----------------------------
-    project = frappe.get_value(
-        "Grant Project",
-        project_id,
-        ["name", "title", "alias", "start_date", "end_date", "lead_organization"],
-        as_dict=True,
-    )
-    if not project:
-        frappe.throw("Project not found")
+    try:
+        project_doc = frappe.get_doc("Grant Project", project_id)
+        project = {
+            "name": project_doc.name,
+            "title": project_doc.title,
+            "alias": project_doc.alias,
+            "start_date": project_doc.start_date,
+            "end_date": project_doc.end_date,
+            "lead_organization": project_doc.lead_organization,
+        }
+    except frappe.PermissionError:
+        frappe.throw("You do not have permission to access this project")
+    except Exception as e:
+        frappe.throw(f"Error fetching project: {str(e)}")
 
     project_id = project["name"]
 

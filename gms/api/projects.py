@@ -60,7 +60,7 @@ def fy_start_and_quarter_end(qval):
     return fy_start, q_end
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_id=None, sort_by=None):
 	"""
 	Separate API endpoint to fetch partners for grant milestones in a specific quarter with pagination.
@@ -89,7 +89,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	if project_id:
 		project_filters["name"] = project_id
 	
-	projects = frappe.get_all(
+	projects = frappe.get_list(
 		"Grant Project",
 		fields=["name", "title"],
 		filters=project_filters,
@@ -103,7 +103,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	# ----------------------------
 	# STEP 2: Fetch Milestones for Quarter
 	# ----------------------------
-	milestones = frappe.get_all(
+	milestones = frappe.get_list(
 		"Grant Project Milestone",
 		fields=["name", "period_start"],
 		filters={"project": ["in", project_ids]},
@@ -201,7 +201,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	milestone_project_map = {}
 	if partner_rows:
 		milestone_ids_to_fetch = list(set([p["parent"] for p in partner_rows]))
-		milestones_for_projects = frappe.get_all(
+		milestones_for_projects = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
 			filters={"name": ["in", milestone_ids_to_fetch]},
@@ -212,7 +212,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	all_projects = []
 	if partner_rows:
 		all_milestone_ids = list(set([p["parent"] for p in partner_rows]))
-		all_milestones = frappe.get_all(
+		all_milestones = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
 			filters={"name": ["in", all_milestone_ids]},
@@ -225,7 +225,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	partner_title_map = {}
 	
 	if partner_ids:
-		partners = frappe.get_all(
+		partners = frappe.get_list(
 			"Grant Partner",
 			fields=["name", "title"],
 			filters={"name": ["in", list(partner_ids)]},
@@ -269,7 +269,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role_filter=None, sort_by=None, project_id=None):
 	"""
 	Separate API endpoint to fetch contributors for grant milestones in a specific quarter with pagination.
@@ -299,7 +299,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	if project_id:
 		project_filters["name"] = project_id
 	
-	projects = frappe.get_all(
+	projects = frappe.get_list(
 		"Grant Project",
 		fields=["name", "title"],
 		filters=project_filters,
@@ -321,7 +321,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	# ----------------------------
 	# STEP 2: Fetch Milestones for Quarter
 	# ----------------------------
-	milestones = frappe.get_all(
+	milestones = frappe.get_list(
 		"Grant Project Milestone",
 		fields=["name", "period_start"],
 		filters={"project": ["in", project_ids]},
@@ -412,7 +412,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	all_projects = []
 	if all_contributor_rows:
 		milestone_ids_all = list(set([c["parent"] for c in all_contributor_rows]))
-		milestones_all = frappe.get_all(
+		milestones_all = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
 			filters={"name": ["in", milestone_ids_all]},
@@ -452,7 +452,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	member_designation_map = {}
 	
 	if member_ids:
-		members = frappe.get_all(
+		members = frappe.get_list(
 			"Grant Member",
 			fields=["name", "name1 as title", "designation"],
 			filters={"name": ["in", list(member_ids)]},
@@ -464,7 +464,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	milestone_project_map = {}
 	if paginated_contributor_rows:
 		milestone_ids_to_fetch = list(set([c["parent"] for c in paginated_contributor_rows]))
-		milestones_for_projects = frappe.get_all(
+		milestones_for_projects = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
 			filters={"name": ["in", milestone_ids_to_fetch]},
@@ -508,7 +508,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_grant_projects_by_quarter(grant_id, quarter_value):
     print(
         "get_grant_projects_by_quarter called with grant_id:",
