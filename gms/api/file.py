@@ -11,6 +11,7 @@ def on_after_delete(doc: File, method):
 
 
 def create_ai_document(doc: File):
+    frappe.log("Create AI Document from file upload")
     # Automatically create a AI Document when PDF File
     # is attached to "Grant","Grant Project","Grant Project Milestone"
 
@@ -23,16 +24,30 @@ def create_ai_document(doc: File):
         ]
         or doc.attached_to_name is None
     ):
+        frappe.log("File not linked with relevant document")
         return
 
     # Only Allow for PDF Ingestion for now
     if doc.file_type != "PDF":
+        frappe.log("File is not PDF")
         return False
 
-    if not frappe.db.exists("AI Document", {"file": doc.name}):
-        ai_document = frappe.get_doc({"doctype": "AI Document", "file": doc.name})
-        ai_document.insert(ignore_permissions=True)
-        frappe.log("AI Document added")
+    check_ai_document_with_content_hash = frappe.qb.get_query(
+        "AI Document",
+        filters={"file.content_hash": doc.content_hash},
+        fields=["name"],
+        limit=1,
+    )
+    
+    print("Check if AI Document exist with the same file content hash")
+    if len(check_ai_document_with_content_hash.run(as_dict=True)) > 0:
+        frappe.log("File already ingested. Skipping creating new AI document")
+        return
+
+    ai_document = frappe.get_doc({"doctype": "AI Document", "file": doc.name})
+    ai_document.insert(ignore_permissions=True)
+    frappe.log("AI Document added")
+    return
 
 
 def delete_ai_document(doc: File):
