@@ -87,8 +87,7 @@ const ChatPanel: React.FC = () => {
         transport: new DefaultChatTransport({
             api: '/api/method/gms.api.conversation.run',
             headers:{
-                // 'X-Frappe-CSRF-Token': window.csrf_token
-                'X-Frappe-CSRF-Token': '38dabc7d0d9d94f823d8dd1e75a6afbae8ea907cc87c5ac5fdacb53f'
+                'X-Frappe-CSRF-Token': window.csrf_token
             },
         }),
         onData: (dataPart) => {
