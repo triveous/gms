@@ -5,7 +5,7 @@ import { X, Clock, MessageSquare, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useFrappeCreateDoc, useFrappeGetDocList, useFrappeGetCall } from 'frappe-react-sdk';
+import { useFrappeCreateDoc, useFrappeGetDocList, useFrappeGetCall, useFrappeDeleteDoc } from 'frappe-react-sdk';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -63,6 +63,7 @@ const commonQuestions = [
 const ChatPanel: React.FC = () => {
     const { isChatOpen, closeChat } = useChatContext();
     const { createDoc } = useFrappeCreateDoc();
+    const { deleteDoc } = useFrappeDeleteDoc();
     const [input, setInput] = useState('');
     const [currentConversaionId, setCurrentConversaionId] = useState('');
     const [initialMessage, setInitialMessage] = useState<string | null>(null);
@@ -111,7 +112,25 @@ const ChatPanel: React.FC = () => {
                 toolCallId: toolCall.toolCallId,
                 output: {},
             });
-        } 
+        },
+        async onFinish(options: any) {
+            const { isError, messages } = options;
+
+            if (isError && messages.length <= 2) {
+                const docToDelete = currentConversaionId;
+                setCurrentConversaionId('');
+                setMessages([]);
+                setInitialMessage(null);
+                if (docToDelete) {
+                    try {
+                        await deleteDoc('AI Conversation', docToDelete);
+                        refetchConversationList();
+                    } catch (e) {
+                        console.error('Failed to delete failed conversation:', e);
+                    }
+                }
+            }
+        },
     });
 
     // Centralized auto-scroll
