@@ -30,12 +30,12 @@ interface MilestoneMetrics {
     'Grantee Comment'?: string;
     'Milestones achieved'?: string;
     'Impact Created'?: string;
-    'Low lights'?: string;
+    'Low lights'?: string[];
     'Overall Progress'?: number;
     'Nodal Agency Comment'?: string;
     'Commercial Readiness Level'?: number;
     'Technology Readiness Level'?: number;
-    'High lights'?: string;
+    'High lights'?: string[];
     'Budget Spent'?: string | number;
     'AI Breakthroughs': number;
 }

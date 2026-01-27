@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 
-import { TrendingUp, TrendingDown, CircleCheckBig, BadgeInfo } from 'lucide-react';
+import { CircleCheckBig, BadgeInfo } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { ProjectCard } from '@/components/ProjectCard';
@@ -46,6 +46,8 @@ interface Project {
     };
     budgetSpent: string;
     progress: string;
+    highlights?: string[];
+    lowlights?: string[];
 }
 
 export default function Grant() {
@@ -68,13 +70,13 @@ export default function Grant() {
         
         // It's a year value, find the corresponding group
         if (grantData.quartersList) {
-            const yearlyGroup = grantData.quartersList.find((g: any) => g.label === "Yearly Wise");
+            const yearlyGroup = grantData.quartersList.find((g: any) => g.label === 'Yearly Wise');
             const yearItem = yearlyGroup?.items.find((i: any) => i.value === period);
             
             if (yearItem) {
                 // Find group matching year title
                 const quarterGroup = grantData.quartersList.find((g: any) => 
-                     g.label !== "Yearly Wise" && g.label.includes(yearItem.title)
+                     g.label !== 'Yearly Wise' && g.label.includes(yearItem.title)
                 );
                 if (quarterGroup?.items?.length > 0) {
                     return quarterGroup.items[0].value;
@@ -87,7 +89,7 @@ export default function Grant() {
     const effectiveSelectedPeriod = useMemo(() => findLatestQuarter(selectedPeriod), [selectedPeriod, grantData]);
     const effectiveComparisonQuarter = useMemo(() => findLatestQuarter(comparisonQuarter), [comparisonQuarter, grantData]);
 
-    const { data: projectsRes, isLoading: projectsLoading, mutate } = useFrappeGetCall(
+    const { data: projectsRes, mutate } = useFrappeGetCall(
         'gms.api.projects.get_grant_projects_by_quarter',
         { grant_id: grantId, quarter_value: effectiveSelectedPeriod },
         effectiveSelectedPeriod ? undefined : null
@@ -218,6 +220,8 @@ export default function Grant() {
                 },
                 budgetSpent: formatIndianAmount(metrics['Budget Spent']),
                 progress: metrics['Overall Progress'] ? `${metrics['Overall Progress']}%` : '0%',
+                highlights: metrics['High lights'],
+                lowlights: metrics['Low lights'],
             };
         });
     }, [projectsRes]);
@@ -431,6 +435,8 @@ export default function Grant() {
                                 metrics={project.metrics}
                                 budgetSpent={project.budgetSpent}
                                 progress={project.progress}
+                                highlights={project.highlights}
+                                lowlights={project.lowlights}
                                 comparisonData={comparisonRes?.message?.find((item: any) => item.project === project.id)}
                             />
                         ))}
