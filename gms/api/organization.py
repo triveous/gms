@@ -2,7 +2,7 @@ import frappe
 
 
 @frappe.whitelist()
-def get_user_organization(user_id):
+def get_user_organization():
 	"""
 	Fetch organization details for a given user ID from grant_organization_user.
 	
@@ -11,15 +11,13 @@ def get_user_organization(user_id):
 	
 	Returns: {organization, organization_name, user, is_admin} or error if not found
 	"""
-	if not user_id:
-		frappe.throw("User ID is required")
-	
-	# Fetch the grant_organization_user record for the given user
 	try:
+		user = frappe.session.user
+		# Fetch the grant_organization_user record for the current session user
 		org_user = frappe.get_list(
 			"Grant Organization User",
 			fields=["organization", "user", "is_admin"],
-			filters={"user": user_id},
+			filters={"user": user},
 			limit_page_length=1,
 		)
 
@@ -42,7 +40,6 @@ def get_user_organization(user_id):
 			"is_admin": org_user_data.get("is_admin"),
 		}
 		
-	except frappe.PermissionError:
-		frappe.throw("You do not have permission to access this organization")
+
 	except Exception as e:
 		frappe.throw(f"Error fetching organization: {str(e)}")
