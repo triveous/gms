@@ -118,19 +118,20 @@ def get_project_details(project_id):
     # ----------------------------
     # STEP 1: Fetch the project
     # ----------------------------
-    try:
-        project = frappe.get_doc("Grant Project", project_id)
-        project = {
-			"name": project.name,
-			"title": project.title,
-			"alias": project.alias,
-			"start_date": project.start_date,
-			"end_date": project.end_date,
-			"lead_organization": project.lead_organization,
-		}
-    except frappe.PermissionError:
-        frappe.throw("You do not have permission to access this project")
-        frappe.throw("Invalid project ID")
+    project = frappe.get_doc("Grant Project", project_id)
+
+    # Permission check (raises frappe.PermissionError automatically if not allowed)
+    project.check_permission("read")
+
+    project = {
+        "name": project.name,
+        "title": project.title,
+        "alias": project.alias,
+        "start_date": project.start_date,
+        "end_date": project.end_date,
+        "lead_organization": project.lead_organization,
+    }
+
 
     if project and project.get("lead_organization"):
         project["lead_organization"] = frappe.get_value(
@@ -357,7 +358,7 @@ def get_project_details(project_id):
     }
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def fetch_project_partners(project_id, quarter_value, page=1, page_size=10, sort_by=None):
 	"""
 	Separate API endpoint to fetch partners for project milestones in a specific quarter with pagination.
@@ -381,19 +382,17 @@ def fetch_project_partners(project_id, quarter_value, page=1, page_size=10, sort
 	# ----------------------------
 	# STEP 1: Verify project exists
 	# ----------------------------
-	project = frappe.db.get_value(
-		"Grant Project",
-		project_id,
-		["name"],
-		as_dict=True,
-	)
-	if not project:
+	try:
+		project_doc = frappe.get_doc("Grant Project", project_id)
+		project_doc.check_permission("read")
+		project = {"name": project_doc.name, "title": project_doc.title}
+	except frappe.DoesNotExistError:
 		frappe.throw("Project not found")
 	
 	# ----------------------------
 	# STEP 2: Fetch Milestones for Quarter
 	# ----------------------------
-	milestones = frappe.get_all(
+	milestones = frappe.get_list(
 		"Grant Project Milestone",
 		fields=["name", "period_start"],
 		filters={"project": project_id},
@@ -532,7 +531,7 @@ def fetch_project_partners(project_id, quarter_value, page=1, page_size=10, sort
 	}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def fetch_project_contributors(project_id, quarter_value, page=1, page_size=10, role_filter=None, sort_by=None):
 	"""
 	Separate API endpoint to fetch contributors for project milestones in a specific quarter with pagination.
@@ -557,13 +556,14 @@ def fetch_project_contributors(project_id, quarter_value, page=1, page_size=10, 
 	# ----------------------------
 	# STEP 1: Verify project exists
 	# ----------------------------
-	project = frappe.db.get_value(
-		"Grant Project",
-		project_id,
-		["name", "title"],
-		as_dict=True,
-	)
-	if not project:
+	try:
+		project_doc = frappe.get_doc("Grant Project", project_id)
+		project_doc.check_permission("read")
+		project = {
+			"name": project_doc.name,
+			"title": project_doc.title,
+		}
+	except frappe.DoesNotExistError:
 		frappe.throw("Project not found")
 	
 	project_map = {project["name"]: project["title"]}
@@ -571,7 +571,7 @@ def fetch_project_contributors(project_id, quarter_value, page=1, page_size=10, 
 	# ----------------------------
 	# STEP 2: Fetch Milestones for Quarter
 	# ----------------------------
-	milestones = frappe.get_all(
+	milestones = frappe.get_list(
 		"Grant Project Milestone",
 		fields=["name", "period_start"],
 		filters={"project": project_id},
@@ -736,7 +736,7 @@ def fetch_project_contributors(project_id, quarter_value, page=1, page_size=10, 
 	}
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_grant_projects_by_quarter(project_id, quarter_value):
     print(
         "get_grant_projects_by_quarter called with project_id:",
@@ -751,20 +751,16 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
     # ----------------------------
     # STEP 1: Fetch this single project
     # ----------------------------
-    try:
-        project_doc = frappe.get_doc("Grant Project", project_id)
-        project = {
-            "name": project_doc.name,
-            "title": project_doc.title,
-            "alias": project_doc.alias,
-            "start_date": project_doc.start_date,
-            "end_date": project_doc.end_date,
-            "lead_organization": project_doc.lead_organization,
-        }
-    except frappe.PermissionError:
-        frappe.throw("You do not have permission to access this project")
-    except Exception as e:
-        frappe.throw(f"Error fetching project: {str(e)}")
+    project_doc = frappe.get_doc("Grant Project", project_id)
+    project_doc.check_permission("read")
+    project = {
+        "name": project_doc.name,
+        "title": project_doc.title,
+        "alias": project_doc.alias,
+        "start_date": project_doc.start_date,
+        "end_date": project_doc.end_date,
+        "lead_organization": project_doc.lead_organization,
+    }
 
     project_id = project["name"]
 
@@ -1014,7 +1010,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
     }
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def compare_quarter_metrics_grant(project_id, quarter_value, compare_with):
     print(
         "-----------> compare_quarter_metrics_grant called with project_id:",
