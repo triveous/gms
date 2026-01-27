@@ -10,7 +10,7 @@ import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 import OrgMembers, { type Partner, type Contributor } from '@/components/OrgMembers';
 import EmptyState from '@/components/EmptyState';
-import { useFrappeGetCall } from 'frappe-react-sdk';
+import { useFrappeGetCall, useFrappePostCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
@@ -264,38 +264,52 @@ export default function Grant() {
     }, [projectsRes]);
 
 
-    const { partners, contributors } = useMemo(() => {
-        if (!projectsRes?.message?.projects) return { partners: [], contributors: [] };
+    const { call: fetchPartners, result: partnersResult } = useFrappePostCall('gms.api.projects.fetch_grant_partners');
+    const { call: fetchContributors, result: contributorsResult } = useFrappePostCall('gms.api.projects.fetch_grant_contributors');
 
-        const partnersMap = new Map<string, Partner>();
-        const contributorsMap = new Map<string, Contributor>();
-
-        projectsRes.message.projects.forEach((project: any) => {
-            project.milestones?.forEach((milestone: any) => {
-                milestone.partners_and_team_members?.forEach((member: any) => {
-                    if (member.partner) {
-                        partnersMap.set(member.partner.id, {
-                            id: member.partner.id,
-                            title: member.partner.title,
-                            responsibility: member.partner.responsibility
-                        });
-                    }
-                    if (member.contributor) {
-                        contributorsMap.set(member.contributor.id, {
-                            id: member.contributor.id,
-                            title: member.contributor.title,
-                            role: member.contributor.role
-                        });
-                    }
-                });
+    useEffect(() => {
+        if (grantId && selectedPeriod) {
+            fetchPartners({
+                grant_id: grantId,
+                quarter_value: selectedPeriod,
+                page: 1,
+                page_size: 10
             });
-        });
+            fetchContributors({
+                grant_id: grantId,
+                quarter_value: selectedPeriod,
+                page: 1,
+                page_size: 10
+            });
+        }
+    }, [grantId, selectedPeriod, fetchPartners, fetchContributors]);
 
-        return {
-            partners: Array.from(partnersMap.values()),
-            contributors: Array.from(contributorsMap.values())
-        };
-    }, [projectsRes]);
+    const partners = useMemo(() => {
+        if (!partnersResult?.message?.partners_map) return [];
+        
+        // Flatten the map values into a single array
+        return Object.values(partnersResult.message.partners_map).flat().map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            responsibilities: p.responsibilities || [],
+            budget: p.budget
+        }));
+    }, [partnersResult]);
+
+    const contributors = useMemo(() => {
+        if (!contributorsResult?.message?.contributors_map) return [];
+
+        // Flatten the map values
+        return Object.values(contributorsResult.message.contributors_map).flat().map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            role: c.role,
+            designation: c.designation,
+            position: c.position,
+            institution: c.institution,
+            email: c.email
+        }));
+    }, [contributorsResult]);
 
     return (
         <DashboardLayout showGrantSwitcher={true}>
@@ -563,7 +577,7 @@ export default function Grant() {
                         </div>
                     </SectionWrapper>
 
-                    <OrgMembers partners={partners} contributors={contributors} />
+                    <OrgMembers partners={partners} contributors={contributors} quarter={selectedPeriod} />
                 </>
             )}
             </>

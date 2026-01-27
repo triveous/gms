@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useFrappeGetCall } from 'frappe-react-sdk';
+import { useFrappeGetCall, useFrappePostCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 import OrgMembers, { type Partner, type Contributor } from '@/components/OrgMembers';
 import DialogButton from '@/components/DialogButton';
-import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent, formatIndianNumber } from '@/utils/formatters';
+import { formatIndianAmount } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
 import { formatTextWithNumber } from '@/utils/textFormatters';
 
@@ -98,7 +98,7 @@ interface ProjectDetails {
 
 
 export default function Project() {
-    const { projectId } = useParams<{ projectId: string }>();
+    const { grantId, projectId } = useParams<{ grantId: string; projectId: string }>();
     const [projectData, setProjectData] = useState<ProjectDetails | null>(null);
     const [projectMilestoneData, setProjectMilestoneData] = useState<ProjectMilestoneData | null>(null);
     const [selectedPeriod, setSelectedPeriod] = useState<string>('');
@@ -229,34 +229,53 @@ export default function Project() {
     const impactTrend = getMetricTrend('Impact Created');
     const aiTrend = getMetricTrend('AI Breakthroughs');
 
-    const { partners, contributors } = useMemo(() => {
-        if (!projectMilestoneData?.milestone?.partners_and_team_members) return { partners: [], contributors: [] };
+    // Data Fetching for Partners and Contributors
+    const { call: fetchPartners, result: partnersResult } = useFrappePostCall('gms.api.project.fetch_project_partners');
+    const { call: fetchContributors, result: contributorsResult } = useFrappePostCall('gms.api.project.fetch_project_contributors');
 
-        const partnersList: Partner[] = [];
-        const contributorsList: Contributor[] = [];
+    useEffect(() => {
+        if (grantId && projectId && effectiveSelectedPeriod) {
+            fetchPartners({
+                grant_id: grantId,
+                quarter_value: effectiveSelectedPeriod,
+                project_id: projectId,
+                sort_by: 'title',
+                page: 1,
+                page_size: 10
+            });
+            fetchContributors({
+                grant_id: grantId,
+                quarter_value: effectiveSelectedPeriod,
+                project_id: projectId,
+                sort_by: 'title',
+                page: 1,
+                page_size: 10
+            });
+        }
+    }, [grantId, projectId, effectiveSelectedPeriod, fetchPartners, fetchContributors]);
 
-        projectMilestoneData.milestone.partners_and_team_members.forEach((member) => {
-            if (member.partner) {
-                partnersList.push({
-                    id: member.partner.id,
-                    title: member.partner.title,
-                    responsibility: member.partner.responsibility
-                });
-            }
-            if (member.contributor) {
-                contributorsList.push({
-                    id: member.contributor.id,
-                    title: member.contributor.title,
-                    role: member.contributor.role
-                });
-            }
-        });
+    const partners = useMemo(() => {
+        if (!partnersResult?.message?.partners_map) return [];
+        return Object.values(partnersResult.message.partners_map).flat().map((p: any) => ({
+            id: p.id,
+            title: p.title,
+            responsibilities: p.responsibilities || [],
+            budget: p.budget
+        }));
+    }, [partnersResult]);
 
-        return {
-            partners: partnersList,
-            contributors: contributorsList
-        };
-    }, [projectMilestoneData]);
+    const contributors = useMemo(() => {
+        if (!contributorsResult?.message?.contributors_map) return [];
+        return Object.values(contributorsResult.message.contributors_map).flat().map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            role: c.role,
+            designation: c.designation,
+            position: c.position,
+            institution: c.institution,
+            email: c.email
+        }));
+    }, [contributorsResult]);
 
     if (!projectData) {
         return (
@@ -608,7 +627,7 @@ export default function Project() {
                 </div>
             </SectionWrapper>
 
-            <OrgMembers partners={partners} contributors={contributors} />
+            <OrgMembers partners={partners} contributors={contributors} quarter={selectedPeriod} />
         </DashboardLayout>
     );
 }
