@@ -8,7 +8,7 @@
   "basic_section",
   "title",
   "first_answer",
-  "run"
+  "last_run"
  ],
  "fields": [
   {
@@ -30,15 +30,16 @@
    "reqd": 1
   },
   {
-   "fieldname": "run",
-   "fieldtype": "Data",
-   "label": "Run"
+   "fieldname": "last_run",
+   "fieldtype": "Link",
+   "label": "Last Run",
+   "options": "AI Thread Run"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-27 18:29:16.279760",
+ "modified": "2026-01-27 18:59:35.748938",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Thread",

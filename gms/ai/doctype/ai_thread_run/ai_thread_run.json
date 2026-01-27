@@ -9,7 +9,8 @@
   "thread",
   "parent_run",
   "query",
-  "blocks"
+  "blocks",
+  "answer"
  ],
  "fields": [
   {
@@ -29,11 +30,12 @@
    "default": "[]",
    "fieldname": "blocks",
    "fieldtype": "JSON",
-   "label": "Blocks"
+   "label": "Blocks",
+   "reqd": 1
   },
   {
    "fieldname": "query",
-   "fieldtype": "Data",
+   "fieldtype": "Markdown Editor",
    "label": "Query",
    "reqd": 1
   },
@@ -42,12 +44,18 @@
    "fieldtype": "Link",
    "label": "Parent Run",
    "options": "AI Thread Run"
+  },
+  {
+   "fieldname": "answer",
+   "fieldtype": "Markdown Editor",
+   "label": "Answer",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-27 18:38:12.170250",
+ "modified": "2026-01-27 19:14:37.572919",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Thread Run",

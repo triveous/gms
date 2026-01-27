@@ -76,15 +76,6 @@ def run2():
     )
 
 
-@frappe.whitelist()
-def ask():
-    query = frappe.form_dict.get("query")
-    if not query:
-        frappe.throw(_("Missing Query"))
-        return
-    thread_id = frappe.form_dict.get("thread_id")
-    run_id = frappe.form_dict.get("run_id")
-
 
 @frappe.whitelist()
 def run():

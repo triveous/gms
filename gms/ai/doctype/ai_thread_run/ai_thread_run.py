@@ -3,7 +3,12 @@
 
 # import frappe
 from frappe.model.document import Document
+from frappe.types import DF
 
 
 class AIThreadRun(Document):
-	pass
+    thread: DF.Link
+    parent_run: DF.Link
+    query: DF.MarkdownEditor
+    answer: DF.MarkdownEditor
+    blocks: DF.JSON

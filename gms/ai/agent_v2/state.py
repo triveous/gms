@@ -1,10 +1,9 @@
-from typing import TypedDict
-
 from pydantic import BaseModel, Field
 from typing_extensions import Literal
-
+from dataclasses import dataclass
+import uuid
 from gms.ai.kb.knowledge_base import KnowledgeBase
-
+import jsonpatch
 
 # ------------- REDUCER
 def manage_blocks(current: list, update: list | dict) -> list:
@@ -75,7 +74,7 @@ class Block(BaseModel):
 
 # ----------------- PLAN BLOCK -------------------
 class Goal(BaseModel):
-    id: str
+    id: str = Field(default_factory=uuid.uuid4)
     final: bool
     description: str
 
@@ -144,5 +143,47 @@ class AgentState(BaseModel):
     blocks: list[PlanBlock | StepBlock] = Field(default_factory=list)
 
 
-class AgentContext(TypedDict):
-    kb: KnowledgeBase
+class BlockBuilder:
+    blocks: list[Block] = []
+
+    def get_planning_block(self):
+        planning_block = [b for b in self.blocks if b.type == "PLAN"]
+        if len(planning_block) > 0:
+            return planning_block[0]
+        return None
+
+    def new_planning_block(goal: str):
+        return PlanBlock(
+            type="PLAN",
+            plan_content=PlanBlock.Content(goals=[Goal(goal=goal)]),
+        )
+
+    def add_goal(self, goal: str):
+        planning_block = self.get_planning_block()
+        if planning_block:
+            # Append goal to planning block
+            pass
+
+        planning_block
+        # Create a new planning block and
+        return Goal(goal=goal)
+
+    def add_step(goal_id: str, step: Step):
+        step
+
+    def updated_step(step: Step):
+        return step
+
+    def add_answer_chunk(chunk: str):
+        return
+
+    def complete_answer():
+        pass
+
+    def complete():
+        return
+
+
+@dataclass
+class AgentContext(BlockBuilder):
+    kb: KnowledgeBase = KnowledgeBase()
