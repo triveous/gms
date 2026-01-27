@@ -89,10 +89,16 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
         self,
         dep_builder: Callable[[MemoryObjectSendStream], Any],
         message_history,
-        on_complete,
+        on_complete=None,
+        on_start=None,
     ):
         return stream_async_iterator(
-            self.run_encoded(dep_builder, message_history, on_complete)
+            self.run_encoded(
+                dep_builder=dep_builder,
+                message_history=message_history,
+                on_complete=on_complete,
+                on_start=on_start,
+            )
         )
 
     def run_encoded(
@@ -100,6 +106,7 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
         dep_builder: Callable[[MemoryObjectSendStream], Any],
         message_history,
         on_complete,
+        on_start,
     ):
         # This ensures that we have an event loop
         get_event_loop()
@@ -107,13 +114,12 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
         send_stream, receive_stream = create_memory_object_stream()
 
         # Pipe the encoded stream to the send stream
-        async def runner():
-            # Build the deps
-            deps = dep_builder(send_stream)
-
+        async def runner(deps):
             # Run the agent to generate UI Events
             ui_stream = self.run_stream(
-                deps=deps, message_history=message_history, on_complete=on_complete
+                deps=deps,
+                message_history=message_history,
+                on_complete=lambda result: on_complete(deps, result),
             )
 
             # Encoded the UI stream to SSE format
@@ -126,10 +132,14 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
                     await send_stream.send(event)
 
         async def stream_generator() -> AsyncIterator[str]:
+            # Build the deps
+            deps = dep_builder(send_stream)
+
             # FIX: Use asyncio.create_task instead of create_task_group.
             # This schedules the runner on the loop without binding it
             # to the specific Task ID of the first chunk's execution.
-            runner_task = asyncio.create_task(runner())
+            runner_task = asyncio.create_task(runner(deps))
+            on_start_task = asyncio.create_task(on_start(deps)) if on_start else None
 
             try:
                 async with receive_stream:
@@ -140,12 +150,17 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
                 # If the WSGI client disconnects or an error occurs reading,
                 # cancel the runner to prevent orphaned tasks.
                 runner_task.cancel()
+                if on_start_task:
+                    on_start_task.cancel()
+
                 raise
 
             # Optional: Await the runner to propagate any exceptions that happened inside it
             # If the stream finished normally, this will return immediately.
             try:
                 await runner_task
+                if on_start_task:
+                    await on_start_task
             except Exception as e:
                 print(e)
                 raise

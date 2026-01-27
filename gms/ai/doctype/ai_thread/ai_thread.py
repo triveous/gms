@@ -10,3 +10,6 @@ class AIThread(Document):
     title: DF.Text
     first_answer: DF.MarkdownEditor
     last_run: DF.Link
+
+    def has_default_title(self):
+        return self.title is None or self.title == "" or self.title == "New Chat"

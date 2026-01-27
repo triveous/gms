@@ -37,11 +37,6 @@ class AgentState:
     events: CustomUIEventSender
 
     kb: KnowledgeBase = field(default_factory=KnowledgeBase)
-
-    search_grant: str | None = None
-    search_project: str | None = None
-    search_project_milestone: str | None = None
-
     planning: PlanningState = field(default_factory=PlanningState)
     thinking: ThinkingState = field(default_factory=ThinkingState)
 
@@ -256,3 +251,19 @@ class AgentRunState(BaseModel):
         block = AskResultBlock()
         self.blocks.append(block)
         return block
+
+
+@dataclass
+class AgentContext:
+    agent_conf: Document
+    query: str
+    thread: Any
+    parent_run: Any
+
+    events: CustomUIEventSender
+
+    kb: KnowledgeBase = field(default_factory=KnowledgeBase)
+    planning: PlanningState = field(default_factory=PlanningState)
+    thinking: ThinkingState = field(default_factory=ThinkingState)
+
+    sources: list[Document] = field(default_factory=list)

@@ -76,7 +76,6 @@ def run2():
     )
 
 
-
 @frappe.whitelist()
 def run():
     if not frappe.request.data:
@@ -181,7 +180,7 @@ def get_message_history(conversation_id: str) -> AIConversation:
     return None
 
 
-def on_complete(conversation_id: str, run: AgentRun):
+async def on_complete(conversation_id: str, run: AgentRun):
     conversation = frappe.get_doc("AI Conversation", conversation_id)
     save_history(conversation, run)
     frappe.db.commit()
@@ -191,7 +190,6 @@ def on_complete(conversation_id: str, run: AgentRun):
         conversation.title = last_message.text[:20]
         conversation.save()
     frappe.db.commit()
-
 
 def save_history(converstion: AIConversation, run: AgentRun):
     messages_json = to_jsonable_python(run.all_messages_json())
