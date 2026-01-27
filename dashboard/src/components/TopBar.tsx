@@ -26,7 +26,6 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
 
     const { data: orgResponse } = useFrappeGetCall(
         'gms.api.organization.get_user_organization',
-        // { user_id: user },
         user ? undefined : null
     );
 
