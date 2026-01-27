@@ -1,6 +1,7 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
+import { useFrappeGetCall } from 'frappe-react-sdk';
 
 export interface BreadcrumbItem {
     label: string;
@@ -16,24 +17,39 @@ export const AppBreadcrumb: React.FC<AppBreadcrumbProps> = ({ items = [] }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { lastVisitedGrant } = useAppContext();
+    const { grantId, projectId } = useParams<{ grantId: string; projectId: string }>();
 
-    const pathParts = location.pathname.split('/').filter(Boolean);
-    const grantId = pathParts[0];
-    const projectId = pathParts[1];
+    const { data: projectData } = useFrappeGetCall<{ message: { project: { title: string } } }>(
+        'gms.api.project.get_project_details',
+        { project_id: projectId },
+        projectId ? undefined : null
+    );
     
     let calculatedItems: BreadcrumbItem[] = [{ label: 'AIKAM', path: '/' }];
     
     if (grantId) {
         const grantLabel = lastVisitedGrant?.alias || 'Grant';
         if (projectId) {
-            calculatedItems = [
-                { label: 'AIKAM', path: '/' },
-                { label: grantLabel, path: `/${grantId}` }
-            ];
+            const projectLabel = projectData?.message?.project?.title || 'Project';
+            const isProjectRoot = location.pathname.replace(/\/$/, '').endsWith(projectId);
+            
+            if (isProjectRoot) {
+                 calculatedItems = [
+                    { label: 'AIKAM', path: '/' },
+                    { label: grantLabel, path: `/${grantId}` }
+                    // Project Label omitted on Project Dashboard as requested
+                ];
+            } else {
+                calculatedItems = [
+                    { label: 'AIKAM', path: '/' },
+                    { label: grantLabel, path: `/${grantId}` },
+                    { label: projectLabel, path: `/${grantId}/${projectId}` }
+                ];
+            }
         } else {
             calculatedItems = [
                 { label: 'AIKAM', path: '/' },
-                // { label: grantLabel }
+                { label: grantLabel, path: `/${grantId}` } // Current page (Grant Dashboard)
             ];
         }
     } else {
