@@ -6,7 +6,6 @@ from frappe.model.document import Document
 from pydantic import BaseModel, Field, PrivateAttr
 from gms.ai.agents.ui import CustomUIEventSender
 from gms.ai.kb.knowledge_base import KnowledgeBase
-from pydantic_ai.ui import StateDeps
 import jsonpatch
 
 
@@ -20,8 +19,10 @@ class PlanningState(BaseModel):
 
 
 class Thought(BaseModel):
-    title: str
-    thought: str
+    title: str = Field(description="3 4 word description of thought")
+    thought: str = Field(
+        description="Your throught on what you have understood and what you should do. Avoid using anything technincal and any mention of any tool or how will you achieve it internally. User doesn't need to know what tools you posses. Keep it within. 10 wor"
+    )
 
 
 class ThinkingState(BaseModel):
@@ -202,7 +203,9 @@ class MarkdownBlockContent(Block.Content):
 
 
 class AskResultBlock(Block):
-    answer_markdown_content: MarkdownBlockContent = Field(default_factory=MarkdownBlockContent)
+    answer_markdown_content: MarkdownBlockContent = Field(
+        default_factory=MarkdownBlockContent
+    )
 
 
 ######### ASK TEXT RESULT #########

@@ -1,6 +1,7 @@
 import time
 
 import frappe
+from frappe import _
 from gms.ai.agents.builder import build_agent
 from gms.ai.agents.state import AgentRunState, AgentState
 from gms.ai.agents.ui import (
@@ -15,6 +16,7 @@ from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from pydantic_core import to_json, to_jsonable_python
 from werkzeug.wrappers import Response
+from gms.ai.agent_v2.graph import q
 
 
 # Build RAG agent
@@ -57,8 +59,13 @@ def iterator():
 
 @frappe.whitelist(allow_guest=True)
 def run2():
+    query = frappe.form_dict.get("query")
+    if not query:
+        frappe.throw("Missing query")
+        return
+
     return Response(
-        iterator(),
+        q(query),
         status=200,
         headers={
             "Content-Type": "text/event-stream",
@@ -67,6 +74,16 @@ def run2():
             "X-Stream-Type": "limited",
         },
     )
+
+
+@frappe.whitelist()
+def ask():
+    query = frappe.form_dict.get("query")
+    if not query:
+        frappe.throw(_("Missing Query"))
+        return
+    thread_id = frappe.form_dict.get("thread_id")
+    run_id = frappe.form_dict.get("run_id")
 
 
 @frappe.whitelist()

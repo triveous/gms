@@ -1,47 +1,63 @@
 import frappe
-from pydantic_ai import RunContext
-
-from gms.ai.agents.state import AgentState
 
 
-def data_overview(ctx: RunContext[AgentState]):
+def data_overview():
     results = {}
 
-    try:
-        results["grants"] = frappe.get_list(
-            "Grant",
-            fields=[
-                "name",
-                "title",
-                "alias",
-                "start_date",
-                "end_date",
-                "description",
-                "approval_identifier",
-                "approved_amount",
-            ],
-        )
-        results["projects"] = frappe.get_list(
-            "Grant Project",
-            fields=["name", "grant", "title", "alias", "start_date", "end_date"],
-        )
+    grants = frappe.get_list(
+        "Grant",
+        fields=[
+            "name",
+            "title",
+            "alias",
+            "start_date",
+            "end_date",
+            "description",
+            "approval_identifier",
+            "approved_amount",
+        ],
+    )
 
-        results["milestone_updates"] = frappe.get_list(
-            "Grant Project Milestone",
-            fields=[
-                "name",
-                "title",
-                "project",
-                "milestone_type",
-                "submitted_at",
-                "period_start",
-                "period_end",
-            ],
-        )
-    except frappe.PermissionError:
-        return "User doens't have permission get the data overview information."
+    projects = frappe.get_list(
+        "Grant Project",
+        fields=["name", "grant", "title", "alias", "start_date", "end_date"],
+    )
 
-    print(f"Data Overview {results}")
+    milestones = frappe.get_list(
+        "Grant Project Milestone",
+        fields=[
+            "title",
+            "project",
+            "milestone_type",
+            "submitted_at",
+            "period_start",
+            "period_end",
+        ],
+    )
+
+    for p in projects:
+        milestone_projects = []
+        for m in milestones:
+            if m["project"] == p["name"]:
+                milestone_projects.append(m)
+                del m["project"]
+
+        # Delete the name of project as it is not more needed
+        del p["name"]
+        p["milestones"] = milestone_projects
+
+    for g in grants:
+        grant_projects = []
+        for p in projects:
+            if p["grant"] == g["name"]:
+                grant_projects.append(p)
+                # Delete the ref
+                del p["grant"]
+
+        # Delete the name of grant as it is not more needed
+        del g["name"]
+        g["projects"] = grant_projects
+
     return frappe.as_json(results)
 
 

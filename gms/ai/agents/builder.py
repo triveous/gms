@@ -17,6 +17,12 @@ BASE_PROMPT = "In order to complete the objective that the user asks of you, you
 
 # Prepare dynamic instructions as per the configuration
 def merge_instruction(agent: Agent, conf: AIAgentConf):
+    if conf.enable_data_overview_tool:
+
+        @agent.instructions
+        def data_overview_instruction():
+            return f"## DATA Overview \n {data_overview()}"
+
     if conf.add_user_name_instruction:
 
         @agent.instructions
@@ -47,9 +53,6 @@ def prepare_tools(conf: AIAgentConf):
 
     if conf.enable_knowledgebase_tool:
         tools.append(Tool(read_knowledge_base, takes_ctx=True))
-
-    if conf.enable_data_overview_tool:
-        tools.append(Tool(data_overview, takes_ctx=True))
 
     tools = [
         *tools,
@@ -106,9 +109,6 @@ def build_agent(agent_conf: Document):
         instructions = []
         if agent_conf.enable_todo_tools:
             instructions.append(TODO_SYSTEM_INSTRUCTION)
-
-        if agent_conf.enable_data_overview_tool:
-            instructions.append(DATA_OVERVIEW_SYSTEM_INSTRUCTION)
 
         if agent_conf.enable_thinking_tool:
             instructions.append(THINKING_TOOL_SYSTEM_INSTRUCTION)
