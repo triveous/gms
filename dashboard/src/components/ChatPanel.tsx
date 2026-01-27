@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useChatContext } from '@/contexts/ChatContext';
 import { Button } from '@/components/ui/button';
-import { X, Clock, MessageSquare, Loader2 } from 'lucide-react';
+import { X, Clock, MessageSquare, Square, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
@@ -39,6 +39,21 @@ interface Conversation {
     title: string;
 }
 
+interface SDKMessage {
+    id: string;
+    role: 'user' | 'assistant' | 'system' | 'data';
+    content?: string;
+    parts?: { type: string; data?: unknown; text?: string }[];
+}
+
+const ThreeDotsLoader = () => (
+    <div className="flex space-x-1 items-center h-5">
+        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+    </div>
+);
+
 const commonQuestions = [
     'PI & Co-PI for Oral lesions project',
     'Summarise goals & impact of TANUH projects',
@@ -56,7 +71,7 @@ const ChatPanel: React.FC = () => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
     
     // Synced directly with SDK messages
-    const [renderMessages, setRenderMessages] = useState<any[]>([]);
+    const [renderMessages, setRenderMessages] = useState<SDKMessage[]>([]);
 
     const { data: conversationListData, mutate: refetchConversationList } = useFrappeGetDocList<Conversation>('AI Conversation', {
         fields: ['name', 'title'],
@@ -112,10 +127,21 @@ const ChatPanel: React.FC = () => {
         }
     }, [status]);
 
-    // Sync UI with SDK messages immediately
     useEffect(() => {
         setRenderMessages(messages);
     }, [messages]);
+
+    const latestAssistantMessage = renderMessages.length > 0 && renderMessages[renderMessages.length - 1].role === 'assistant' 
+        ? renderMessages[renderMessages.length - 1] 
+        : null;
+    
+    const isAssistantResponding = status === 'submitted' || status === 'streaming' || initialMessage !== null;
+    
+    const hasThinkingPart = latestAssistantMessage?.parts?.some(p => p.type === 'data-thinking');
+    const hasTextPart = latestAssistantMessage?.parts?.some(p => p.type === 'text');
+
+    const showBeforeThinking = isAssistantResponding && !hasThinkingPart && !hasTextPart;
+    const showThinkingActive = isAssistantResponding && hasThinkingPart && !hasTextPart;
 
 
     const { data: conversationHistoryData } = useFrappeGetCall(
@@ -138,7 +164,7 @@ const ChatPanel: React.FC = () => {
                     // Keep text or thinking parts
                     return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-thinking');
                 });
-            
+  
             setMessages(transformedMessages);
             setIsHistoryRequested(false);
         }
@@ -188,7 +214,6 @@ const ChatPanel: React.FC = () => {
             setTimeout(() => setInitialMessage(null), 0);
         }
     }, [currentConversaionId, initialMessage, sendMessage]);
-
 
     return (
         <>
@@ -273,6 +298,14 @@ const ChatPanel: React.FC = () => {
 
                             {/* REMOVED DUPLICATE THINKING BLOCK HERE */}
 
+                            {showBeforeThinking && (
+                                <Message from="assistant">
+                                    <MessageContent className="rounded-tl-none p-1">
+                                        <ThreeDotsLoader />
+                                    </MessageContent>
+                                </Message>
+                            )}
+
                             {renderMessages.length === 0 ? (
                                 <div className="flex flex-col items-end text-right mb-2">
                                     <h3 className="text-sm font-semibold text-foreground mb-2">Quick suggestion to ask.</h3>
@@ -293,53 +326,63 @@ const ChatPanel: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                            ([...renderMessages].reverse().map((message) => (
-                                <MessageBranch defaultBranch={0} key={message.id}>
-                                    <MessageBranchContent  className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
-                                        <Message
-                                            from={message.role}
-                                            key={message.id}
-                                        >
-                                            {/* This loop handles both TEXT and THINKING parts */}
-                                            {message.parts ? (
-                                                message.parts.map((part: any, index: number) => {
-                                                    if (part.type === 'text' || part.type === 'data-thinking') {
-                                                        return (
-                                                            <MessageContent key={index} className={cn(
+                                (() => {
+                                    const lastMessage = renderMessages[renderMessages.length - 1];
+                                    return [...renderMessages].reverse().map((message) => {
+                                        const isLastMessage = message.id === lastMessage?.id;
+                                        const isAssistant = message.role === 'assistant';
+                                        const messageStatus = (isLastMessage && isAssistant) ? status : 'ready';
+
+                                        return (
+                                            <MessageBranch defaultBranch={0} key={message.id}>
+                                                <MessageBranchContent className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
+                                                    <Message from={message.role} key={message.id}>
+                                                        {message.parts ? (
+                                                            message.parts.map((part: any, index: number) => {
+                                                                if (part.type === 'text' || part.type === 'data-thinking') {
+                                                                    return (
+                                                                        <MessageContent key={index} className={cn(
+                                                                            'rounded-2xl px-4 py-2.5 transition-all duration-300',
+                                                                            message.role === 'user' 
+                                                                                ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
+                                                                                : 'rounded-tl-none p-1'
+                                                                        )}>
+                                                                            {part.type === 'data-thinking' && (
+                                                                                <ChainOfThoughtComponent 
+                                                                                    key={`cot-${message.id}-${index}`}
+                                                                                    open={true} 
+                                                                                    data={part.data} 
+                                                                                    status={messageStatus} 
+                                                                                />
+                                                                            )}
+                                                                            {part.type === 'text' && (
+                                                                                <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                                    {part.text}
+                                                                                </MessageResponse>
+                                                                            )}
+                                                                        </MessageContent>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })
+                                                        ) : (
+                                                            <MessageContent className={cn(
                                                                 'rounded-2xl px-4 py-2.5 transition-all duration-300',
                                                                 message.role === 'user' 
                                                                     ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
                                                                     : 'rounded-tl-none p-1'
                                                             )}>
-                                                                {part.type === 'data-thinking' && (
-                                                                    <ChainOfThoughtComponent open={true} data={part.data} status={status} />
-                                                                )}
-                                                                {part.type === 'text' && (
-                                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                                        {part.text}
-                                                                    </MessageResponse>
-                                                                )}
+                                                                <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                    {message.content}
+                                                                </MessageResponse>
                                                             </MessageContent>
-                                                        );
-                                                    }
-                                                    return null;
-                                                })
-                                            ) : (
-                                                <MessageContent className={cn(
-                                                    'rounded-2xl px-4 py-2.5 transition-all duration-300',
-                                                    message.role === 'user' 
-                                                        ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
-                                                        : 'rounded-tl-none p-1'
-                                                )}>
-                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                        {message.content}
-                                                    </MessageResponse>
-                                                </MessageContent>
-                                            )}
-                                        </Message>
-                                    </MessageBranchContent>
-                                </MessageBranch>
-                            )))
+                                                        )}
+                                                    </Message>
+                                                </MessageBranchContent>
+                                            </MessageBranch>
+                                        );
+                                    });
+                                })()
                             )}
                             </ConversationContent>
                             <ConversationScrollButton />
@@ -365,11 +408,13 @@ const ChatPanel: React.FC = () => {
                                     />
                                 </PromptInputBody>
                                 <PromptInputSubmit
-                                    disabled={!(input.trim() || status) || status === 'streaming' || status === 'submitted' }
+                                    disabled={!(input.trim() || status) || (isAssistantResponding && !hasTextPart)}
                                     status={status}
                                     className='bg-[#FEF2F2]  text-orange-500 hover:!text-orange-700 cursor-pointer'
                                     children={<>
-                                        {(status === 'submitted' || status === 'streaming' || initialMessage !== null) ? (
+                                        {showBeforeThinking ? (
+                                            <Square className="w-4 h-4 text-orange-500 fill-orange-500 shrink-0" />
+                                        ) : showThinkingActive ? (
                                             <Loader2 className="w-5 h-5 text-orange-500 animate-spin shrink-0" />
                                         ) : (
                                             <svg className="w-5 h-5 text-orange-500 shrink-0" viewBox="0 0 20 20" fill="none">

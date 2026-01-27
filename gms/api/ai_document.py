@@ -83,7 +83,6 @@ def index_ai_document(ai_document_id: str, forced: bool):
                 return False
 
             doc_meta["grant_id"] = grant_id
-            doc_meta["project_id"] = project_id
 
         if file.attached_to_doctype == "Grant Project Milestone":
             milestone_id = file.attached_to_name
@@ -97,8 +96,6 @@ def index_ai_document(ai_document_id: str, forced: bool):
             if not grant_id:
                 return False
             doc_meta["grant_id"] = grant_id
-            doc_meta["project_id"] = project_id
-            doc_meta["project_milestone_id"] = milestone_id
 
         frappe.log("Ingesting")
         DoclingIngestionManager().request_docling_document(
