@@ -46,8 +46,8 @@ interface Project {
     };
     budgetSpent: string;
     progress: string;
-    highlights?: string[] | string;
-    lowlights?: string[] | string;
+    highlights?: string[];
+    lowlights?: string[];
 }
 
 export default function Grant() {
@@ -70,13 +70,13 @@ export default function Grant() {
         
         // It's a year value, find the corresponding group
         if (grantData.quartersList) {
-            const yearlyGroup = grantData.quartersList.find((g: any) => g.label === "Yearly Wise");
+            const yearlyGroup = grantData.quartersList.find((g: any) => g.label === 'Yearly Wise');
             const yearItem = yearlyGroup?.items.find((i: any) => i.value === period);
             
             if (yearItem) {
                 // Find group matching year title
                 const quarterGroup = grantData.quartersList.find((g: any) => 
-                     g.label !== "Yearly Wise" && g.label.includes(yearItem.title)
+                     g.label !== 'Yearly Wise' && g.label.includes(yearItem.title)
                 );
                 if (quarterGroup?.items?.length > 0) {
                     return quarterGroup.items[0].value;

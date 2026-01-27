@@ -876,6 +876,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
     for row in metric_rows:
         mid = row["parent"]
         title = row["title"]
+        code = row["code"]
 
         mtype = (row.get("type") or "").lower()
         if mtype == "int":
@@ -892,7 +893,7 @@ def get_grant_projects_by_quarter(project_id, quarter_value):
         # ----------------------------
         # SPECIAL HANDLING: Highlights / Lowlights
         # ----------------------------
-        if title in ("High lights", "Low lights"):
+        if code in ("hl", "ll"):
             milestone_metrics[mid].setdefault(title, [])
             if value:
                 milestone_metrics[mid][title].append(value)

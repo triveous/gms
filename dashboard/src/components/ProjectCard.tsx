@@ -51,8 +51,8 @@ interface ProjectCardProps {
     };
     budgetSpent: string;
     progress: string;
-    highlights?: string[] | string;
-    lowlights?: string[] | string;
+    highlights?: string[];
+    lowlights?: string[];
     comparisonData?: {
         project: string;
         result: ComparisonResult;
@@ -74,17 +74,8 @@ export function ProjectCard({
     lowlights = [],
     comparisonData,
 }: ProjectCardProps) {
-    const highlightsList = Array.isArray(highlights) 
-        ? highlights 
-        : typeof highlights === 'string' 
-            ? highlights.split('\n').map(s => s.trim().replace(/^[•-]\s*/, '')).filter(Boolean)
-            : [];
-            
-    const lowlightsList = Array.isArray(lowlights) 
-        ? lowlights 
-        : typeof lowlights === 'string' 
-            ? lowlights.split('\n').map(s => s.trim().replace(/^[•-]\s*/, '')).filter(Boolean)
-            : [];
+    const highlightsList = Array.isArray(highlights) ? highlights : [];
+    const lowlightsList = Array.isArray(lowlights) ? lowlights : [];
 
     console.log(comparisonData);
     const navigate = useNavigate();
