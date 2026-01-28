@@ -93,7 +93,7 @@ class PlanBlock(Block):
 
     def default(text: str):
         return PlanBlock(
-            content=PlanBlock.Content(
+            plan_content=PlanBlock.Content(
                 goals=[Goal(description=text, id="0", final=True)]
             )
         )
