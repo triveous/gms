@@ -145,7 +145,7 @@ def add_thread_run(ctx: AgentContext, result: AgentRunResult):
         "AI Thread Run",
         thread=ctx.thread.name,
         query=ctx.query,
-        answer="Some Answer",
+        answer=result.output,
         blocks=blocks_json,
     )
     thread_run.save()

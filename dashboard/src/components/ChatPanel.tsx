@@ -126,7 +126,7 @@ const ChatPanel: React.FC = () => {
                 setInitialMessage(null);
                 if (docToDelete) {
                     try {
-                        await deleteDoc('AI Conversation', docToDelete);
+                        await deleteDoc('AI Thread', docToDelete);
                         refetchConversationList();
                     } catch (e) {
                         console.error('Failed to delete failed conversation:', e);
@@ -167,8 +167,8 @@ const ChatPanel: React.FC = () => {
 
 
     const { data: conversationHistoryData } = useFrappeGetCall(
-        'gms.api.conversation.history',
-        { conversation_id: currentConversaionId },
+        'gms.api.ai.history',
+        { thread_id: currentConversaionId },
         (currentConversaionId && isHistoryRequested) ? undefined : null
     );
 
