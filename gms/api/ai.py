@@ -71,7 +71,7 @@ def ask():
         ),
         message_history=message_history,
         on_start=lambda ctx: on_start(ctx),
-        on_complete=lambda ctx, result: on_complete(ctx, result),
+        on_complete=on_complete,
     )
 
     return Response(
@@ -87,46 +87,73 @@ def ask():
 
 
 async def on_start(ctx: AgentContext):
+    pass
+
+
+def generate_title(ctx: AgentContext, result: AgentRunResult):
     if ctx.thread.has_default_title():
         print("Generating title")
 
         class GenerateTitle(BaseModel):
             title: str = Field(description="title of the conversation")
 
+        custom_prompt = frappe.db.get_single_value(
+            "AI Settings", "conversation_title_generation_prompt"
+        )
         agent = Agent(
             model=ctx.agent_conf.model,
-            system_prompt="Summarize the ai conversation in 5 words of fewer",
+            system_prompt=custom_prompt
+            or "Summarize the ai conversation in 5 words of fewer",
             output_type=GenerateTitle,
         )
-        response = await agent.run("<conversation>Human: {query} </conversation")
+        response = agent.run_sync(
+            f"<conversation>{result.all_messages_json()}</conversation"
+        )
         ctx.thread.title = response.output.title
-    ctx.thread.save()
-    frappe.db.commit()
+        ctx.thread.save()
+        frappe.db.commit()
 
 
 def on_complete(ctx: AgentContext, result: AgentRunResult):
-    thread_run = add_thread_run(ctx, result)
+    try:
+        # Save the thread first
+        ctx.thread.save()
+        frappe.db.commit()
 
-    # Update the first answer of the thread for quick access
-    if not ctx.thread.first_answer:
-        ctx.thread.first_answer = result.output
+        add_thread_run(ctx, result)
 
-    # Quick access for the last run
-    ctx.thread.last_run = thread_run.name
-    ctx.thread.save()
+        # Update the first answer of the thread for quick access
+        if not ctx.thread.first_answer:
+            ctx.thread.first_answer = result.output
+            ctx.thread.save()
+            frappe.db.commit()
 
-    frappe.db.commit()
+        generate_title(ctx, result)
+    except Exception as e:
+        print(e)
 
 
 def add_thread_run(ctx: AgentContext, result: AgentRunResult):
+    # # App answer to state
+    ctx.add_answer(result.output)
+
+    blocks_json = ctx.statew.to_json()
+    print(f"Block sjon {blocks_json}")
+
     thread_run = frappe.new_doc(
         "AI Thread Run",
         thread=ctx.thread.name,
         query=ctx.query,
         answer="Some Answer",
-        blocks="[]",
+        blocks=blocks_json,
     )
-    thread_run.insert()
+    thread_run.save()
+
+    # Quick access for the last run
+    ctx.thread.last_run = thread_run
+    ctx.thread.save()
+
+    frappe.db.commit()
     return thread_run
 
 
@@ -136,6 +163,7 @@ def get_thread(thread_id: str | None) -> tuple[bool, AIThread]:
         return frappe.new_doc("AI Thread")
 
     thread = frappe.get_doc("AI Thread", thread_id)
+    thread.check_permission()
     if not thread:
         raise frappe.throw(_("Invalid thread"))
 
@@ -149,14 +177,18 @@ def get_message_history(thread_id: str | None):
         return None, []
 
     # Enforce permission check
-    runs = frappe.get_all("AI Thread Run", {"thread": thread_id})
+    runs = frappe.get_all(
+        "AI Thread Run",
+        filters={"thread": thread_id},
+        fields=["query", "answer"],
+        order_by="creation asc",
+    )
 
     if len(runs) == 0:
         frappe.log("No previous run found")
         return None, []
 
-    historical_runs = sorted(runs, key=lambda x: x["creation"])
-    return historical_runs[-1], run_to_messages(historical_runs)
+    return runs[-1], run_to_messages(runs)
 
 
 def run_to_messages(runs):

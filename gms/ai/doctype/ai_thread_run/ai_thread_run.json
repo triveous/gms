@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "hash",
  "creation": "2026-01-27 18:31:00.516922",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -47,7 +48,7 @@
   },
   {
    "fieldname": "answer",
-   "fieldtype": "Markdown Editor",
+   "fieldtype": "Long Text",
    "label": "Answer",
    "reqd": 1
   }
@@ -55,10 +56,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-28 04:08:49.924681",
+ "modified": "2026-01-28 19:35:16.541191",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Thread Run",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -103,6 +105,5 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
- "title_field": "query"
+ "states": []
 }

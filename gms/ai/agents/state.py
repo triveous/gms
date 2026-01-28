@@ -9,6 +9,7 @@ from pydantic_ai.ui.vercel_ai.response_types import DataChunk
 from gms.ai.agents.ui import CustomUIEventSender
 from gms.ai.kb.knowledge_base import KnowledgeBase
 import uuid
+from pydantic import TypeAdapter
 
 
 class Todo(BaseModel):
@@ -184,13 +185,16 @@ class StepBlock(Block):
 
 ######### ASK TEXT RESULT #########
 class MarkdownBlockContent(Block.Content):
-    progress: Literal["DEFAULT", "IN_PROGRESS", "DONE", "ERROR"] = "DEFAULT"
+    progress: Literal["DEFAULT", "IN_PROGRESS", "DONE", "ERROR"] = Field(
+        default="DEFAULT"
+    )
     chunks: list[str] = Field(default_factory=list)
     chunk_starting_offset: int = Field(default=0)
-    answer: str | None = None
+    answer: str | None = Field(default=None)
 
 
 class AskResultBlock(Block):
+    usage: BlockType = "ask_text"
     answer_markdown_content: MarkdownBlockContent = Field(
         default_factory=MarkdownBlockContent
     )
@@ -211,9 +215,15 @@ class AnswerSourceBlock(Block):
 
 ######### ANSWER SOURCE #########
 
+AllBlock = PlanBlock | StepBlock | AskResultBlock
 
+
+@dataclass
 class AgentRunState:
-    blocks: list[Block] = []
+    blocks: list[Block] = field(default_factory=list)
+
+    def to_json(self):
+        return TypeAdapter(list[AllBlock]).dump_json(self.blocks).decode()
 
     def step(self) -> StepBlock:
         for b in self.blocks:
@@ -233,7 +243,7 @@ class AgentRunState:
 
     def ask_result(self) -> AskResultBlock:
         for b in self.blocks:
-            if b.usage == "ASK_TEXT":
+            if b.usage == "ask_text":
                 return b
         block = AskResultBlock()
         self.blocks.append(block)
@@ -258,26 +268,33 @@ class AgentContext:
     statew: AgentRunState = field(default_factory=AgentRunState)
 
     async def add_kb_search_step(self, queries: list[str], limit: int, goal_id="0"):
-        step = self.statew.step()
-        step.add_kb_search_step(
+        step_block = self.statew.step()
+        step_block.add_kb_search_step(
             goal_id,
             id=str(uuid.uuid4()),
             queries=queries,
             limit=limit,
         )
-        await self.send_block_update([step])
+        await self.send_block_update([step_block])
 
     async def add_browse_kb_result_step(self, sources: list[str], goal_id="0"):
         if len(sources) == 0:
             return
 
-        step = self.statew.step()
-        step.add_browse_kb_result_step(
+        step_block = self.statew.step()
+        step_block.add_browse_kb_result_step(
             goal_id,
             id=str(uuid.uuid4()),
             sources=[Source(name=s) for s in set(sources)],
         )
-        await self.send_block_update([step])
+        await self.send_block_update([step_block])
+
+    def add_answer(self, answer: str):
+        ask_result_block = self.statew.ask_result()
+        ask_result_block.answer_markdown_content.progress = "DONE"
+        ask_result_block.answer_markdown_content.chunks = [answer]
+        ask_result_block.answer_markdown_content.answer = answer
+        return ask_result_block
 
     async def send_block_update(self, blocks: list[Block]):
         for block in blocks:

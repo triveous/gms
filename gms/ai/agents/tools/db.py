@@ -2,8 +2,6 @@ import frappe
 
 
 def data_overview():
-    results = {}
-
     grants = frappe.get_list(
         "Grant",
         fields=[
@@ -58,7 +56,7 @@ def data_overview():
         del g["name"]
         g["projects"] = grant_projects
 
-    return frappe.as_json(results)
+    return frappe.as_json({"grants": grants})
 
 
 DATA_OVERVIEW_SYSTEM_INSTRUCTION = """## `data_overview`

@@ -3,7 +3,7 @@ import time
 import frappe
 from frappe import _
 from gms.ai.agents.builder import build_agent
-from gms.ai.agents.state import AgentRunState, AgentState
+from gms.ai.agents.state import AgentRunState, AgentState, PlanBlock, AgentContext
 from gms.ai.agents.ui import (
     CustomUIEventSender,
     VercelAIAdapterCustom,
@@ -104,9 +104,13 @@ def run():
 
     agent_conf, agent = build_rag_agent()
     adapter = VercelAIAdapterCustom(agent=agent, run_input=run_input, accept=accept)
+    adapter.default_plan = PlanBlock.default("Analyzing your request")
     event_stream = adapter.run_encoded_sync(
-        dep_builder=lambda send_stream: AgentState(
-            agent_conf=agent_conf, events=CustomUIEventSender(send_stream)
+        dep_builder=lambda send_stream: AgentContext(
+            agent_conf=agent_conf, events=CustomUIEventSender(send_stream),
+            thread=None,
+            query="",
+            parent_run=None
         ),
         message_history=message_history,
         on_complete=lambda run: on_complete(conversation_id, run),
@@ -190,6 +194,7 @@ async def on_complete(conversation_id: str, run: AgentRun):
         conversation.title = last_message.text[:20]
         conversation.save()
     frappe.db.commit()
+
 
 def save_history(converstion: AIConversation, run: AgentRun):
     messages_json = to_jsonable_python(run.all_messages_json())

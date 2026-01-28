@@ -185,12 +185,12 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
         send_stream, receive_stream = create_memory_object_stream()
 
         # Pipe the encoded stream to the send stream
-        async def runner(deps):
+        async def runner(context):
             # Run the agent to generate UI Events
             ui_stream = self.run_stream(
-                deps=deps,
+                deps=context,
                 message_history=message_history,
-                on_complete=lambda result: on_complete(deps, result),
+                on_complete=lambda result: on_complete(context, result),
             )
 
             # Encoded the UI stream to SSE format
@@ -204,13 +204,13 @@ class VercelAIAdapterCustom(BaseVercelAIAdapter):
 
         async def stream_generator() -> AsyncIterator[str]:
             # Build the deps
-            deps = dep_builder(send_stream)
+            context = dep_builder(send_stream)
 
             # FIX: Use asyncio.create_task instead of create_task_group.
             # This schedules the runner on the loop without binding it
             # to the specific Task ID of the first chunk's execution.
-            runner_task = asyncio.create_task(runner(deps))
-            on_start_task = asyncio.create_task(on_start(deps)) if on_start else None
+            runner_task = asyncio.create_task(runner(context))
+            on_start_task = asyncio.create_task(on_start(context)) if on_start else None
 
             try:
                 async with receive_stream:

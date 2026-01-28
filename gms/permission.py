@@ -156,6 +156,12 @@ def ai_conversation_query(user):
     return f"owner = {frappe.db.escape(user)}"
 
 
+def ai_thread_query(user):
+    if not user or user == "Guest":
+        return "1=0"
+    return f"owner = {frappe.db.escape(user)}"
+
+
 def get_organization_user(user: str = None) -> dict | None:
     if not user:
         user = frappe.session.user

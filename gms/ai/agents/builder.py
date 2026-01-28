@@ -21,7 +21,9 @@ def merge_instruction(agent: Agent, conf: AIAgentConf):
 
         @agent.instructions
         def data_overview_instruction():
-            return f"## DATA Overview \n {data_overview()}"
+            overview = data_overview()
+            print(f"Overview: {overview}")
+            return f"## DATA Overview \n {overview}"
 
     if conf.add_user_name_instruction:
 
