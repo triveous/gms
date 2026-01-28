@@ -1,9 +1,8 @@
 import time
 
 import frappe
-from frappe import _
 from gms.ai.agents.builder import build_agent
-from gms.ai.agents.state import AgentRunState, AgentState, PlanBlock, AgentContext
+from gms.ai.agents.state import AgentContext, AgentRunState, AgentState, PlanBlock
 from gms.ai.agents.ui import (
     CustomUIEventSender,
     VercelAIAdapterCustom,
@@ -16,7 +15,6 @@ from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from pydantic_core import to_json, to_jsonable_python
 from werkzeug.wrappers import Response
-from gms.ai.agent_v2.graph import q
 
 
 # Build RAG agent
@@ -107,10 +105,11 @@ def run():
     adapter.default_plan = PlanBlock.default("Analyzing your request")
     event_stream = adapter.run_encoded_sync(
         dep_builder=lambda send_stream: AgentContext(
-            agent_conf=agent_conf, events=CustomUIEventSender(send_stream),
+            agent_conf=agent_conf,
+            events=CustomUIEventSender(send_stream),
             thread=None,
             query="",
-            parent_run=None
+            parent_run=None,
         ),
         message_history=message_history,
         on_complete=lambda run: on_complete(conversation_id, run),
