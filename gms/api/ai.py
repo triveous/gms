@@ -10,6 +10,7 @@ from pydantic_ai.ui import MessagesBuilder, SSE_CONTENT_TYPE
 from gms.ai.agents.builder import build_agent
 from pydantic_ai import Agent, AgentRunResult
 from pydantic import BaseModel, Field
+from pydantic_core import to_jsonable_python
 
 
 # Build RAG agent
@@ -169,6 +170,20 @@ def get_thread(thread_id: str | None) -> tuple[bool, AIThread]:
 
     # Returns False when an existing thread is fetched
     return thread
+
+
+@frappe.whitelist()
+def history():
+    thread_id = frappe.form_dict.get("thread_id")
+    if not thread_id:
+        frappe.throw("Missing Thread")
+        return
+
+    thread = frappe.get_doc("AI Thread", thread_id)
+    thread.check_permission()
+    _, model_message = get_message_history(thread_id)
+    ui_messages = VercelAIAdapterCustom.dump_messages(model_message)
+    return to_jsonable_python(ui_messages)
 
 
 def get_message_history(thread_id: str | None):
