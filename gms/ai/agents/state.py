@@ -2,11 +2,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
+import jsonpatch
 from frappe.model.document import Document
 from pydantic import BaseModel, Field, PrivateAttr
+from pydantic_ai.ui.vercel_ai.response_types import DataChunk
+
 from gms.ai.agents.ui import CustomUIEventSender
 from gms.ai.kb.knowledge_base import KnowledgeBase
-import jsonpatch
+import uuid
 
 
 class Todo(BaseModel):
@@ -45,7 +48,7 @@ class AgentState:
 
 ######### UTILS
 
-BlockType = Literal["PLAN", "STEP", "ASK_TEXT"]
+BlockType = Literal["plan", "step", "ask_text"]
 
 
 class Block(BaseModel):
@@ -55,27 +58,9 @@ class Block(BaseModel):
     usage: BlockType
     _previous: dict = PrivateAttr(default={})
 
-    def diff(self):
-        model_dump = self.model_dump(exclude=["usage"])
-
-        diffs = []
-        for k, v in model_dump.items():
-            prev = self._previous.get(k)
-            patch = jsonpatch.make_patch(prev, v)
-            self._previous[k] = v
-            if len(patch.patch):
-                diffs.append(
-                    {"usage": self.usage, "diff": {"field": k, "patches": patch.patch}}
-                )
-
-        return diffs
-
 
 class Source(BaseModel):
     name: str
-    snippet: str
-    metadata: dict[str, Any] | None = None
-    is_from_kb: bool = Field(default=False)
 
 
 class SearchQuery(BaseModel):
@@ -105,7 +90,7 @@ class PlanBlockContent(Block.Content):
 
 
 class PlanBlock(Block):
-    usage: Literal["PLAN"] = "PLAN"
+    usage: BlockType = "plan"
     plan_content: PlanBlockContent = Field(default_factory=PlanBlockContent)
 
 
@@ -135,7 +120,7 @@ class KBSearchStep(BaseModel):
 class BrowseKBResultStep(BaseModel):
     class Content(BaseModel):
         goal_id: str
-        kb_result: list[Source]
+        sources: list[Source]
 
     id: str
     type: Literal["BROWSE_KB_RESULT"] = "BROWSE_KB_RESULT"
@@ -172,18 +157,22 @@ class StepBlock(Block):
         queries = [SearchQuery(query=q, limit=limit) for q in queries]
         search_kb_step = KBSearchStep(
             id=id,
-            kb_search=KBSearchStep.Content(queries=queries, goal_id=goal_id),
+            kb_search=KBSearchStep.Content(
+                queries=queries,
+                goal_id=goal_id,
+            ),
         )
         self.add_step(search_kb_step)
 
-    def add_browse_kb_result_step(self, goal_id: str, id: str, results: list[Source]):
-        search_kb_result_step = BrowseKBResultStep(
+    def add_browse_kb_result_step(self, goal_id: str, id: str, sources: list[Source]):
+        browser_kb_result_step = BrowseKBResultStep(
             id=id,
-            kb_result_content=BrowseKBResultStep.Content(
-                kb_result=results, goal_id=goal_id
+            browse_kb_result=BrowseKBResultStep.Content(
+                sources=sources,
+                goal_id=goal_id,
             ),
         )
-        self.add_step(search_kb_result_step)
+        self.add_step(browser_kb_result_step)
 
 
 ######### STEP #########
@@ -212,38 +201,32 @@ class AnswerSourceContent(BaseModel):
 
 
 class AnswerSourceBlock(Block):
-    usage: Literal["PLAN"] = "PLAN"
+    usage: BlockType = "ask_text"
     answer_source_content: AnswerSourceContent
 
 
 ######### ANSWER SOURCE #########
 
 
-class AgentRunState(BaseModel):
-    blocks: list[Block] = Field(default=[])
+class AgentRunState:
+    blocks: list[Block] = []
 
-    def get_diff(self):
-        return [d for b in self.blocks for d in b.diff()]
-
-    @property
     def step(self) -> StepBlock:
         for b in self.blocks:
-            if b.usage == "STEP":
+            if b.usage == "step":
                 return b
         block = StepBlock()
         self.blocks.append(block)
         return block
 
-    @property
     def plan(self) -> PlanBlock:
         for b in self.blocks:
-            if b.usage == "PLAN":
+            if b.usage == "plan":
                 return b
         block = PlanBlock()
         self.blocks.append(block)
         return block
 
-    @property
     def ask_result(self) -> AskResultBlock:
         for b in self.blocks:
             if b.usage == "ASK_TEXT":
@@ -267,3 +250,33 @@ class AgentContext:
     thinking: ThinkingState = field(default_factory=ThinkingState)
 
     sources: list[Document] = field(default_factory=list)
+
+    statew: AgentRunState = field(default_factory=AgentRunState)
+
+    async def add_kb_search_step(self, queries: list[str], limit: int, goal_id="0"):
+        step = self.statew.step()
+        step.add_kb_search_step(
+            goal_id,
+            id=str(uuid.uuid4()),
+            queries=queries,
+            limit=limit,
+        )
+        await self.send_block_update([step])
+
+    async def add_browse_kb_result_step(self, sources: list[str], goal_id="0"):
+        step = self.statew.step()
+        step.add_browse_kb_result_step(
+            goal_id,
+            id=str(uuid.uuid4()),
+            sources=[Source(name=s) for s in set(sources)],
+        )
+        await self.send_block_update([step])
+
+    async def send_block_update(self, blocks: list[Block]):
+        for block in blocks:
+            await self.events.send_event(
+                DataChunk(
+                    type=f"data-block-{block.usage}",
+                    data=block.model_dump(),
+                )
+            )

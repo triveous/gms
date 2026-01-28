@@ -6,7 +6,9 @@ from anyio.streams.memory import MemoryObjectSendStream
 from pydantic_ai.ui.vercel_ai import (
     VercelAIAdapter as BaseVercelAIAdapter,
 )
-from pydantic_ai.ui.vercel_ai.response_types import BaseChunk
+from pydantic_ai.ui.vercel_ai.response_types import (
+    BaseChunk,
+)
 
 
 class CustomUIEventSender:
@@ -20,7 +22,9 @@ class CustomUIEventSender:
 
 class CustomUIEventAdapter:
     def __init__(self):
-        self._send_stream, self._receive_stream = create_memory_object_stream()
+        self._send_stream, self._receive_stream = create_memory_object_stream(
+            max_buffer_size=64
+        )
         self._sender = CustomUIEventSender(self._send_stream)
         self._forward_task: asyncio.Task | None = None
 

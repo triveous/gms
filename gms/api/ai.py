@@ -99,21 +99,28 @@ async def on_start(ctx: AgentContext):
 
 
 def on_complete(ctx: AgentContext, result: AgentRunResult):
-    try:
-        thread_run = frappe.new_doc(
-            "AI Thread Run",
-            thread=ctx.thread.name,
-            query=ctx.query,
-            answer="Some Answer",
-            blocks="[]",
-        )
-        thread_run.insert()
-        ctx.thread.last_run = thread_run.name
-        ctx.thread.save()
-        frappe.db.commit()
-        print("ON Complete")
-    except Exception as e:
-        print(e)
+    thread_run = add_thread_run(ctx, result)
+
+    # Update the first answer of the thread for quick access
+    if not ctx.thread.first_answer:
+        ctx.thread.first_answer = result.output
+
+    # Quick access for the last run
+    ctx.thread.last_run = thread_run.name
+    ctx.thread.save()
+
+    frappe.db.commit()
+
+
+def add_thread_run(ctx: AgentContext, result: AgentRunResult):
+    thread_run = frappe.new_doc(
+        "AI Thread Run",
+        thread=ctx.thread.name,
+        query=ctx.query,
+        answer="Some Answer",
+        blocks="[]",
+    )
+    thread_run.insert()
 
 
 def get_thread(thread_id: str | None) -> tuple[bool, AIThread]:
