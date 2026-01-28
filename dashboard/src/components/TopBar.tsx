@@ -6,13 +6,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import React, { useEffect, useState } from 'react';
-import { User, ChevronsUpDown, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { User, ChevronsUpDown, ChevronDown, LayoutDashboard, Building2, Building } from 'lucide-react';
 import ChatToggleButton from '@/components/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/Logo';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
+import { useFrappeGetCall } from 'frappe-react-sdk';
 
 interface TopBarProps {
     showGrantSwitcher?: boolean;
@@ -20,8 +21,15 @@ interface TopBarProps {
 
 const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
     const { isChatOpen } = useChatContext();
-    const { logout, userData } = useAuth();
+    const { logout, userData, user } = useAuth();
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1280);
+
+    const { data: orgResponse } = useFrappeGetCall(
+        'gms.api.organization.get_user_organization',
+        user ? undefined : null
+    );
+
+
     
     // Grant Switcher Logic
     const location = useLocation();
@@ -90,6 +98,14 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
 
                 {/* Right side buttons */}
                 <div className="flex items-center gap-6" style={{ marginRight: (isChatOpen && isLargeScreen) ? '380px' : '0', transition: 'margin-right 300ms ease-in-out' }}>
+                    {/* Organization Name */}
+                    {orgResponse?.message?.organization_name && (
+                        <div className="flex items-center gap-2 text-[#475569] font-medium text-sm">
+                            <Building className="w-5 h-5" />
+                            <span>{orgResponse.message.organization_name}</span>
+                        </div>
+                    )}
+
                     {/* User Dropdown Menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
