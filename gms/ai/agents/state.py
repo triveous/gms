@@ -2,9 +2,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
-import jsonpatch
 from frappe.model.document import Document
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field
 from pydantic_ai.ui.vercel_ai.response_types import DataChunk
 
 from gms.ai.agents.ui import CustomUIEventSender
@@ -56,7 +55,6 @@ class Block(BaseModel):
         pass
 
     usage: BlockType
-    _previous: dict = PrivateAttr(default={})
 
 
 class Source(BaseModel):
@@ -78,20 +76,26 @@ class Goal(BaseModel):
     pass
 
 
-class PlanBlockContent(Block.Content):
-    goals: list[Goal] = Field(default_factory=list)
-
-    def get_content_fields(self):
-        return {"goals": self.goals}
-
-    def add_goal(self, description: str):
-        goal_id = len(self.add_goal)
-        self.goals.append(Goal(id=str(goal_id), description=description))
-
-
 class PlanBlock(Block):
+    class Content(Block.Content):
+        goals: list[Goal] = Field(default_factory=list)
+
+        def get_content_fields(self):
+            return {"goals": self.goals}
+
+        def add_goal(self, description: str):
+            goal_id = len(self.add_goal)
+            self.goals.append(Goal(id=str(goal_id), description=description))
+
     usage: BlockType = "plan"
-    plan_content: PlanBlockContent = Field(default_factory=PlanBlockContent)
+    plan_content: Content = Field(default_factory=Content)
+
+    def default(text: str):
+        return PlanBlock(
+            content=PlanBlock.Content(
+                goals=[Goal(description=text, id="0", final=True)]
+            )
+        )
 
 
 ######### PLAN #########
@@ -139,7 +143,7 @@ class StepBlockContent(Block.Content):
 
 
 class StepBlock(Block):
-    usage: Literal["STEP"] = "STEP"
+    usage: BlockType = "step"
     step_content: StepBlockContent = Field(default_factory=StepBlockContent)
 
     def add_step(self, step: Steps):
@@ -264,6 +268,9 @@ class AgentContext:
         await self.send_block_update([step])
 
     async def add_browse_kb_result_step(self, sources: list[str], goal_id="0"):
+        if len(sources) == 0:
+            return
+
         step = self.statew.step()
         step.add_browse_kb_result_step(
             goal_id,
@@ -276,7 +283,8 @@ class AgentContext:
         for block in blocks:
             await self.events.send_event(
                 DataChunk(
-                    type=f"data-block-{block.usage}",
+                    type="data-block",
+                    id=block.usage,
                     data=block.model_dump(),
                 )
             )

@@ -5,9 +5,13 @@ from anyio import create_memory_object_stream
 from anyio.streams.memory import MemoryObjectSendStream
 from pydantic_ai.ui.vercel_ai import (
     VercelAIAdapter as BaseVercelAIAdapter,
+    VercelAIEventStream as BaseVercelEventStream,
 )
 from pydantic_ai.ui.vercel_ai.response_types import (
     BaseChunk,
+    DataChunk,
+    StartStepChunk,
+    FinishStepChunk,
 )
 
 
@@ -17,7 +21,11 @@ class CustomUIEventSender:
 
     async def send_event(self, event: BaseChunk):
         encoded = f"data: {event.encode()}\n\n"
-        await self.send_stream.send(encoded)
+        try:
+            self.send_stream.send_nowait(encoded)
+        except Exception as e:
+            print(f"Failed would block {e}")
+            await self.send_stream.send(encoded)
 
 
 class CustomUIEventAdapter:
@@ -83,11 +91,70 @@ def stream_async_iterator(async_iter: AsyncIterator[str]):
         return
 
 
+class VercelEventStream(BaseVercelEventStream):
+    def get_empty_iter(self):
+        async def iter():
+            if False:
+                yield
+
+        return iter()
+
+    plan_sent: bool
+    default_plan: Any
+
+    def set_de(self, plan):
+        self.plan_sent = False
+        self.default_plan = plan
+
+    def before_stream(self):
+        iter = super().before_stream()
+
+        async def process():
+            async for event in iter:
+                yield event
+
+            if not self.plan_sent:
+                self.plan_sent = True
+                yield StartStepChunk()
+                yield DataChunk(type="data-block", id="plan", data=self.default_plan)
+                yield FinishStepChunk()
+
+        return process()
+
+    def handle_tool_call_start(self, part):
+        return self.get_empty_iter()
+
+    def handle_tool_call_end(self, part):
+        return self.get_empty_iter()
+
+    def handle_function_tool_call(self, event):
+        return self.get_empty_iter()
+
+    def handle_function_tool_result(self, event):
+        return self.get_empty_iter()
+
+    def handle_builtin_tool_call_start(self, part):
+        return self.get_empty_iter()
+
+    async def handle_builtin_tool_call_end(self, part):
+        return self.get_empty_iter()
+
+    async def handle_tool_call_delta(self, delta):
+        return self.get_empty_iter()
+
+
 class VercelAIAdapterCustom(BaseVercelAIAdapter):
     @staticmethod
     def set_loop():
         """Ensure that there is a running event loop."""
         get_event_loop()
+
+    default_plan: Any
+
+    def build_event_stream(self):
+        ev = VercelEventStream(self.run_input, self.accept, self.default_plan)
+        ev.set_de(self.default_plan)
+        return ev
 
     def run_encoded_sync(
         self,

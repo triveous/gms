@@ -1,6 +1,6 @@
 import frappe
 from frappe import ValidationError, _
-from gms.ai.agents.state import AgentContext
+from gms.ai.agents.state import AgentContext, PlanBlock, Goal
 from gms.ai.agents.ui import CustomUIEventSender
 from gms.ai.doctype.ai_thread.ai_thread import AIThread
 from gms.api.conversation import VercelAIAdapterCustom
@@ -8,7 +8,7 @@ from werkzeug.wrappers import Response
 from pydantic_ai import TextPart, UserPromptPart
 from pydantic_ai.ui import MessagesBuilder, SSE_CONTENT_TYPE
 from gms.ai.agents.builder import build_agent
-from pydantic_ai import RunContext, Agent, AgentRunResult
+from pydantic_ai import Agent, AgentRunResult
 from pydantic import BaseModel, Field
 
 
@@ -54,7 +54,13 @@ def ask():
     VercelAIAdapterCustom.set_loop()
 
     agent_conf, agent = build_rag_agent()
-    adapter = VercelAIAdapterCustom(agent=agent, run_input=run_input, accept=accept)
+    adapter = VercelAIAdapterCustom(
+        agent=agent,
+        run_input=run_input,
+        accept=accept,
+    )
+    adapter.default_plan = PlanBlock.default("Analyzing your request")
+
     event_stream = adapter.run_encoded_sync(
         dep_builder=lambda send_stream: AgentContext(
             agent_conf=agent_conf,
@@ -121,6 +127,7 @@ def add_thread_run(ctx: AgentContext, result: AgentRunResult):
         blocks="[]",
     )
     thread_run.insert()
+    return thread_run
 
 
 def get_thread(thread_id: str | None) -> tuple[bool, AIThread]:
