@@ -665,6 +665,7 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
                 "parent",
                 "title",
                 "type",
+                "code",
                 "data_string",
                 "data_int",
                 "data_float",
