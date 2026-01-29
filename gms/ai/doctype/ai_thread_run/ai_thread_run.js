@@ -1,0 +1,8 @@
+// Copyright (c) 2026, Triveous and contributors
+// For license information, please see license.txt
+
+// frappe.ui.form.on("AI Thread Run", {
+// 	refresh(frm) {
+
+// 	},
+// });

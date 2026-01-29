@@ -128,6 +128,7 @@ permission_query_conditions = {
     "Grant Project Milestone": "gms.permission.grant_project_milestone_query",
     "Grant Organization User": "gms.permission.grant_organization_user_query",
     "AI Conversation": "gms.permission.ai_conversation_query",
+    "AI Thread": "gms.permission.ai_thread_query",
 }
 #
 has_permission = {

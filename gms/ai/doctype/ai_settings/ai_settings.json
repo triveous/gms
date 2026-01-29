@@ -13,7 +13,8 @@
   "contextual_chunking_model_config",
   "contextual_chunking_model",
   "contextualization_prompt",
-  "chunk_token_size"
+  "chunk_token_size",
+  "conversation_title_generation_prompt"
  ],
  "fields": [
   {
@@ -61,13 +62,18 @@
    "fieldname": "chunk_token_size",
    "fieldtype": "Int",
    "label": "Chunk Token Size"
+  },
+  {
+   "fieldname": "conversation_title_generation_prompt",
+   "fieldtype": "Long Text",
+   "label": "Conversation Title Generation Prompt"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-19 18:34:05.459696",
+ "modified": "2026-01-28 20:23:21.487799",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Settings",

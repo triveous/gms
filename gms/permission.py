@@ -138,7 +138,11 @@ def grant_project_milestone_query(user):
         "Grant Project",
         fields=["name"],
     )
-    project_names = [frappe.db.escape(project.name) for project in projects]
+    project_names = (
+        [frappe.db.escape(project.name) for project in projects]
+        if len(projects) > 0
+        else ["-1"]
+    )
     return f"`tabGrant Project Milestone`.project in ({', '.join(project_names)})"
 
 
@@ -151,6 +155,12 @@ def grant_organization_user_query(user):
 
 
 def ai_conversation_query(user):
+    if not user or user == "Guest":
+        return "1=0"
+    return f"owner = {frappe.db.escape(user)}"
+
+
+def ai_thread_query(user):
     if not user or user == "Guest":
         return "1=0"
     return f"owner = {frappe.db.escape(user)}"

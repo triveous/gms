@@ -1,9 +1,11 @@
+import time
+
 import frappe
 from gms.ai.agents.builder import build_agent
-from gms.ai.agents.state import AgentState
+from gms.ai.agents.state import AgentContext, AgentRunState, AgentState, PlanBlock
 from gms.ai.agents.ui import (
-    VercelAIAdapterCustom,
     CustomUIEventSender,
+    VercelAIAdapterCustom,
 )
 from gms.ai.doctype.ai_conversation.ai_conversation import AIConversation
 from gms.utils.iterator import stream_async_iterator
@@ -11,7 +13,7 @@ from pydantic import ValidationError
 from pydantic_ai import AgentRun, ModelMessagesTypeAdapter
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
-from pydantic_core import to_jsonable_python
+from pydantic_core import to_json, to_jsonable_python
 from werkzeug.wrappers import Response
 
 
@@ -20,6 +22,56 @@ def build_rag_agent():
     rag_agent_name = frappe.get_single_value("GMS Settings", "rag_agent")
     agent_conf = frappe.get_doc("AI Agent", rag_agent_name)
     return agent_conf, build_agent(agent_conf)
+
+
+def iterator():
+    state = AgentRunState()
+
+    def emit_data(diff: list[dict]):
+        return f"data: {to_json(diff)}\n\n"
+
+    def emit_empty():
+        return "data: {}\n\n"
+
+    def encode_event(type: str):
+        return f"event: {type}\n"
+
+    i = 0
+    while i < 10:
+        if i == 3:
+            state.step.add_intial_query_step("What is universe")
+        if i == 7:
+            state.step.add_kb_search_step("0", "xasda", ["TANUH"], limit=5)
+
+        diff = state.get_diff()
+
+        yield encode_event("message")
+        yield emit_data(diff)
+
+        time.sleep(1)
+        i = i + 1
+
+    yield encode_event("end_of_stream")
+    yield emit_empty()
+
+
+@frappe.whitelist(allow_guest=True)
+def run2():
+    query = frappe.form_dict.get("query")
+    if not query:
+        frappe.throw("Missing query")
+        return
+
+    return Response(
+        q(query),
+        status=200,
+        headers={
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Stream-Type": "limited",
+        },
+    )
 
 
 @frappe.whitelist()
@@ -50,9 +102,14 @@ def run():
 
     agent_conf, agent = build_rag_agent()
     adapter = VercelAIAdapterCustom(agent=agent, run_input=run_input, accept=accept)
+    adapter.default_plan = PlanBlock.default("Analyzing your request")
     event_stream = adapter.run_encoded_sync(
-        dep_builder=lambda send_stream: AgentState(
-            agent_conf=agent_conf, events=CustomUIEventSender(send_stream)
+        dep_builder=lambda send_stream: AgentContext(
+            agent_conf=agent_conf,
+            events=CustomUIEventSender(send_stream),
+            thread=None,
+            query="",
+            parent_run=None,
         ),
         message_history=message_history,
         on_complete=lambda run: on_complete(conversation_id, run),
@@ -126,7 +183,7 @@ def get_message_history(conversation_id: str) -> AIConversation:
     return None
 
 
-def on_complete(conversation_id: str, run: AgentRun):
+async def on_complete(conversation_id: str, run: AgentRun):
     conversation = frappe.get_doc("AI Conversation", conversation_id)
     save_history(conversation, run)
     frappe.db.commit()
