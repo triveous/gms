@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: userList, isLoading: isUserLoading } = useFrappeGetDocList(
     'User',
     {
-      fields: ['username'],
+      fields: ['username', 'full_name'],
       filters: [['name', '=', currentUser ?? '']]
     },
     { enabled: !!currentUser }

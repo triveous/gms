@@ -1,14 +1,12 @@
 import { useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-
-import { CircleCheckBig, BadgeInfo } from 'lucide-react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { AppBreadcrumb } from '@/components/AppBreadcrumb';
 import { ProjectCard } from '@/components/ProjectCard';
 import { BudgetUtilizationChart } from '@/components/BudgetUtilizationChart';
 import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
-import OrgMembers, { type Partner, type Contributor } from '@/components/OrgMembers';
+import OrgMembers from '@/components/OrgMembers';
 import EmptyState from '@/components/EmptyState';
 import { useFrappeGetCall, useFrappePostCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
@@ -442,75 +440,6 @@ export default function Grant() {
                         ))}
                     </SectionWrapper>
 
-                    {/* Key Highlights & Lowlights */}
-                    <SectionWrapper 
-                        title="Key Highlights & Lowlights"
-                        contentClassName="grid grid-cols-2 gap-6"
-                    >
-                        {/* Highlights */}
-                        <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
-                            <h3>Highlights</h3>
-                            <div className="flex flex-col gap-4">
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Rapid AI Model Validation: Across verticals (Diabetes, Chest X-Ray, AMR), AI models have achieved high diagnostic accuracy (88-94%) in validation phases, with the Diabetes Risk Stratification model completing training ahead of schedule.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Successful Field Deployment: Critical pilot programs are now operational on the ground, including the Voice-Bot for ASHA workers in 9 sites and the Cough-Against-TB app reaching recruitment targets, demonstrating effective lab-to-field translation.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Infrastructure & Compliance Readiness: Major backend milestones were met, including the integration of the Medically Aware LLM Master Agent, successful 3rd party security audits, and the installation of high-end imaging infrastructure (ZEISS CLARUS) at IISc.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <CircleCheckBig className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Clinical Adoption Velocity: Strong clinical engagement is evident, with 100% of PHC staff trained for Diabetes management and automated AMR pipelines stabilizing in 4 critical care departments at AIIMS, exceeding initial adoption targets.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Lowlights */}
-                        <div className="p-6 bg-card flex flex-col gap-4 border border-border rounded text-muted-foreground font-inter text-base font-medium leading-6">
-                            <h3>Lowlights</h3>
-                            <div className="flex flex-col gap-4 ">
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Hardware Supply Chain Disruptions: Critical procurement delays (Tablets/Servers) have severely impacted the Oral Cancer screening timeline, causing a 75% shortfall in screening targets for the quarter.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Data Collection Bottlenecks: Multiple projects (STI/Leprosy, COPD, CARDIAC-India) are facing delays in data collection due to slow ethics approvals, unsigned consortium agreements, or patient device adherence issues.
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Last-Mile Usability Issues: Field feedback indicates usability friction in rural settings, specifically regarding questionnaire length (Breast Cancer), non-intuitive app interfaces for older devices (Platform), and dialect recognition gaps (Conversational AI).
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 items-start">
-                                    <BadgeInfo className="w-5 h-5 shrink-0 mt-0.5" />
-                                    <p>
-                                        Operational Lag in Multi-Center Projects: Large consortium projects like CARDIAC-India are struggling with administrative coordination, leading to significant under-utilization of budget and delayed deployment at partner sites.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                       
-                    </SectionWrapper>
 
                     {/* Budget Utilisation */}
                     <SectionWrapper 

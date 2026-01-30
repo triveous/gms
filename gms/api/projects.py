@@ -190,10 +190,10 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 			"parenttype": "Grant Project Milestone",
 			"parentfield": "partners",
 		},
-		offset=offset,
-		limit=page_size,
+        limit_start=offset,
+        limit_page_length=page_size,
 	)
-	
+
 	if not partner_rows:
 		return {"partners_map": {}, "all_projects": [], "total_count": total_count, "page": page, "page_size": page_size, "total_pages": total_pages}
 	

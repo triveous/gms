@@ -111,7 +111,7 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="gap-2">
                                 <User className="w-4 h-4" />
-                                {userData?.username || 'Guest'}
+                                {userData?.full_name || userData?.username || 'Guest'}
                                 <ChevronDown className="w-4 h-4" />
                             </Button>
                         </DropdownMenuTrigger>
