@@ -90,14 +90,15 @@ const ChatPanel: React.FC = () => {
         transport: new DefaultChatTransport({
             api: '/api/method/gms.api.ai.ask',
             headers: {
-                'X-Frappe-CSRF-Token': window.csrf_token
+                // 'X-Frappe-CSRF-Token': window.csrf_token
+                'X-Frappe-CSRF-Token': 'd1eb67b3c32141d197bd7c10550035275ded48b0cfd3d0515430b054'
             },
         }),
         onData: (dataPart) => {
             if (dataPart.type === 'data-conversation-title') {
                 refetchConversationList();
             }
-            // Removed 'data-thinking' handling here because it's handled in the message loop
+            // Removed deprecated data handling
         },
 
         async onToolCall({ toolCall }) {
@@ -159,11 +160,11 @@ const ChatPanel: React.FC = () => {
 
     const isAssistantResponding = status === 'submitted' || status === 'streaming' || initialMessage !== null;
 
-    const hasThinkingPart = latestAssistantMessage?.parts?.some(p => p.type === 'data-thinking');
+    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p => p.type === 'data-block');
     const hasTextPart = latestAssistantMessage?.parts?.some(p => p.type === 'text');
 
-    const showBeforeThinking = isAssistantResponding && !hasThinkingPart && !hasTextPart;
-    const showThinkingActive = isAssistantResponding && hasThinkingPart && !hasTextPart;
+    const showBeforeThinking = isAssistantResponding && !hasDataBlockPart && !hasTextPart;
+    const showThinkingActive = isAssistantResponding && hasDataBlockPart && !hasTextPart;
 
 
     const { data: conversationHistoryData } = useFrappeGetCall(
@@ -183,8 +184,8 @@ const ChatPanel: React.FC = () => {
                 }))
                 .filter((msg: { id: string; role: string; parts: Record<string, unknown>[] }) => {
                     if (msg.role === 'user') return true;
-                    // Keep text or thinking parts
-                    return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-thinking');
+                    // Keep text or data-block parts
+                    return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-block');
                 });
 
             setMessages(transformedMessages);
@@ -355,57 +356,81 @@ const ChatPanel: React.FC = () => {
                                             const isAssistant = message.role === 'assistant';
                                             const messageStatus = (isLastMessage && isAssistant) ? status : 'ready';
 
-                                            return (
-                                                <MessageBranch defaultBranch={0} key={message.id}>
-                                                    <MessageBranchContent className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
-                                                        <Message from={message.role} key={message.id}>
-                                                            {message.parts ? (
-                                                                message.parts.map((part: any, index: number) => {
-                                                                    if (part.type === 'text' || part.type === 'data-thinking') {
-                                                                        return (
-                                                                            <MessageContent key={index} className={cn(
-                                                                                'rounded-2xl px-4 py-2.5 transition-all duration-300',
-                                                                                message.role === 'user'
-                                                                                    ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]'
-                                                                                    : 'rounded-tl-none p-1'
-                                                                            )}>
-                                                                                {part.type === 'data-thinking' && (
-                                                                                    <ChainOfThoughtComponent
-                                                                                        key={`cot-${message.id}-${index}`}
-                                                                                        open={true}
-                                                                                        data={part.data}
-                                                                                        status={messageStatus}
-                                                                                    />
-                                                                                )}
-                                                                                {part.type === 'text' && (
-                                                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                                                        {part.text}
-                                                                                    </MessageResponse>
-                                                                                )}
-                                                                            </MessageContent>
-                                                                        );
-                                                                    }
-                                                                    return null;
-                                                                })
-                                                            ) : (
-                                                                <MessageContent className={cn(
-                                                                    'rounded-2xl px-4 py-2.5 transition-all duration-300',
-                                                                    message.role === 'user'
-                                                                        ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]'
-                                                                        : 'rounded-tl-none p-1'
-                                                                )}>
-                                                                    <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
-                                                                        {message.content}
-                                                                    </MessageResponse>
-                                                                </MessageContent>
-                                                            )}
-                                                        </Message>
-                                                    </MessageBranchContent>
-                                                </MessageBranch>
-                                            );
-                                        });
-                                    })()
-                                )}
+                                            const parts = message.parts || (message.content ? [{ type: 'text', text: message.content }] : []);
+
+                                            // Group ALL data-block parts of a message into a single group
+                                            // and place it at the position of the first data-block encountered.
+                                            const groupedParts: any[] = [];
+                                            let cotGroup: { type: 'data-block-group', blocks: any[] } | null = null;
+
+                                            parts.forEach((part: any) => {
+                                                if (part.type === 'data-block') {
+                                                    if (!cotGroup) {
+                                                        cotGroup = { type: 'data-block-group', blocks: [part] };
+                                                        groupedParts.push(cotGroup);
+                                                    } else {
+                                                        cotGroup.blocks.push(part);
+                                                    }
+                                                } else if (part.type === 'text') {
+                                                    groupedParts.push(part);
+                                                }
+                                                // Ignore data-thinking as per request
+                                            });
+
+                                        return (
+                                            <MessageBranch defaultBranch={0} key={message.id}>
+                                                <MessageBranchContent className="flex flex-col-reverse gap-6 w-full max-w-full overflow-hidden">
+                                                    <Message from={message.role} key={message.id}>
+                                                        {groupedParts.length > 0 ? (
+                                                            groupedParts.map((groupOrPart: any, index: number) => {
+                                                                if (groupOrPart.type === 'data-block-group') {
+                                                                    return (
+                                                                        <MessageContent key={`group-${index}`} className="rounded-tl-none p-1">
+                                                                            <ChainOfThoughtComponent 
+                                                                                key={`cot-${message.id}-${index}`}
+                                                                                open={true} 
+                                                                                data={groupOrPart.blocks} 
+                                                                                status={messageStatus} 
+                                                                            />
+                                                                        </MessageContent>
+                                                                    );
+                                                                }
+                                                                
+                                                                if (groupOrPart.type === 'text') {
+                                                                    return (
+                                                                        <MessageContent key={index} className={cn(
+                                                                            'rounded-2xl px-4 py-2.5 transition-all duration-300',
+                                                                            message.role === 'user' 
+                                                                                ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
+                                                                                : 'rounded-tl-none p-1'
+                                                                        )}>
+                                                                            <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                                {groupOrPart.text}
+                                                                            </MessageResponse>
+                                                                        </MessageContent>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })
+                                                        ) : (
+                                                            <MessageContent className={cn(
+                                                                'rounded-2xl px-4 py-2.5 transition-all duration-300',
+                                                                message.role === 'user' 
+                                                                    ? 'bg-white border border-slate-200 !rounded-[6px] px-4 py-2 text-sm text-slate-700 max-w-[85%]' 
+                                                                    : 'rounded-tl-none p-1'
+                                                            )}>
+                                                                <MessageResponse className={message.role === 'user' ? 'text-slate-900' : ''}>
+                                                                    {message.content}
+                                                                </MessageResponse>
+                                                            </MessageContent>
+                                                        )}
+                                                    </Message>
+                                                </MessageBranchContent>
+                                            </MessageBranch>
+                                        );
+                                    });
+                                })()
+                            )}
                             </ConversationContent>
                             <ConversationScrollButton />
                             <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-[#F8FAFC] to-transparent pointer-events-none rounded-t-md z-10" />
