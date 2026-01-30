@@ -90,8 +90,7 @@ const ChatPanel: React.FC = () => {
         transport: new DefaultChatTransport({
             api: '/api/method/gms.api.ai.ask',
             headers: {
-                // 'X-Frappe-CSRF-Token': window.csrf_token
-                'X-Frappe-CSRF-Token': 'd1eb67b3c32141d197bd7c10550035275ded48b0cfd3d0515430b054'
+                'X-Frappe-CSRF-Token': window.csrf_token
             },
         }),
         onData: (dataPart) => {
