@@ -11,6 +11,7 @@ from pydantic_ai import Agent, AgentRunResult, TextPart, UserPromptPart
 from pydantic_ai.ui import SSE_CONTENT_TYPE, MessagesBuilder
 from pydantic_core import to_jsonable_python
 from werkzeug.wrappers import Response
+from gms.ai.kb.kb import Knowledge
 
 
 # Build RAG agent
@@ -36,9 +37,9 @@ def ask2():
         frappe.db.commit()
 
     settings = frappe.get_single("AI Settings")
+    knowlegde = Knowledge(uri=settings.milvus_db_url, token=settings.milvus_db_token)
     iter = run_chat_agent_ui_mode(
-        kb_connection_uri=settings.milvus_db_url,
-        kb_token=settings.milvus_db_token,
+        knowledge=knowlegde,
         thread_id=thread_id,
         query=query,
     )

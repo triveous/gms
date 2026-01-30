@@ -3,6 +3,7 @@
 #       `bench pip langgraph-cli[inmem]`
 # To start the studio server. you need to be have langgraph.json file in the sites folder and start the studio
 # by calling `langgraph dev`
+# Additional install debugpy to enable debugging
 
 
 ### Content of langgraph.json

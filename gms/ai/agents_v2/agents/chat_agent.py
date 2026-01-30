@@ -1,10 +1,11 @@
-from deepagents import create_deep_agent, SubAgent
+from deepagents import SubAgent, create_deep_agent
 from langchain.agents import AgentState
-from langchain_core.messages import HumanMessage, AIMessageChunk
+from langchain_core.messages import AIMessageChunk, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
+from gms.ai.kb.kb import Knowledge
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
 
 DEFAULT_SYSTEM_PROMPT = """You are AIKAM, a helpful assistant answer only domain specific questions. Your domain is Grant Management.
@@ -28,10 +29,15 @@ You have access to read_knowledge_base tool to search for content on knowledgeba
 
 
 def create_chat_agent(
-    kb_connection_uri: str,
-    kb_token: str,
+    knowledge: Knowledge,
     checkpointer: BaseCheckpointSaver | None = None,
 ):
+    """Create a chat agent with knowledge base search capability.
+
+    Args:
+        knowledge: Knowledge instance for searching the knowledge base
+        checkpointer: Optional checkpointer for state persistence
+    """
     model: str = DEFAULT_MODEL
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
 
@@ -41,9 +47,7 @@ def create_chat_agent(
         description="Research agent",
         system_prompt=RESEARCH_AGENT_SYSTEM_PROMPT,
         tools=[],
-        middleware=[
-            KBSearchMiddleware(connection_uri=kb_connection_uri, token=kb_token)
-        ],
+        middleware=[KBSearchMiddleware(knowledge=knowledge)],
     )
     return create_deep_agent(
         model=model,
@@ -53,17 +57,12 @@ def create_chat_agent(
     )
 
 
-def run_chat_agent_ui_mode(
-    kb_connection_uri: str, kb_token: str, thread_id: str, query: str
-):
+def run_chat_agent_ui_mode(knowledge: Knowledge, thread_id: str, query: str):
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     checkointer = FrappeBufferedCheckpointer()
     checkointer.load_from_frappe(config)
-    for e in checkointer.list(config):
-        yield f"data: {e.checkpoint}\n\n"
 
-    agent = create_chat_agent(kb_connection_uri, kb_token, checkpointer=checkointer)
-
+    agent = create_chat_agent(knowledge, checkpointer=checkointer)
     state = AgentState(messages=[HumanMessage(content=query)])
 
     # noinspection PyTypeChecker
