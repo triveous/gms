@@ -94,7 +94,7 @@ def build_agent(agent_conf: Document):
     agent = Agent(
         model=GoogleModel(
             agent_conf.model.split(":")[1],
-            provider=GoogleProvider(http_client=AsyncClient()),
+            provider=GoogleProvider(http_client=AsyncClient(timeout=180)),
         ),
         deps_type=AgentState,
         model_settings=agent_conf.model_setting_dict,
