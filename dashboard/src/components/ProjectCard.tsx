@@ -1,3 +1,5 @@
+import { useState, useMemo } from 'react';
+import { useScrollDetection } from '@/hooks/useScrollDetection';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, LayoutList, X, CircleCheckBig, BadgeInfo } from 'lucide-react';
 import { MetricItem } from './MetricItem';
@@ -74,8 +76,8 @@ export function ProjectCard({
     lowlights = [],
     comparisonData,
 }: ProjectCardProps) {
-    const highlightsList = Array.isArray(highlights) ? highlights : [];
-    const lowlightsList = Array.isArray(lowlights) ? lowlights : [];
+    const highlightsList = useMemo(() => Array.isArray(highlights) ? highlights : [], [highlights]);
+    const lowlightsList = useMemo(() => Array.isArray(lowlights) ? lowlights : [], [lowlights]);
 
     console.log(comparisonData);
     const navigate = useNavigate();
@@ -83,6 +85,9 @@ export function ProjectCard({
     const handleProjectClick = (projectId: string) => {
         navigate(`/${grantId}/${projectId}`);
     };
+
+    const [scrollNode, setScrollNode] = useState<HTMLDivElement | null>(null);
+    const { isScrollable } = useScrollDetection(scrollNode, [highlightsList, lowlightsList]);
 
     const getMetricDisplay = (key: 'tbl' | 'mrl' | 'crl' | 'sirl', name: keyof ComparisonResult['metrics']) => {
         const defaultMetric = metrics[key];
@@ -141,7 +146,7 @@ export function ProjectCard({
                                 <LayoutList className="size-5 text-[#0F172A]" />
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[700px] p-6 gap-6 border-none rounded-lg overflow-hidden" showCloseButton={false}>
+                        <DialogContent className="sm:max-w-[700px]  p-6 gap-6 border-none rounded-lg overflow-hidden" showCloseButton={false}>
                             <DialogHeader className="pb-0 flex flex-row items-center justify-between">
                                 <DialogTitle className="text-[#020617] font-sans text-[20px] font-semibold leading-[120%] tracking-[-0.4px]">
                                     Key Highlights & Lowlights
@@ -152,13 +157,16 @@ export function ProjectCard({
                                     </Button>
                                 </DialogClose>
                             </DialogHeader>
-                            <div className=" flex flex-col space-y-4">
-                                <h3 className="text-[#020617] font-sans text-[16px] font-semibold leading-[140%]">
+                            <div className="flex flex-col space-y-4 min-h-0">
+                                <h3 className="text-[#020617] font-sans text-[16px] font-semibold leading-[140%] shrink-0">
                                     {title}
                                 </h3>
 
-                                <div className="relative">
-                                    <div className="space-y-6 max-h-[300px] overflow-y-auto scroll-smooth remove-scrollbar">
+                                <div className="relative min-h-0">
+                                    <div 
+                                        ref={setScrollNode}
+                                        className={`space-y-6 max-h-[300px] overflow-y-auto scroll-smooth remove-scrollbar ${isScrollable? 'pb-7':'pb-2'}`}
+                                    >
                                         <div className="space-y-3">
                                             <h4 className="text-[#64748B] font-sans text-[16px] font-medium">Highlights</h4>
                                             <div className="space-y-4 text-[#334155]">
@@ -193,9 +201,12 @@ export function ProjectCard({
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent pointer-events-none z-10" />
+                                    {isScrollable && (
+                                       <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none z-20" /> 
+                                    )} 
                                 </div>
                             </div>
+                            
                         </DialogContent>
                     </Dialog>
                     <Button variant="outline" className="w-[155.5px] h-[45px] px-6 gap-2  shadow-none" onClick={() => handleProjectClick(id)}>
