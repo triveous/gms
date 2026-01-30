@@ -1,16 +1,16 @@
 import frappe
 from frappe import ValidationError, _
-from gms.ai.agents.state import AgentContext, PlanBlock, Goal
+from gms.ai.agents.builder import build_agent
+from gms.ai.agents.state import AgentContext, Goal, PlanBlock
 from gms.ai.agents.ui import CustomUIEventSender
+from gms.ai.agents_v2.agents.chat_agent import run_chat_agent_ui_mode
 from gms.ai.doctype.ai_thread.ai_thread import AIThread
 from gms.api.conversation import VercelAIAdapterCustom
-from werkzeug.wrappers import Response
-from pydantic_ai import TextPart, UserPromptPart
-from pydantic_ai.ui import MessagesBuilder, SSE_CONTENT_TYPE
-from gms.ai.agents.builder import build_agent
-from pydantic_ai import Agent, AgentRunResult
 from pydantic import BaseModel, Field
+from pydantic_ai import Agent, AgentRunResult, TextPart, UserPromptPart
+from pydantic_ai.ui import SSE_CONTENT_TYPE, MessagesBuilder
 from pydantic_core import to_jsonable_python
+from werkzeug.wrappers import Response
 
 
 # Build RAG agent
@@ -18,6 +18,41 @@ def build_rag_agent():
     rag_agent_name = frappe.get_single_value("GMS Settings", "rag_agent")
     agent_conf = frappe.get_doc("AI Agent", rag_agent_name)
     return agent_conf, build_agent(agent_conf)
+
+
+@frappe.whitelist()
+def ask2():
+    thread_id = frappe.form_dict.get("thread_id")
+    query = frappe.form_dict.get("query")
+    if not query:
+        frappe.throw("Missing query")
+        return
+
+    if not thread_id:
+        thread = frappe.new_doc("AI Thread", title="Langchain Local")
+        thread.save()
+        thread_id = thread.name
+        print(f"using thread {thread_id}")
+        frappe.db.commit()
+
+    settings = frappe.get_single("AI Settings")
+    iter = run_chat_agent_ui_mode(
+        kb_connection_uri=settings.milvus_db_url,
+        kb_token=settings.milvus_db_token,
+        thread_id=thread_id,
+        query=query,
+    )
+
+    return Response(
+        iter,
+        status=200,
+        headers={
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Stream-Type": "limited",
+        },
+    )
 
 
 @frappe.whitelist()
