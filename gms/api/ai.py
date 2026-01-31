@@ -3,7 +3,10 @@ from frappe import ValidationError, _
 from gms.ai.agents.builder import build_agent
 from gms.ai.agents.state import AgentContext, Goal, PlanBlock
 from gms.ai.agents.ui import CustomUIEventSender
-from gms.ai.agents_v2.agents.chat_agent import run_chat_agent_ui_mode
+from gms.ai.agents_v2.agents.chat_agent import (
+    run_chat_agent_ui_mode,
+    get_chat_agent_history,
+)
 from gms.ai.doctype.ai_thread.ai_thread import AIThread
 from gms.api.conversation import VercelAIAdapterCustom
 from pydantic import BaseModel, Field
@@ -54,6 +57,22 @@ def ask2():
             "X-Stream-Type": "limited",
         },
     )
+
+
+@frappe.whitelist()
+def history2():
+    thread_id = frappe.form_dict.get("thread_id")
+    if not thread_id:
+        frappe.throw("Missing thread")
+        return
+
+    # Check the permission before allowing to read the history
+    thread = frappe.get_doc("AI Thread", thread_id)
+    thread.check_permission()
+
+    settings = frappe.get_single("AI Settings")
+    knowlegde = Knowledge(uri=settings.milvus_db_url, token=settings.milvus_db_token)
+    return get_chat_agent_history(knowlegde, thread_id)
 
 
 @frappe.whitelist()
