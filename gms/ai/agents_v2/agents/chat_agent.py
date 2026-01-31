@@ -145,4 +145,8 @@ def run_chat_agent_ui_mode(knowledge: Knowledge, thread_id: str, query: str):
     _apply_ui_data_to_last_message(messages, ui_data)
     print(f"Message{messages[-1]}")
 
+    # Update state with modified messages so ui_data_parts are persisted
+    if ui_data:
+        agent.update_state(config, {"messages": messages})
+
     checkpointer.flush_to_frappe()
