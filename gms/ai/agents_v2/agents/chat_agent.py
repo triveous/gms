@@ -1,8 +1,6 @@
-from typing import Annotated, Any
+from typing import Any
 
 from deepagents import SubAgent, create_deep_agent
-from langchain.agents import AgentState
-from langchain.agents.middleware.types import OmitFromInput
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -10,25 +8,12 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 from gms.ai.kb.kb import Knowledge
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
+from gms.ai.agents_v2.middleware.ui_data import UIDataMiddleware
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
 from gms.ai.agents_v2.vercel_ui.converter import (
     convert_messages_to_ui_messages,
     UI_DATA_PARTS_KEY,
 )
-from gms.ai.agents_v2.utils.ui_stream_writer import ui_data_reducer
-
-
-# Custom state for chat agent with UI data support
-class ChatAgentState(AgentState):
-    """
-    Extended agent state that tracks UI data for persistence.
-
-    The ui_data field collects non-transient data from UIStreamWriter
-    and is merged using a custom reducer to prevent overwriting.
-    It's marked OmitFromInput so it doesn't pollute the input schema.
-    """
-
-    ui_data: Annotated[dict[str, Any], ui_data_reducer, OmitFromInput]
 
 
 DEFAULT_SYSTEM_PROMPT = """You are AIKAM, a helpful assistant answer only domain specific questions. Your domain is Grant Management.
@@ -64,19 +49,25 @@ def create_chat_agent(
     model: str = DEFAULT_MODEL
     system_prompt: str = DEFAULT_SYSTEM_PROMPT
 
+    # UIDataMiddleware adds ui_data to state schema for both SubAgent and main agent
+    # This enables tools to update ui_data via Command, which propagates up
     research_agent = SubAgent(
         name="research-agent",
         model=SUB_AGENT_DEFAULT_MODEL,
         description="Research agent",
         system_prompt=RESEARCH_AGENT_SYSTEM_PROMPT,
         tools=[],
-        middleware=[KBSearchMiddleware(knowledge=knowledge)],
+        middleware=[
+            UIDataMiddleware(),  # Enable ui_data in SubAgent state
+            KBSearchMiddleware(knowledge=knowledge),
+        ],
     )
     return create_deep_agent(
         model=model,
         system_prompt=system_prompt,
         checkpointer=checkpointer,
         subagents=[research_agent],
+        middleware=[UIDataMiddleware()],  # Enable ui_data in main agent state
     )
 
 
@@ -88,6 +79,7 @@ def get_chat_agent_history(knowledge: Knowledge, thread_id: str):
     agent = create_chat_agent(knowledge, checkpointer=checkpointer)
     state = agent.get_state(config)
     messages = state.values.get("messages", [])
+    print(f"History message {messages[-1]}")
     ui_messages = convert_messages_to_ui_messages(messages)
     return ui_messages
 
@@ -124,7 +116,8 @@ def run_chat_agent_ui_mode(knowledge: Knowledge, thread_id: str, query: str):
     checkpointer.load_from_frappe(config)
 
     agent = create_chat_agent(knowledge, checkpointer=checkpointer)
-    state = ChatAgentState(messages=[HumanMessage(content=query)])
+    # Use plain dict - UIDataMiddleware provides the state schema with ui_data
+    state = {"messages": [HumanMessage(content=query)]}
 
     handler = VercelUIStreamHandler()
 
@@ -147,7 +140,9 @@ def run_chat_agent_ui_mode(knowledge: Knowledge, thread_id: str, query: str):
     final_state = agent.get_state(config)
     messages = final_state.values.get("messages", [])
     ui_data = final_state.values.get("ui_data", {})
+    print(f"UI Data{ui_data}")
 
     _apply_ui_data_to_last_message(messages, ui_data)
+    print(f"Message{messages[-1]}")
 
     checkpointer.flush_to_frappe()
