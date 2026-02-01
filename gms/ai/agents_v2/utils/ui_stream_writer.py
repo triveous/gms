@@ -11,6 +11,7 @@ from langgraph.config import get_stream_writer
 
 if TYPE_CHECKING:
     from gms.ai.agents_v2.middleware.steps import Step
+    from gms.ai.agents_v2.middleware.goal import Goal
 
 
 def get_ui_stream_writer() -> "UIStreamWriter":
@@ -114,6 +115,23 @@ class UIStreamWriter:
             "type": "data-step",
             "id": step_id,
             "data": dict(step),
+        }
+        self.write(data)
+
+    def write_goal(self, goal: "Goal") -> None:
+        """
+        Write a goal update to the stream.
+
+        Sends a data-goal chunk with the goal data.
+
+        Args:
+            goal: Goal instance
+        """
+        goal_id = goal.get("id", "")
+        data: dict[str, Any] = {
+            "type": "data-goal",
+            "id": goal_id,
+            "data": dict(goal),
         }
         self.write(data)
 

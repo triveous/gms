@@ -163,10 +163,7 @@ def create_set_goal_tool():
             from gms.ai.agents_v2.utils.ui_stream_writer import get_ui_stream_writer
 
             writer = get_ui_stream_writer()
-            writer.write_data(
-                data_type="goal",
-                payload=new_goal,
-            )
+            writer.write_goal(new_goal)
         except Exception as e:
             print(f"Failed to stream goal: {e}")
 
@@ -353,10 +350,7 @@ class GoalMiddleware(AgentMiddleware[GoalState, Any]):
             from gms.ai.agents_v2.utils.ui_stream_writer import get_ui_stream_writer
 
             writer = get_ui_stream_writer()
-            writer.write_data(
-                data_type="goal",
-                payload=goal,
-            )
+            writer.write_goal(goal)
         except Exception as e:
             # Don't fail if streaming fails
             print(f"Failed to stream goal: {e}")
