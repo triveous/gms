@@ -2,6 +2,7 @@
 
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
 from gms.ai.agents_v2.middleware.steps import (
+    STEPS_PARTS_KEY,
     BrowseKBStep,
     SearchKBStep,
     Step,
@@ -14,6 +15,7 @@ from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddlewa
 
 __all__ = [
     # Steps
+    "STEPS_PARTS_KEY",
     "BrowseKBStep",
     "SearchKBStep",
     "Step",

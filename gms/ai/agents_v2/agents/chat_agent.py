@@ -1,24 +1,21 @@
 from __future__ import annotations
 
 from deepagents import SubAgent, create_deep_agent
-from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 from gms.ai.kb.kb import Knowledge
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
-from gms.ai.agents_v2.middleware.steps import StepsMiddleware, Step
+from gms.ai.agents_v2.middleware.steps import StepsMiddleware
 from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.middleware.state_sync import (
     EndStateNotifierMiddleware,
     StartStateNotifierMiddleware,
 )
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
-from gms.ai.agents_v2.vercel_ui.converter import (
-    convert_messages_to_ui_messages,
-    UI_DATA_PARTS_KEY,
-)
+from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
 
 
 DEFAULT_SYSTEM_PROMPT = """You are AIKAM, a helpful assistant answer only domain specific questions. Your domain is Grant Management.
@@ -95,36 +92,17 @@ def get_chat_agent_history(knowledge: Knowledge, thread_id: str):
     return ui_messages
 
 
-def _apply_steps_to_last_message(messages: list, steps: list[Step]) -> None:
-    """
-    Apply collected steps to the last AIMessage's additional_kwargs.
-
-    This persists the steps with the message so it's available
-    when loading chat history.
-    """
-    if not steps:
-        return
-
-    # Find the last AIMessage
-    for msg in reversed(messages):
-        if isinstance(msg, (AIMessage, AIMessageChunk)):
-            # Merge with existing
-            existing = msg.additional_kwargs.get(UI_DATA_PARTS_KEY, {})
-            if existing:
-                existing_parts = existing.get("data_parts", [])
-                steps = existing_parts + steps
-
-            msg.additional_kwargs[UI_DATA_PARTS_KEY] = {"data_parts": steps}
-            break
-
-
 def run_chat_agent_ui_mode(knowledge: Knowledge, thread_id: str, query: str):
+    """Run chat agent in UI mode with SSE streaming.
+
+    Note: Steps persistence is handled by StepsMiddleware.after_agent,
+    so no manual step handling is needed here.
+    """
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     checkpointer = FrappeBufferedCheckpointer()
     checkpointer.load_from_frappe(config)
 
     agent = create_chat_agent(knowledge, checkpointer=checkpointer)
-    # Use plain dict - StepsMiddleware provides the state schema with steps
     state = {"messages": [HumanMessage(content=query)]}
 
     handler = VercelUIStreamHandler()
@@ -144,17 +122,5 @@ def run_chat_agent_ui_mode(knowledge: Knowledge, thread_id: str, query: str):
     # Finish stream
     yield from handler.finish()
 
-    # Get final state and apply steps to last message
-    final_state = agent.get_state(config)
-    messages = final_state.values.get("messages", [])
-    steps = final_state.values.get("steps", [])
-    print(f"Steps: {steps}")
-
-    _apply_steps_to_last_message(messages, steps)
-    print(f"Message{messages[-1]}")
-
-    # Update state with modified messages so steps are persisted
-    if steps:
-        agent.update_state(config, {"messages": messages})
-
+    # Flush checkpointer data
     checkpointer.flush_to_frappe()

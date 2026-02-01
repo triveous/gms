@@ -53,6 +53,8 @@ from .types import (
     UIMessageState,
 )
 
+from gms.ai.agents_v2.middleware.steps import STEPS_PARTS_KEY
+
 
 class UIMessagePart(TypedDict, total=False):
     """A part of a UIMessage."""
@@ -487,36 +489,34 @@ class LangGraphUIMessageConverter:
         return ErrorChunk(error_text=error_text)
 
 
-# Key used to store UI data parts in message additional_kwargs
-UI_DATA_PARTS_KEY = "ui_data_parts"
-
-
-def get_ui_data_parts(message: BaseMessage) -> list[dict]:
+def get_steps_parts(message: BaseMessage) -> list[dict]:
     """
-    Get persisted UI data parts from a message's additional_kwargs.
+    Get persisted steps from a message's additional_kwargs.
 
-    Reads from UI_DATA_PARTS_KEY in additional_kwargs and returns
-    a flat list of data parts.
+    Reads from STEPS_PARTS_KEY in additional_kwargs and converts
+    steps to data-step format for the UI.
 
     Args:
         message: The message to read data from
 
     Returns:
-        List of data part dicts, or empty list if none.
+        List of data-step part dicts, or empty list if none.
     """
-    data_dict = message.additional_kwargs.get(UI_DATA_PARTS_KEY)
-    if not data_dict:
-        return []
-
-    # Handle flat format: {"data_parts": [list of dicts with type field]}
-    data_parts = data_dict.get("data_parts", [])
-    if data_parts:
-        return data_parts
-
-    # Handle legacy categorized format
     parts = []
-    for key in ["source_urls", "source_documents", "files"]:
-        parts.extend(data_dict.get(key, []))
+
+    # Read steps_parts format
+    steps_parts = message.additional_kwargs.get(STEPS_PARTS_KEY, [])
+    if steps_parts:
+        # Convert steps to data parts format for UI
+        for step in steps_parts:
+            parts.append(
+                {
+                    "type": "data-step",
+                    "id": step.get("id", ""),
+                    "data": step,
+                }
+            )
+
     return parts
 
 
@@ -647,10 +647,10 @@ def convert_message_to_ui_message(
                                 {"type": "file", "mediaType": "image/*", "url": url}
                             )
 
-    # Read persisted UI data parts from additional_kwargs
-    ui_data_parts = get_ui_data_parts(message)
-    if ui_data_parts:
-        parts.extend(ui_data_parts)
+    # Read persisted steps from additional_kwargs
+    steps_parts = get_steps_parts(message)
+    if steps_parts:
+        parts.extend(steps_parts)
 
     return UIMessage(id=message_id, role=role, parts=parts)
 

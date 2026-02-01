@@ -13,15 +13,12 @@ from __future__ import annotations
 from typing import Any, ClassVar, Generator
 
 import frappe
-from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from gms.ai.agents_v2.agents.chat_agent import create_chat_agent
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
-from gms.ai.agents_v2.vercel_ui.converter import (
-    UI_DATA_PARTS_KEY,
-    convert_messages_to_ui_messages,
-)
+from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
 from gms.ai.kb.kb import Knowledge
 
@@ -160,16 +157,9 @@ class AgentRunner:
             if stream_mode == "custom" or namespace == ():
                 yield from handler.process_event(stream_mode, data)
 
-        # Get final state and apply ui_data to last message
+        # Get final state for thread title update
+        # Note: Steps persistence is handled by StepsMiddleware.after_agent
         final_state = agent.get_state(config)
-        messages = final_state.values.get("messages", [])
-        ui_data = final_state.values.get("ui_data", {})
-
-        self._apply_ui_data_to_last_message(messages, ui_data)
-
-        # Update state with modified messages so ui_data_parts are persisted
-        if ui_data:
-            agent.update_state(config, {"messages": messages})
 
         # Update thread title if generated and thread has default title
         thread_title = final_state.values.get("thread_title")
@@ -207,28 +197,3 @@ class AgentRunner:
         messages = state.values.get("messages", [])
 
         return convert_messages_to_ui_messages(messages)
-
-    @staticmethod
-    def _apply_ui_data_to_last_message(messages: list, ui_data: dict[str, Any]) -> None:
-        """Apply collected UI data to the last AIMessage's additional_kwargs.
-
-        This persists the UI data with the message so it's available
-        when loading chat history.
-        """
-        if not ui_data:
-            return
-
-        # Find the last AIMessage
-        for msg in reversed(messages):
-            if isinstance(msg, (AIMessage, AIMessageChunk)):
-                # Convert ui_data dict to list of parts
-                parts = list(ui_data.values())
-
-                # Merge with existing
-                existing = msg.additional_kwargs.get(UI_DATA_PARTS_KEY, {})
-                if existing:
-                    existing_parts = existing.get("data_parts", [])
-                    parts = existing_parts + parts
-
-                msg.additional_kwargs[UI_DATA_PARTS_KEY] = {"data_parts": parts}
-                break

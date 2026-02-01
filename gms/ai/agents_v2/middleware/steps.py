@@ -10,8 +10,12 @@ from typing import Annotated, Any, Literal
 from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import OmitFromInput
+from langchain_core.messages import AIMessage, AIMessageChunk
 from typing_extensions import TypedDict
 
+
+# Key used to store steps in message additional_kwargs
+STEPS_PARTS_KEY = "steps_parts"
 
 # Step progress states
 StepProgress = Literal["in-progress", "done", "error"]
@@ -120,6 +124,9 @@ class StepsMiddleware(AgentMiddleware[StepsState, Any]):
     This middleware enables tools to track step progress via Command returns.
     Steps are merged using steps_reducer by step ID.
 
+    The after_agent hook persists steps to the last AIMessage so they
+    are available when loading chat history.
+
     Usage:
         from gms.ai.agents_v2.middleware.steps import StepsMiddleware
 
@@ -139,3 +146,39 @@ class StepsMiddleware(AgentMiddleware[StepsState, Any]):
 
     state_schema = StepsState
     tools = []  # No additional tools
+
+    def after_agent(self, state: StepsState, runtime: Any) -> dict[str, Any] | None:
+        """Persist steps to the last AIMessage after agent completes.
+
+        This ensures steps are available when loading chat history by
+        storing them in the message's additional_kwargs.
+
+        Args:
+            state: Current agent state containing steps and messages
+            runtime: Agent runtime context
+
+        Returns:
+            Updated state with steps attached to last message, or None if no steps
+        """
+        steps = state.get("steps", [])
+        if not steps:
+            return None
+
+        messages = state.get("messages", [])
+        if not messages:
+            return None
+
+        # Find the last AIMessage
+        for msg in reversed(messages):
+            if isinstance(msg, (AIMessage, AIMessageChunk)):
+                # Get existing steps if any
+                existing = msg.additional_kwargs.get(STEPS_PARTS_KEY, [])
+                if existing:
+                    # Merge with existing steps using reducer logic
+                    steps = steps_reducer(existing, steps)
+
+                msg.additional_kwargs[STEPS_PARTS_KEY] = steps
+                break
+
+        # Return updated messages
+        return {"messages": messages}

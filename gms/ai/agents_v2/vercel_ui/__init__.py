@@ -47,8 +47,7 @@ from .converter import (
     UIMessagePart,
     convert_messages_to_ui_messages,
     convert_message_to_ui_message,
-    get_ui_data_parts,
-    UI_DATA_PARTS_KEY,
+    get_steps_parts,
 )
 from .stream_handler import (
     VercelUIStreamHandler,
@@ -74,8 +73,7 @@ __all__ = [
     "UIMessagePart",
     "convert_messages_to_ui_messages",
     "convert_message_to_ui_message",
-    "get_ui_data_parts",
-    "UI_DATA_PARTS_KEY",
+    "get_steps_parts",
     # Stream handlers
     "VercelUIStreamHandler",
     "AsyncVercelUIStreamHandler",
