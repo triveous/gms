@@ -3,13 +3,34 @@ from langchain.tools import ToolRuntime
 from langchain_core.messages import ToolMessage
 from langchain_core.tools import StructuredTool
 from langgraph.graph.state import Command
+from uuid import uuid4
 
-from gms.ai.agents_v2.utils.ui_stream_writer import get_ui_stream_writer
+from gms.ai.agents_v2.middleware.steps import SearchKBStep
+from gms.ai.agents_v2.utils import get_ui_stream_writer
 from gms.ai.kb.kb import Knowledge
 
 READ_KNOWLEDGE_BASE_TOOL_DESCRIPTION = """Reads and retrieves relevant content from the knowledge base based on the given query.
 Search for relevant documents in the knowledge base based on the given query.
 """
+
+
+def create_search_step(query: list[str]) -> SearchKBStep:
+    """Create a new search step with in-progress status."""
+    return SearchKBStep(
+        id=str(uuid4()),
+        type="search_kb",
+        content={"query": query},
+        progress="in-progress",
+    )
+
+
+def complete_search_step(
+    step: SearchKBStep, query: list[str], results_count: int
+) -> SearchKBStep:
+    """Mark a search step as complete with results count."""
+    step["content"] = {"query": query, "results_count": results_count}
+    step["progress"] = "done"
+    return step
 
 
 def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
@@ -23,6 +44,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
     async def aread_knowledge_base(query: list[str], runtime: ToolRuntime):
         """Async version of knowledge base search."""
         writer = get_ui_stream_writer()
+
+        # Add the search step
+        step = create_search_step(query)
+        writer.write_step(step)
+
         all_results = []
         for q in query:
             results = await knowledge.asearch(
@@ -37,18 +63,26 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
 
         content = "\n".join([f"<content>{r.text}</content>" for r in all_results])
         print(f"Total documents found: {len(all_results)}")
+
+        # Mark the search step as complete
+        complete_search_step(step, query, len(all_results))
+        writer.write_step(step)
+
         return Command(
             update={
                 "messages": [
                     ToolMessage(content=content, tool_call_id=runtime.tool_call_id)
                 ],
-                "ui_data": writer.get_state_update(),
+                "steps": [step],
             }
         )
 
     def read_knowledge_base(query: list[str], runtime: ToolRuntime):
         writer = get_ui_stream_writer()
-        writer.write_data("step", payload={"query": query}, data_id="search")
+
+        # Add the search step
+        step = create_search_step(query)
+        writer.write_step(step)
 
         all_results = []
         for q in query:
@@ -64,12 +98,17 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
 
         content = "\n".join([f"<content>{r.text}</content>" for r in all_results])
         print(f"Total documents found: {len(all_results)}")
+
+        # Mark the search step as complete
+        complete_search_step(step, query, len(all_results))
+        writer.write_step(step)
+
         return Command(
             update={
                 "messages": [
                     ToolMessage(content=content, tool_call_id=runtime.tool_call_id)
                 ],
-                "ui_data": writer.get_state_update(),
+                "steps": [step],
             }
         )
 

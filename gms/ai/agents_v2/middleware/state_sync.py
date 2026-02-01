@@ -30,7 +30,7 @@ class BaseStateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
             state_payload = {
                 "thread_id": thread_id,
                 "thread_title": state.get("thread_title"),
-                "ui_data": state.get("ui_data"),
+                "steps": state.get("steps", []),
             }
 
             # Stream state to frontend
@@ -40,7 +40,6 @@ class BaseStateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
             writer.write_data(
                 data_type="state",
                 payload=state_payload,
-                transient=True,
             )
             print(f"Streamed state ({phase}): thread_id={thread_id}")
 
