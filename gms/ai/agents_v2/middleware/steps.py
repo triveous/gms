@@ -9,7 +9,6 @@ from typing import Annotated, Any, Literal
 
 from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
-from langchain.agents.middleware.types import OmitFromInput
 from langchain_core.messages import AIMessage, AIMessageChunk
 from typing_extensions import TypedDict
 
@@ -80,6 +79,17 @@ class BrowseKBStep(TypedDict, total=False):
     progress: StepProgress
 
 
+class Replace(list):
+    """Wrapper to signal 'replace entirely' instead of merge in reducers.
+
+    Use this when you want to clear/reset a reducer-managed field:
+        return {"steps": Replace([])}  # Clears steps
+        return {"steps": Replace([new_step])}  # Replaces with new list
+    """
+
+    pass
+
+
 def steps_reducer(existing: list[Step] | None, new: list[Step] | None) -> list[Step]:
     """Custom reducer for steps field that merges by step ID.
 
@@ -98,6 +108,10 @@ def steps_reducer(existing: list[Step] | None, new: list[Step] | None) -> list[S
         existing = []
     if new is None:
         return existing
+
+    # If new is a Replace wrapper, replace entirely
+    if isinstance(new, Replace):
+        return list(new)
 
     # Build a dict for fast lookup, preserving order
     steps_by_id: dict[str, Step] = {}
@@ -127,7 +141,7 @@ class StepsState(AgentState):
     Uses a custom reducer to merge updates by step ID.
     """
 
-    steps: Annotated[list[Step], steps_reducer, OmitFromInput]
+    steps: Annotated[list[Step], steps_reducer]
 
 
 class StepsMiddleware(AgentMiddleware[StepsState, Any]):

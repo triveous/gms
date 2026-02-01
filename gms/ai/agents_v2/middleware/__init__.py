@@ -13,6 +13,7 @@ from gms.ai.agents_v2.middleware.steps import (
     STEPS_PARTS_KEY,
     BrowseKBSource,
     BrowseKBStep,
+    Replace,
     SearchKBStep,
     Step,
     StepProgress,
@@ -32,6 +33,7 @@ __all__ = [
     "GOALS_PARTS_KEY",
     # Steps
     "STEPS_PARTS_KEY",
+    "Replace",
     "BrowseKBSource",
     "BrowseKBStep",
     "SearchKBStep",

@@ -13,7 +13,7 @@ Features:
 from typing import Annotated, Any, Literal
 
 from langchain.agents.middleware import AgentMiddleware
-from langchain.agents.middleware.types import AgentState, OmitFromInput
+from langchain.agents.middleware.types import AgentState
 from langchain.tools import ToolRuntime
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
@@ -21,6 +21,8 @@ from langchain_core.tools import StructuredTool
 from langgraph.graph.state import Command
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
+
+from gms.ai.agents_v2.middleware.steps import Replace
 
 
 # Default model for goal generation (lightweight/fast model)
@@ -90,6 +92,10 @@ def goals_reducer(existing: list[Goal] | None, new: list[Goal] | None) -> list[G
         existing = []
     if new is None:
         return existing
+
+    # If new is a Replace wrapper, replace entirely
+    if isinstance(new, Replace):
+        return list(new)
 
     # Build a dict for fast lookup, preserving order
     goals_by_id: dict[str, Goal] = {}
@@ -190,7 +196,7 @@ def create_set_goal_tool():
 class GoalState(AgentState):
     """Extended state with goals list. Last goal in list is the active goal."""
 
-    goals: Annotated[list[Goal], goals_reducer, OmitFromInput]
+    goals: Annotated[list[Goal], goals_reducer]
 
 
 class GoalMiddleware(AgentMiddleware[GoalState, Any]):

@@ -77,17 +77,24 @@ class EndStateNotifierMiddleware(BaseStateNotifierMiddleware):
     """
 
     def after_agent(self, state: AgentState, runtime: Any) -> dict[str, Any] | None:
-        """Send state to frontend after agent completes.
+        """Send state to frontend after agent completes, then clear per-run state.
 
         Args:
             state: Current agent state
             runtime: Agent runtime context
 
         Returns:
-            None - only streams data, doesn't update state
+            State update to clear goals/steps for next run
         """
+        from gms.ai.agents_v2.middleware.steps import Replace
+
         self._send_state(state, phase="after")
-        return None
+
+        # Clear per-run state for next query
+        return {
+            "goals": Replace([]),
+            "steps": Replace([]),
+        }
 
 
 class StateNotifierMiddleware(StartStateNotifierMiddleware, EndStateNotifierMiddleware):
