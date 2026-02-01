@@ -546,9 +546,17 @@ def get_steps_parts(message: BaseMessage) -> list[dict]:
     return parts
 
 
+def _should_include_type(type_name: str, include_types: set[str] | None) -> bool:
+    """Check if a content type should be included."""
+    if include_types is None:
+        return True
+    return type_name in include_types
+
+
 def convert_message_to_ui_message(
     message: BaseMessage,
     tool_outputs: dict[str, Any] | None = None,
+    include_types: list[str] | None = None,
 ) -> UIMessage:
     """
     Convert a single LangGraph message to UIMessage format.
@@ -556,12 +564,14 @@ def convert_message_to_ui_message(
     Args:
         message: A LangGraph message (HumanMessage, AIMessage, SystemMessage, ToolMessage)
         tool_outputs: Optional dict mapping tool_call_id to output for completed tool calls
+        include_types: Optional list of types to include ("text", "reasoning", "tool", "data").
 
     Returns:
         UIMessage dict representing the message.
     """
     message_id = message.id or str(uuid.uuid4())
     tool_outputs = tool_outputs or {}
+    include_types_set = set(include_types) if include_types else None
 
     # Determine role
     if isinstance(message, HumanMessage):
@@ -586,65 +596,79 @@ def convert_message_to_ui_message(
             block_type = block.get("type")
 
             if block_type == "text":
-                text = block.get("text", "")
-                if text:
-                    parts.append({"type": "text", "text": text, "state": "done"})
+                if _should_include_type("text", include_types_set):
+                    text = block.get("text", "")
+                    if text:
+                        # Merge with previous text part if exists
+                        if parts and parts[-1]["type"] == "text":
+                            parts[-1]["text"] += text
+                        else:
+                            parts.append(
+                                {"type": "text", "text": text, "state": "done"}
+                            )
 
             elif block_type == "reasoning":
-                text = block.get("reasoning", "") or block.get("text", "")
-                if text:
-                    part: UIMessagePart = {
-                        "type": "reasoning",
-                        "text": text,
-                        "state": "done",
-                    }
-                    if provider_metadata := block.get("provider_metadata"):
-                        part["providerMetadata"] = provider_metadata
-                    parts.append(part)
+                if _should_include_type("reasoning", include_types_set):
+                    text = block.get("reasoning", "") or block.get("text", "")
+                    if text:
+                        # Merge with previous reasoning part if exists
+                        if parts and parts[-1]["type"] == "reasoning":
+                            parts[-1]["text"] += text
+                        else:
+                            part: UIMessagePart = {
+                                "type": "reasoning",
+                                "text": text,
+                                "state": "done",
+                            }
+                            if provider_metadata := block.get("provider_metadata"):
+                                part["providerMetadata"] = provider_metadata
+                            parts.append(part)
 
             elif block_type == "tool_call":
-                tool_call_id = block.get("id", "")
-                tool_name = block.get("name", "unknown")
-                args = block.get("args", {})
+                if _should_include_type("tool", include_types_set):
+                    tool_call_id = block.get("id", "")
+                    tool_name = block.get("name", "unknown")
+                    args = block.get("args", {})
 
-                # Check if we have output for this tool call
-                output = tool_outputs.get(tool_call_id)
+                    # Check if we have output for this tool call
+                    output = tool_outputs.get(tool_call_id)
 
-                part: UIMessagePart = {
-                    "type": f"tool-{tool_name}",
-                    "toolCallId": tool_call_id,
-                    "input": args,
-                    "state": "output-available"
-                    if output is not None
-                    else "input-available",
-                }
-                if output is not None:
-                    part["output"] = output
-                parts.append(part)
+                    part: UIMessagePart = {
+                        "type": f"tool-{tool_name}",
+                        "toolCallId": tool_call_id,
+                        "input": args,
+                        "state": "output-available"
+                        if output is not None
+                        else "input-available",
+                    }
+                    if output is not None:
+                        part["output"] = output
+                    parts.append(part)
 
         # Also check tool_calls attribute on AIMessage
         if hasattr(message, "tool_calls") and message.tool_calls:
-            for tc in message.tool_calls:
-                tool_call_id = tc.get("id", "")
-                # Skip if already processed from content_blocks
-                if any(p.get("toolCallId") == tool_call_id for p in parts):
-                    continue
+            if _should_include_type("tool", include_types_set):
+                for tc in message.tool_calls:
+                    tool_call_id = tc.get("id", "")
+                    # Skip if already processed from content_blocks
+                    if any(p.get("toolCallId") == tool_call_id for p in parts):
+                        continue
 
-                tool_name = tc.get("name", "unknown")
-                args = tc.get("args", {})
-                output = tool_outputs.get(tool_call_id)
+                    tool_name = tc.get("name", "unknown")
+                    args = tc.get("args", {})
+                    output = tool_outputs.get(tool_call_id)
 
-                part: UIMessagePart = {
-                    "type": f"tool-{tool_name}",
-                    "toolCallId": tool_call_id,
-                    "input": args,
-                    "state": "output-available"
-                    if output is not None
-                    else "input-available",
-                }
-                if output is not None:
-                    part["output"] = output
-                parts.append(part)
+                    part: UIMessagePart = {
+                        "type": f"tool-{tool_name}",
+                        "toolCallId": tool_call_id,
+                        "input": args,
+                        "state": "output-available"
+                        if output is not None
+                        else "input-available",
+                    }
+                    if output is not None:
+                        part["output"] = output
+                    parts.append(part)
 
     elif isinstance(message, (HumanMessage, SystemMessage)):
         # Simple text content
@@ -657,15 +681,25 @@ def convert_message_to_ui_message(
             for item in content:
                 if isinstance(item, str):
                     if item:
-                        parts.append({"type": "text", "text": item, "state": "done"})
+                        # Merge with previous text part if exists
+                        if parts and parts[-1]["type"] == "text":
+                            parts[-1]["text"] += item
+                        else:
+                            parts.append(
+                                {"type": "text", "text": item, "state": "done"}
+                            )
                 elif isinstance(item, dict):
                     item_type = item.get("type")
                     if item_type == "text":
                         text = item.get("text", "")
                         if text:
-                            parts.append(
-                                {"type": "text", "text": text, "state": "done"}
-                            )
+                            # Merge with previous text part if exists
+                            if parts and parts[-1]["type"] == "text":
+                                parts[-1]["text"] += text
+                            else:
+                                parts.append(
+                                    {"type": "text", "text": text, "state": "done"}
+                                )
                     elif item_type == "image_url":
                         url = item.get("image_url", {}).get("url", "")
                         if url:
@@ -683,6 +717,7 @@ def convert_message_to_ui_message(
 
 def convert_messages_to_ui_messages(
     messages: Sequence[BaseMessage],
+    include_types: list[str] | None = None,
 ) -> list[UIMessage]:
     """
     Convert a list of LangGraph messages to UIMessage format for chat history display.
@@ -724,7 +759,9 @@ def convert_messages_to_ui_messages(
             # Tool outputs are already paired with their AIMessage tool calls
             continue
 
-        ui_message = convert_message_to_ui_message(msg, tool_outputs)
+        ui_message = convert_message_to_ui_message(
+            msg, tool_outputs, include_types=include_types
+        )
 
         # Only add if message has parts
         if ui_message.get("parts"):

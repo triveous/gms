@@ -196,4 +196,5 @@ class AgentRunner:
         state = agent.get_state(config)
         messages = state.values.get("messages", [])
 
-        return convert_messages_to_ui_messages(messages)
+        # Match the filtering used in run_ui_mode (text and data only)
+        return convert_messages_to_ui_messages(messages, include_types=["text", "data"])
