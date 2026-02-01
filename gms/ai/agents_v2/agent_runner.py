@@ -144,36 +144,44 @@ class AgentRunner:
         # Start stream
         yield from handler.start()
 
-        # Process agent stream
-        # Filter by namespace: () = main agent, ('subagent-name',) = subagent
-        for namespace, stream_mode, data in agent.stream(
-            state,
-            config,
-            stream_mode=["messages", "custom"],
-            subgraphs=True,
-        ):
-            # Always process custom events (from middleware write_data calls)
-            # Only filter message events to main agent namespace
-            if stream_mode == "custom" or namespace == ():
-                yield from handler.process_event(stream_mode, data)
+        try:
+            # Process agent stream
+            # Filter by namespace: () = main agent, ('subagent-name',) = subagent
+            for namespace, stream_mode, data in agent.stream(
+                state,
+                config,
+                stream_mode=["messages", "custom"],
+                subgraphs=True,
+            ):
+                # Always process custom events (from middleware write_data calls)
+                # Only filter message events to main agent namespace
+                if stream_mode == "custom" or namespace == ():
+                    yield from handler.process_event(stream_mode, data)
 
-        # Get final state for thread title update
-        # Note: Steps persistence is handled by StepsMiddleware.after_agent
-        final_state = agent.get_state(config)
+            # Get final state for thread title update
+            # Note: Steps persistence is handled by StepsMiddleware.after_agent
+            final_state = agent.get_state(config)
 
-        # Update thread title if generated and thread has default title
-        thread_title = final_state.values.get("thread_title")
-        if thread_title and self.thread and self.thread.has_default_title():
-            self.thread.title = thread_title
-            print(f"Updated thread title: {thread_title}")
+            # Update thread title if generated and thread has default title
+            thread_title = final_state.values.get("thread_title")
+            if thread_title and self.thread and self.thread.has_default_title():
+                self.thread.title = thread_title
+                print(f"Updated thread title: {thread_title}")
 
-        # Save thread after stream completes
-        self._save_thread()
+            # Save thread after stream completes
+            self._save_thread()
 
-        # Flush checkpointer data at the very end
-        checkpointer.flush_to_frappe()
+            # Flush checkpointer data at the very end
+            checkpointer.flush_to_frappe()
 
-        # Finish stream
+        except Exception as e:
+            # Log error
+            print(f"Agent execution error: {e}")
+
+            # Yield error event as per Vercel AI SDK protocol
+            yield handler.encode_error(str(e))
+
+        # Always finish stream (even on error)
         yield from handler.finish()
 
     def get_history(self) -> list[dict[str, Any]]:
