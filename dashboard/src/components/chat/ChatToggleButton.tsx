@@ -1,7 +1,7 @@
 import React from 'react';
 import { useChatContext } from '@/contexts/ChatContext';
-import { Button } from './ui/button';
-import VectorLogo from '../assets/Vector.png';
+import { Button } from '@/components/ui/button';
+import VectorLogo from '../../assets/Vector.png';
 const ChatToggleButton: React.FC = () => {
     const { toggleChat, isChatOpen } = useChatContext();
 
