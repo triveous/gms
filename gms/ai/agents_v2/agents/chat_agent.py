@@ -73,7 +73,7 @@ def create_chat_agent(
         subagents=[research_agent],
         middleware=[
             UIDataMiddleware(),  # Enable ui_data in main agent state
-            TitleGenerationMiddleware(),  # Generate title after agent completes
+            TitleGenerationMiddleware(),  # Generate title before/after agent
         ],
     )
 
