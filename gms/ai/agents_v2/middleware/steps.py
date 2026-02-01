@@ -53,10 +53,17 @@ class SearchKBStep(TypedDict, total=False):
     progress: StepProgress
 
 
+class BrowseKBSource(TypedDict, total=False):
+    """A source document in browse_kb step."""
+
+    id: str  # ai_document_id
+    title: str  # filename
+
+
 class BrowseKBContent(TypedDict, total=False):
     """Content for browse_kb step type."""
 
-    sources: list[str]
+    sources: list[BrowseKBSource]
 
 
 class BrowseKBStep(TypedDict, total=False):

@@ -5,7 +5,11 @@ from langchain_core.tools import StructuredTool
 from langgraph.graph.state import Command
 from uuid import uuid4
 
-from gms.ai.agents_v2.middleware.steps import SearchKBStep
+from gms.ai.agents_v2.middleware.steps import (
+    SearchKBStep,
+    BrowseKBStep,
+    BrowseKBSource,
+)
 from gms.ai.agents_v2.utils import get_ui_stream_writer
 from gms.ai.kb.kb import Knowledge
 
@@ -31,6 +35,55 @@ def complete_search_step(
     step["content"] = {"query": query, "results_count": results_count}
     step["progress"] = "done"
     return step
+
+
+def create_browse_step(results: list) -> BrowseKBStep:
+    """Create a browse step showing unique source documents.
+
+    Extracts unique sources from search results based on ai_document_id.
+
+    Args:
+        results: List of SearchResult objects with metadata containing
+                ai_document_id and filename fields.
+
+    Returns:
+        BrowseKBStep with unique sources.
+    """
+    # Extract unique sources using ai_document_id
+    seen_ids: set[str] = set()
+    sources: list[BrowseKBSource] = []
+
+    for result in results:
+        metadata = result.metadata
+        doc_id = metadata.get("ai_document_id", "")
+        filename = metadata.get("filename", "")
+
+        # Skip if we've already seen this document
+        if doc_id and doc_id in seen_ids:
+            continue
+        if not doc_id and filename in seen_ids:
+            continue
+
+        # Add to seen set
+        if doc_id:
+            seen_ids.add(doc_id)
+        elif filename:
+            seen_ids.add(filename)
+
+        # Add source
+        sources.append(
+            BrowseKBSource(
+                id=doc_id or filename,
+                title=filename,
+            )
+        )
+
+    return BrowseKBStep(
+        id=str(uuid4()),
+        type="browse_kb",
+        content={"sources": sources},
+        progress="done",
+    )
 
 
 def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
@@ -68,12 +121,16 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         complete_search_step(step, query, len(all_results))
         writer.write_step(step)
 
+        # Create browse step showing sources
+        browse_step = create_browse_step(all_results)
+        writer.write_step(browse_step)
+
         return Command(
             update={
                 "messages": [
                     ToolMessage(content=content, tool_call_id=runtime.tool_call_id)
                 ],
-                "steps": [step],
+                "steps": [step, browse_step],
             }
         )
 
@@ -103,12 +160,16 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         complete_search_step(step, query, len(all_results))
         writer.write_step(step)
 
+        # Create browse step showing sources
+        browse_step = create_browse_step(all_results)
+        writer.write_step(browse_step)
+
         return Command(
             update={
                 "messages": [
                     ToolMessage(content=content, tool_call_id=runtime.tool_call_id)
                 ],
-                "steps": [step],
+                "steps": [step, browse_step],
             }
         )
 
