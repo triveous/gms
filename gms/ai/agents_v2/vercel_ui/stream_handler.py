@@ -35,14 +35,21 @@ class VercelUIStreamHandler:
             yield chunk
     """
 
-    def __init__(self, message_id: str | None = None):
+    def __init__(
+        self,
+        message_id: str | None = None,
+        include_types: list[str] | None = None,
+    ):
         """
         Initialize the stream handler.
 
         Args:
             message_id: Optional ID for the UIMessage. If not provided, a UUID will be generated.
+            include_types: Optional list of types to include ("text", "reasoning", "tool", "data").
         """
-        self.converter = LangGraphUIMessageConverter(message_id=message_id)
+        self.converter = LangGraphUIMessageConverter(
+            message_id=message_id, include_types=include_types
+        )
         self._queue: queue.Queue[str] = queue.Queue()
 
     @staticmethod
@@ -132,14 +139,21 @@ class AsyncVercelUIStreamHandler:
             yield chunk
     """
 
-    def __init__(self, message_id: str | None = None):
+    def __init__(
+        self,
+        message_id: str | None = None,
+        include_types: list[str] | None = None,
+    ):
         """
         Initialize the async stream handler.
 
         Args:
             message_id: Optional ID for the UIMessage. If not provided, a UUID will be generated.
+            include_types: Optional list of types to include ("text", "reasoning", "tool", "data").
         """
-        self.converter = LangGraphUIMessageConverter(message_id=message_id)
+        self.converter = LangGraphUIMessageConverter(
+            message_id=message_id, include_types=include_types
+        )
         self._queue: asyncio.Queue[str] = asyncio.Queue()
 
     @staticmethod
@@ -211,6 +225,7 @@ class AsyncVercelUIStreamHandler:
 def stream_langgraph_to_vercel(
     stream_iterator: Iterator[tuple],
     message_id: str | None = None,
+    include_types: list[str] | None = None,
 ) -> Generator[str, None, UIMessage]:
     """
     Convenience function to convert a LangGraph stream to Vercel AI SSE format.
@@ -227,7 +242,7 @@ def stream_langgraph_to_vercel(
     Returns:
         The final UIMessage after stream completes.
     """
-    handler = VercelUIStreamHandler(message_id=message_id)
+    handler = VercelUIStreamHandler(message_id=message_id, include_types=include_types)
 
     # Start
     for chunk in handler.start():
@@ -255,6 +270,7 @@ def stream_langgraph_to_vercel(
 async def astream_langgraph_to_vercel(
     stream_iterator: AsyncIterator[tuple],
     message_id: str | None = None,
+    include_types: list[str] | None = None,
 ) -> AsyncIterator[str]:
     """
     Async convenience function to convert a LangGraph stream to Vercel AI SSE format.
@@ -268,7 +284,9 @@ async def astream_langgraph_to_vercel(
     Yields:
         SSE-formatted chunks.
     """
-    handler = AsyncVercelUIStreamHandler(message_id=message_id)
+    handler = AsyncVercelUIStreamHandler(
+        message_id=message_id, include_types=include_types
+    )
 
     # Start
     async for chunk in handler.start():

@@ -139,7 +139,7 @@ class AgentRunner:
         agent = create_chat_agent(self.knowledge, checkpointer=checkpointer)
         state = {"messages": [HumanMessage(content=query)]}
 
-        handler = VercelUIStreamHandler()
+        handler = VercelUIStreamHandler(include_types=["text", "data"])
 
         # Start stream
         yield from handler.start()

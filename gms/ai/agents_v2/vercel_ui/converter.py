@@ -108,14 +108,21 @@ class LangGraphUIMessageConverter:
         ui_message = converter.to_ui_message()
     """
 
-    def __init__(self, message_id: str | None = None):
+    def __init__(
+        self,
+        message_id: str | None = None,
+        include_types: list[str] | None = None,
+    ):
         """
         Initialize the converter.
 
         Args:
             message_id: Optional ID for the UIMessage. If not provided, a UUID will be generated.
+            include_types: Optional list of types to include ("text", "reasoning", "tool", "data").
+                         If None, all types are included.
         """
         self.message_id = message_id or str(uuid.uuid4())
+        self.include_types = set(include_types) if include_types else None
         self.state = UIMessageState(id=self.message_id)
         self._started = False
         self._finished = False
@@ -124,6 +131,12 @@ class LangGraphUIMessageConverter:
         self._active_text_ids: set[str] = set()
         self._active_reasoning_ids: set[str] = set()
         self._active_tool_ids: set[str] = set()
+
+    def _should_include(self, type_name: str) -> bool:
+        """Check if a content type should be included."""
+        if self.include_types is None:
+            return True
+        return type_name in self.include_types
 
     def _generate_part_id(self, prefix: str = "part") -> str:
         """Generate a unique ID for a message part."""
@@ -222,18 +235,24 @@ class LangGraphUIMessageConverter:
             block_type = block.get("type")
 
             if block_type == "text":
-                yield from self._handle_text_block(chunk.id or self.message_id, block)
+                if self._should_include("text"):
+                    yield from self._handle_text_block(
+                        chunk.id or self.message_id, block
+                    )
 
             elif block_type == "reasoning":
-                yield from self._handle_reasoning_block(
-                    chunk.id or self.message_id, block
-                )
+                if self._should_include("reasoning"):
+                    yield from self._handle_reasoning_block(
+                        chunk.id or self.message_id, block
+                    )
 
             elif block_type == "tool_call_chunk":
-                yield from self._handle_tool_call_chunk(block)
+                if self._should_include("tool"):
+                    yield from self._handle_tool_call_chunk(block)
 
             elif block_type == "tool_call":
-                yield from self._handle_tool_call_complete(block)
+                if self._should_include("tool"):
+                    yield from self._handle_tool_call_complete(block)
 
     def _handle_text_block(
         self, message_id: str, block: dict[str, Any]
@@ -360,9 +379,16 @@ class LangGraphUIMessageConverter:
     def _convert_custom_event(self, data: Any) -> Generator[BaseChunk, None, None]:
         """Convert a 'custom' stream event (data chunks)."""
         if isinstance(data, BaseChunk):
-            # Already a Vercel chunk, pass through
-            yield data
+            # Already a Vercel chunk, pass through if type matches
+            # Note: BaseChunk doesn't always have a clear type mapping, so we assume "data"
+            # unless it's a specific chunk type we can check.
+            if self._should_include("data"):
+                yield data
         elif isinstance(data, dict):
+            # Filter check for data dicts
+            if not self._should_include("data"):
+                return
+
             # Convert dict to DataChunk
             data_type = data.get("type", "data-custom")
             if not data_type.startswith("data-"):
