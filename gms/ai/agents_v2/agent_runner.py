@@ -148,13 +148,17 @@ class AgentRunner:
         yield from handler.start()
 
         # Process agent stream
-        for _, stream_mode, data in agent.stream(
+        # Filter by namespace: () = main agent, ('subagent-name',) = subagent
+        for namespace, stream_mode, data in agent.stream(
             state,
             config,
             stream_mode=["messages", "custom"],
             subgraphs=True,
         ):
-            yield from handler.process_event(stream_mode, data)
+            # Only process events from main agent (empty namespace)
+            # Skip events from subagents like research-agent or title generation
+            if namespace == ():
+                yield from handler.process_event(stream_mode, data)
 
         # Get final state and apply ui_data to last message
         final_state = agent.get_state(config)

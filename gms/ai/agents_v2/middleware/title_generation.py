@@ -43,15 +43,20 @@ class TitleGenerationState(AgentState):
 
 
 class TitleGenerationMiddleware(AgentMiddleware[TitleGenerationState, Any]):
-    """Middleware that generates a title for conversations.
+    """Middleware that sets and generates titles for conversations.
 
-    This middleware uses the `after_agent` hook to generate a title
-    based on the conversation messages. The title is stored in the
-    agent state under `thread_title`.
+    This middleware has two phases:
 
-    The runner is responsible for:
-    - Checking if the thread needs a title update
-    - Persisting the generated title to the database
+    1. `before_agent`: Sets a default title from the first human message
+       (no AI generation, just truncates the query). This ensures there's
+       always a title available immediately.
+
+    2. `after_agent`: Generates an AI-powered title from the conversation
+       if no AI-generated title exists yet. This replaces the default title
+       with a more descriptive one.
+
+    The title is stored in the agent state under `thread_title`.
+    StateNotifierMiddleware will automatically send the title to the frontend.
 
     Usage:
         agent = create_deep_agent(
@@ -59,15 +64,10 @@ class TitleGenerationMiddleware(AgentMiddleware[TitleGenerationState, Any]):
             middleware=[TitleGenerationMiddleware()],
         )
 
-        # After agent run, check state for generated title
-        state = agent.get_state(config)
-        if state.values.get("thread_title"):
-            thread.title = state.values["thread_title"]
-            thread.save()
-
     Args:
-        model: Model to use for title generation (defaults to gemini-2.5-flash)
+        model: Model to use for AI title generation (defaults to gemini-2.5-flash)
         prompt: Custom system prompt for title generation
+        max_default_length: Max length for default title from query (default 50)
     """
 
     state_schema = TitleGenerationState
@@ -76,31 +76,65 @@ class TitleGenerationMiddleware(AgentMiddleware[TitleGenerationState, Any]):
         self,
         model: str | BaseChatModel | None = None,
         prompt: str | None = None,
+        max_default_length: int = 50,
     ):
         super().__init__()
         self.model = model or DEFAULT_TITLE_MODEL
         self.prompt = prompt or TITLE_GENERATION_PROMPT
+        self.max_default_length = max_default_length
 
-    def after_agent(
+    def before_agent(
         self, state: TitleGenerationState, runtime: Any
     ) -> dict[str, Any] | None:
-        """Generate title after agent completes.
+        """Set default title from first human message before agent runs.
 
-        Only generates a title if `thread_title` is None or empty.
-        Streams the title as a custom event via get_stream_writer.
+        This sets a quick default title without AI generation.
+        StateNotifierMiddleware will send this to frontend automatically.
 
         Args:
             state: Current agent state with messages
             runtime: Agent runtime context
 
         Returns:
-            State update with thread_title, or None if title exists
+            State update with thread_title, or None if title already exists
         """
-        # Only generate if no title exists in state
+        # Don't override existing title
         existing_title = state.get("thread_title")
         if existing_title:
             return None
 
+        # Get first human message as default title
+        messages = state.get("messages", [])
+        for msg in messages:
+            if getattr(msg, "type", None) == "human":
+                content = getattr(msg, "content", "")
+                if content:
+                    # Truncate to max length
+                    if len(content) > self.max_default_length:
+                        title = content[: self.max_default_length - 3].strip() + "..."
+                    else:
+                        title = content.strip()
+                    print(f"Set default title: {title}")
+                    return {"thread_title": title}
+                break
+
+        return None
+
+    def after_agent(
+        self, state: TitleGenerationState, runtime: Any
+    ) -> dict[str, Any] | None:
+        """Generate AI title after agent completes if no AI title exists.
+
+        Only generates if title matches the default pattern (from query).
+        Streams the new title as a custom event via UIStreamWriter.
+
+        Args:
+            state: Current agent state with messages
+            runtime: Agent runtime context
+
+        Returns:
+            State update with thread_title, or None if not generated
+        """
         try:
             title = self._generate_title(state)
             if title:
@@ -112,9 +146,9 @@ class TitleGenerationMiddleware(AgentMiddleware[TitleGenerationState, Any]):
                     data_type="thread_title",
                     payload={"title": title},
                     data_id="thread_title",
-                    transient=True,  # Don't persist in ui_data, just stream
+                    transient=True,
                 )
-                print(f"Generated and streamed title: {title}")
+                print(f"Generated and streamed AI title: {title}")
                 return {"thread_title": title}
         except Exception as e:
             # Don't fail the agent if title generation fails
@@ -140,11 +174,12 @@ class TitleGenerationMiddleware(AgentMiddleware[TitleGenerationState, Any]):
         if not conversation_text:
             return None
 
-        # Initialize model
+        # Initialize model with streaming disabled
+        # This prevents title generation from streaming to frontend
         from langchain.chat_models import init_chat_model
 
         if isinstance(self.model, str):
-            model = init_chat_model(self.model)
+            model = init_chat_model(self.model, disable_streaming=True)
         else:
             model = self.model
 
