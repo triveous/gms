@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from deepagents import SubAgent, create_deep_agent
@@ -9,6 +11,7 @@ from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 from gms.ai.kb.kb import Knowledge
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
 from gms.ai.agents_v2.middleware.ui_data import UIDataMiddleware
+from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
 from gms.ai.agents_v2.vercel_ui.converter import (
     convert_messages_to_ui_messages,
@@ -62,12 +65,16 @@ def create_chat_agent(
             KBSearchMiddleware(knowledge=knowledge),
         ],
     )
+
     return create_deep_agent(
         model=model,
         system_prompt=system_prompt,
         checkpointer=checkpointer,
         subagents=[research_agent],
-        middleware=[UIDataMiddleware()],  # Enable ui_data in main agent state
+        middleware=[
+            UIDataMiddleware(),  # Enable ui_data in main agent state
+            TitleGenerationMiddleware(),  # Generate title after agent completes
+        ],
     )
 
 

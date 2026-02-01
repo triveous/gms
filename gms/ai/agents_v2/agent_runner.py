@@ -156,9 +156,6 @@ class AgentRunner:
         ):
             yield from handler.process_event(stream_mode, data)
 
-        # Finish stream
-        yield from handler.finish()
-
         # Get final state and apply ui_data to last message
         final_state = agent.get_state(config)
         messages = final_state.values.get("messages", [])
@@ -170,10 +167,20 @@ class AgentRunner:
         if ui_data:
             agent.update_state(config, {"messages": messages})
 
+        # Update thread title if generated and thread has default title
+        thread_title = final_state.values.get("thread_title")
+        if thread_title and self.thread and self.thread.has_default_title():
+            self.thread.title = thread_title
+            print(f"Updated thread title: {thread_title}")
+
+        # Save thread after stream completes
+        self._save_thread()
+
+        # Flush checkpointer data at the very end
         checkpointer.flush_to_frappe()
 
-        # Save thread after successful run
-        self._save_thread()
+        # Finish stream
+        yield from handler.finish()
 
     def get_history(self) -> list[dict[str, Any]]:
         """Get chat history for the thread.
