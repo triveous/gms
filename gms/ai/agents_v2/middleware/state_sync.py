@@ -11,53 +11,8 @@ from langchain.agents.middleware.types import AgentState
 from langgraph.config import get_config
 
 
-class StateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
-    """Middleware that sends agent state to frontend before and after execution.
-
-    This middleware uses the `before_agent` and `after_agent` hooks to send the
-    complete state (excluding messages) to the frontend. This includes:
-    - thread_id (from config)
-    - thread_title (if generated)
-    - ui_data (UI state accumulated during execution)
-
-    The data is sent as a transient 'data-state' event, meaning it's
-    streamed to the frontend but not persisted in the message history.
-
-    Usage:
-        agent = create_deep_agent(
-            ...
-            middleware=[
-                TitleGenerationMiddleware(),
-                StateNotifierMiddleware(),  # Should be last middleware
-            ],
-        )
-    """
-
-    def before_agent(self, state: AgentState, runtime: Any) -> dict[str, Any] | None:
-        """Send current state to frontend before agent proceeds.
-
-        Args:
-            state: Current agent state
-            runtime: Agent runtime context
-
-        Returns:
-            None - only streams data, doesn't update state
-        """
-        self._send_state(state, phase="before")
-        return None
-
-    def after_agent(self, state: AgentState, runtime: Any) -> dict[str, Any] | None:
-        """Send state to frontend after agent completes.
-
-        Args:
-            state: Current agent state
-            runtime: Agent runtime context
-
-        Returns:
-            None - only streams data, doesn't update state
-        """
-        self._send_state(state, phase="after")
-        return None
+class BaseStateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
+    """Base middleware for sending agent state."""
 
     def _send_state(self, state: AgentState, phase: str) -> None:
         """Send state to frontend.
@@ -92,3 +47,53 @@ class StateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
         except Exception as e:
             # Don't fail the agent if state sync fails
             print(f"State sync failed ({phase}): {e}")
+
+
+class StartStateNotifierMiddleware(BaseStateNotifierMiddleware):
+    """Middleware that sends agent state to frontend BEFORE execution.
+
+    This ensures initial state (like default title) is sent immediately.
+    """
+
+    def before_agent(self, state: AgentState, runtime: Any) -> dict[str, Any] | None:
+        """Send current state to frontend before agent proceeds.
+
+        Args:
+            state: Current agent state
+            runtime: Agent runtime context
+
+        Returns:
+            None - only streams data, doesn't update state
+        """
+        self._send_state(state, phase="before")
+        return None
+
+
+class EndStateNotifierMiddleware(BaseStateNotifierMiddleware):
+    """Middleware that sends agent state to frontend AFTER execution.
+
+    This ensures final state (including generated/AI artifacts) is sent.
+    """
+
+    def after_agent(self, state: AgentState, runtime: Any) -> dict[str, Any] | None:
+        """Send state to frontend after agent completes.
+
+        Args:
+            state: Current agent state
+            runtime: Agent runtime context
+
+        Returns:
+            None - only streams data, doesn't update state
+        """
+        self._send_state(state, phase="after")
+        return None
+
+
+class StateNotifierMiddleware(StartStateNotifierMiddleware, EndStateNotifierMiddleware):
+    """Middleware that sends agent state to frontend before and after execution.
+
+    Combines Start and End notifiers for simple use cases where ordering
+    relative to other middlewares isn't critical.
+    """
+
+    pass
