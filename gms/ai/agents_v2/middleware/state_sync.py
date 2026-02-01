@@ -40,6 +40,7 @@ class BaseStateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
             writer = get_ui_stream_writer()
             writer.write_data(
                 data_type="state",
+                data_id="state",
                 payload=state_payload,
             )
             print(f"Streamed state ({phase}): thread_id={thread_id}")
