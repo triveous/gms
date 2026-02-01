@@ -61,6 +61,7 @@ class BrowseKBSource(TypedDict, total=False):
 
     id: str  # ai_document_id
     title: str  # filename
+    page: int
 
 
 class BrowseKBContent(TypedDict, total=False):

@@ -59,27 +59,13 @@ def history2():
 
 @frappe.whitelist()
 def ask():
-    if not frappe.request.data:
-        frappe.throw("Missing details to initiate a chat")
-        return
-
-    try:
-        run_input = VercelAIAdapterCustom.build_run_input(frappe.request.data)
-        if len(run_input.messages) == 0:
-            frappe.throw("Missing query")
-            return
-    except ValidationError:
-        frappe.response["http_status_code"] = 422
-        frappe.throw("Invalid Request Data")
-        return
-
-    query = run_input.messages[-1].parts[0].text
+    thread_id = frappe.form_dict.get("thread_id")
+    query = frappe.form_dict.get("query")
     if not query:
         frappe.response["http_status_code"] = 400
         frappe.throw("Missing Query")
         return
 
-    thread_id = run_input.id
     runner = AgentRunner(thread_id)
 
     return Response(

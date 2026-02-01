@@ -79,6 +79,8 @@ def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBSte
         metadata = result.metadata
         doc_id = metadata.get("ai_document_id", "")
         filename = metadata.get("filename", "")
+        page_no = metadata.get("page_no", None)
+        title = filename
 
         # Skip if we've already seen this document
         if doc_id and doc_id in seen_ids:
@@ -93,12 +95,7 @@ def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBSte
             seen_ids.add(filename)
 
         # Add source
-        sources.append(
-            BrowseKBSource(
-                id=doc_id or filename,
-                title=filename,
-            )
-        )
+        sources.append(BrowseKBSource(id=doc_id or filename, title=title, page=page_no))
 
     return BrowseKBStep(
         id=str(uuid4()),
