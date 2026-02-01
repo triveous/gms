@@ -54,6 +54,7 @@ from .types import (
 )
 
 from gms.ai.agents_v2.middleware.steps import STEPS_PARTS_KEY
+from gms.ai.agents_v2.middleware.goal import GOALS_PARTS_KEY
 
 
 class UIMessagePart(TypedDict, total=False):
@@ -546,6 +547,37 @@ def get_steps_parts(message: BaseMessage) -> list[dict]:
     return parts
 
 
+def get_goals_parts(message: BaseMessage) -> list[dict]:
+    """
+    Get persisted goals from a message's additional_kwargs.
+
+    Reads from GOALS_PARTS_KEY in additional_kwargs and converts
+    goals to data-goal format for the UI.
+
+    Args:
+        message: The message to read data from
+
+    Returns:
+        List of data-goal part dicts, or empty list if none.
+    """
+    parts = []
+
+    # Read goals_parts format
+    goals_parts = message.additional_kwargs.get(GOALS_PARTS_KEY, [])
+    if goals_parts:
+        # Convert goals to data parts format for UI
+        for goal in goals_parts:
+            parts.append(
+                {
+                    "type": "data-goal",
+                    "id": goal.get("id", ""),
+                    "data": goal,
+                }
+            )
+
+    return parts
+
+
 def _should_include_type(type_name: str, include_types: set[str] | None) -> bool:
     """Check if a content type should be included."""
     if include_types is None:
@@ -711,6 +743,11 @@ def convert_message_to_ui_message(
     steps_parts = get_steps_parts(message)
     if steps_parts:
         parts.extend(steps_parts)
+
+    # Read persisted goals from additional_kwargs
+    goals_parts = get_goals_parts(message)
+    if goals_parts:
+        parts.extend(goals_parts)
 
     return UIMessage(id=message_id, role=role, parts=parts)
 

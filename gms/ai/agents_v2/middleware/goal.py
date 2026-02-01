@@ -16,7 +16,7 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import AgentState, OmitFromInput
 from langchain.tools import ToolRuntime
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from langchain_core.tools import StructuredTool
 from langgraph.graph.state import Command
 from pydantic import BaseModel, Field
@@ -43,6 +43,9 @@ Examples:
 - "How do I apply for funding?" → "Explaining funding process"
 
 Respond with ONLY the goal text, nothing else."""
+
+# Key used to store goals in message additional_kwargs
+GOALS_PARTS_KEY = "goals_parts"
 
 
 class GeneratedGoal(BaseModel):
@@ -259,6 +262,28 @@ class GoalMiddleware(AgentMiddleware[GoalState, Any]):
         except Exception as e:
             # Don't fail the agent if goal generation fails
             print(f"Goal generation failed: {e}")
+
+        return None
+
+    def after_agent(self, state: GoalState, runtime: Any) -> dict[str, Any] | None:
+        """Persist goals to the last message's additional_kwargs."""
+        messages = state.get("messages", [])
+        goals = state.get("goals", [])
+
+        if not messages or not goals:
+            return None
+
+        # Get the last AI message
+        for msg in reversed(messages):
+            if isinstance(msg, AIMessage):
+                # Ensure additional_kwargs exists
+                if not hasattr(msg, "additional_kwargs"):
+                    msg.additional_kwargs = {}
+
+                # Persist goals
+                # We persist all goals in the list so the UI can reconstruct the history
+                msg.additional_kwargs[GOALS_PARTS_KEY] = goals
+                break
 
         return None
 

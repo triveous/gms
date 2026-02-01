@@ -6,6 +6,7 @@ from gms.ai.agents_v2.middleware.goal import (
     GoalState,
     GoalStatus,
     goals_reducer,
+    GOALS_PARTS_KEY,
 )
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
 from gms.ai.agents_v2.middleware.steps import (
@@ -28,6 +29,7 @@ __all__ = [
     "GoalState",
     "GoalStatus",
     "goals_reducer",
+    "GOALS_PARTS_KEY",
     # Steps
     "STEPS_PARTS_KEY",
     "BrowseKBSource",
