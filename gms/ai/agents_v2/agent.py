@@ -10,7 +10,16 @@ from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
 from langchain_milvus import BM25BuiltInFunction, Milvus
 from langgraph.config import get_stream_writer
 from langgraph.types import Command
-from pydantic_ai.ui.vercel_ai.response_types import StartChunk, FinishChunk, BaseChunk, DataChunk, DoneChunk, TextStartChunk, TextDeltaChunk, TextEndChunk
+from pydantic_ai.ui.vercel_ai.response_types import (
+    StartChunk,
+    FinishChunk,
+    BaseChunk,
+    DataChunk,
+    DoneChunk,
+    TextStartChunk,
+    TextDeltaChunk,
+    TextEndChunk,
+)
 from typing import TypedDict
 import asyncio
 
@@ -101,6 +110,8 @@ class VercelUIMessenger:
 milvus = dense_index_param = {"metric_type": "COSINE", "index_type": "HNSW"}
 sparse_index_param = {"metric_type": "BM25", "index_type": "AUTOINDEX"}
 
+# NOTE: This is deprecated - use AgentRunner which loads credentials from AI Settings
+# Keeping for reference only - DO NOT USE directly
 milvus = Milvus(
     auto_id=True,
     embedding_function=GoogleGenerativeAIEmbeddings(
@@ -229,7 +240,9 @@ def run_gms_in_ui_mode(thread_id: str, run_id: str, query: str):
             if isinstance(message_chunk, AIMessageChunk):
                 for content in message_chunk.content_blocks:
                     if content.type == "text":
-                        ui_messenger.push_text(id=message_chunk.id, text=message_chunk.text)
+                        ui_messenger.push_text(
+                            id=message_chunk.id, text=message_chunk.text
+                        )
 
         while chunk := ui_messenger.pull():
             print(f"Chunk {chunk}")
