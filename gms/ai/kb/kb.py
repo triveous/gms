@@ -205,6 +205,7 @@ class Knowledge:
         task_type: Literal[
             "RETRIEVAL_QUERY", "QUESTION_ANSWERING", "FACT_VERIFICATION"
         ] = "RETRIEVAL_QUERY",
+        filter_expr: str | None = None,
     ) -> list[SearchResult]:
         """Perform hybrid search using dense and sparse vectors with RRF ranking.
 
@@ -217,6 +218,7 @@ class Knowledge:
                 - RETRIEVAL_QUERY: Standard retrieval (default)
                 - QUESTION_ANSWERING: For QA use cases
                 - FACT_VERIFICATION: For fact-checking use cases
+            filter_expr: Optional Milvus filter expression (e.g., "grant_id IN ['G1','G2']")
 
         Returns:
             List of SearchResult objects
@@ -233,6 +235,7 @@ class Knowledge:
             anns_field="dense",
             param={"metric_type": "COSINE", "params": {"ef": 100}},
             limit=limit,
+            expr=filter_expr,
         )
 
         # Sparse search request (BM25)
@@ -242,6 +245,7 @@ class Knowledge:
             anns_field="sparse",
             param={"metric_type": "BM25"},
             limit=limit,
+            expr=filter_expr,
         )
 
         # Perform hybrid search with RRF ranking
@@ -284,6 +288,7 @@ class Knowledge:
         task_type: Literal[
             "RETRIEVAL_QUERY", "QUESTION_ANSWERING", "FACT_VERIFICATION"
         ] = "RETRIEVAL_QUERY",
+        filter_expr: str | None = None,
     ) -> list[SearchResult]:
         """Async version of search. Currently wraps sync version.
 
@@ -291,7 +296,7 @@ class Knowledge:
         """
         # pymilvus doesn't have native async support yet
         # This is a placeholder for future async implementation
-        return self.search(query, limit, rrf_k, output_fields, task_type)
+        return self.search(query, limit, rrf_k, output_fields, task_type, filter_expr)
 
     def delete_documents(self, ids: list[int]) -> int:
         """Delete documents by their IDs.

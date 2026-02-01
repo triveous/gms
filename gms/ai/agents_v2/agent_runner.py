@@ -9,6 +9,7 @@ This module provides the AgentRunner class which handles:
 """
 
 from __future__ import annotations
+import traceback
 
 from typing import Any, ClassVar, Generator
 
@@ -175,6 +176,7 @@ class AgentRunner:
             checkpointer.flush_to_frappe()
 
         except Exception as e:
+            traceback.print_exception(e)
             # Log error
             print(f"Agent execution error: {e}")
 

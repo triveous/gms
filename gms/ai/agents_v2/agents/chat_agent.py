@@ -6,18 +6,18 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
-from gms.ai.kb.kb import Knowledge
+from gms.ai.agents_v2.middleware.data_overview import DataOverviewMiddleware
 from gms.ai.agents_v2.middleware.goal import GoalMiddleware
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
-from gms.ai.agents_v2.middleware.steps import StepsMiddleware
-from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.middleware.state_sync import (
     EndStateNotifierMiddleware,
     StartStateNotifierMiddleware,
 )
-from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
+from gms.ai.agents_v2.middleware.steps import StepsMiddleware
+from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
-
+from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
+from gms.ai.kb.kb import Knowledge
 
 DEFAULT_SYSTEM_PROMPT = """You are AIKAM, a helpful assistant answer only domain specific questions. Your domain is Grant Management.
 There are grant in the system. Each Grant will have project and there will be milestone update sharing planning information or
@@ -63,6 +63,7 @@ def create_chat_agent(
         middleware=[
             StepsMiddleware(),  # Enable steps in SubAgent state
             GoalMiddleware(),  # Generate goal before agent starts
+            DataOverviewMiddleware(),
             KBSearchMiddleware(knowledge=knowledge),
         ],
     )
@@ -77,6 +78,7 @@ def create_chat_agent(
             StepsMiddleware(),  # Enable steps in main agent state
             GoalMiddleware(),  # Generate goal before agent starts
             TitleGenerationMiddleware(),  # Generate title before/after agent
+            DataOverviewMiddleware(),  # Load data overview into system prompt
             StartStateNotifierMiddleware(),  # Register LAST to run LAST in before_agent
         ],
     )

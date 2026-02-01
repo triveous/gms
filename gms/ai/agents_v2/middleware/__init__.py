@@ -22,6 +22,7 @@ from gms.ai.agents_v2.middleware.steps import (
     steps_reducer,
 )
 from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
+from gms.ai.agents_v2.middleware.data_overview import DataOverviewMiddleware
 
 __all__ = [
     # Goal
@@ -45,4 +46,5 @@ __all__ = [
     # Other middleware
     "KBSearchMiddleware",
     "TitleGenerationMiddleware",
+    "DataOverviewMiddleware",
 ]

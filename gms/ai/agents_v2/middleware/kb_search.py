@@ -114,6 +114,26 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         limit: Maximum number of results per query
     """
 
+    def _build_grant_filter(runtime: ToolRuntime) -> str | None:
+        """Build Milvus filter expression from data_overview state.
+
+        Uses grant names from data_overview loaded by DataOverviewMiddleware.
+        """
+        data_overview = runtime.state.get("data_overview", {})
+        grants = data_overview.get("grants", [])
+
+        if not grants:
+            # No accessible grants - return expression that matches nothing
+            return "grant_id == 'invalid'"
+
+        # Build filter expression: grant_id IN ['grant1', 'grant2', ...]
+        grant_names = [g["name"] for g in grants if g.get("name")]
+        if grant_names:
+            escaped = ",".join([f"'{g}'" for g in grant_names])
+            return f"grant_id IN [{escaped}]"
+
+        return None
+
     async def aread_knowledge_base(query: list[str], runtime: ToolRuntime):
         """Async version of knowledge base search."""
         writer = get_ui_stream_writer()
@@ -125,12 +145,16 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         step = create_search_step(query, goal_id=goal_id)
         writer.write_step(step)
 
+        # Build grant filter from data_overview state
+        filter_expr = _build_grant_filter(runtime)
+
         all_results = []
         for q in query:
             results = await knowledge.asearch(
                 q,
                 limit=limit,
                 task_type="QUESTION_ANSWERING",
+                filter_expr=filter_expr,
             )
             all_results.extend(results)
 
@@ -162,10 +186,13 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
 
         # Get current goal ID for step linking (last goal is active)
         goal_id = _get_active_goal_id(runtime)
-
         # Add the search step
         step = create_search_step(query, goal_id=goal_id)
         writer.write_step(step)
+
+        # Build grant filter from data_overview state
+        filter_expr = _build_grant_filter(runtime)
+        print(filter_expr)
 
         all_results = []
         for q in query:
@@ -173,6 +200,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
                 q,
                 limit=limit,
                 task_type="QUESTION_ANSWERING",
+                filter_expr=filter_expr,
             )
             all_results.extend(results)
 
