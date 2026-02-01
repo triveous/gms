@@ -3,10 +3,7 @@ from frappe import ValidationError, _
 from gms.ai.agents.builder import build_agent
 from gms.ai.agents.state import AgentContext, Goal, PlanBlock
 from gms.ai.agents.ui import CustomUIEventSender
-from gms.ai.agents_v2.agents.chat_agent import (
-    run_chat_agent_ui_mode,
-    get_chat_agent_history,
-)
+from gms.ai.agents_v2.agent_runner import AgentRunner
 from gms.ai.doctype.ai_thread.ai_thread import AIThread
 from gms.api.conversation import VercelAIAdapterCustom
 from pydantic import BaseModel, Field
@@ -14,7 +11,6 @@ from pydantic_ai import Agent, AgentRunResult, TextPart, UserPromptPart
 from pydantic_ai.ui import SSE_CONTENT_TYPE, MessagesBuilder
 from pydantic_core import to_jsonable_python
 from werkzeug.wrappers import Response
-from gms.ai.kb.kb import Knowledge
 
 
 # Build RAG agent
@@ -26,29 +22,18 @@ def build_rag_agent():
 
 @frappe.whitelist()
 def ask2():
+    """Run chat agent in UI mode with SSE streaming."""
     thread_id = frappe.form_dict.get("thread_id")
     query = frappe.form_dict.get("query")
+
     if not query:
         frappe.throw("Missing query")
         return
 
-    if not thread_id:
-        thread = frappe.new_doc("AI Thread", title="Langchain Local")
-        thread.save()
-        thread_id = thread.name
-        print(f"using thread {thread_id}")
-        frappe.db.commit()
-
-    settings = frappe.get_single("AI Settings")
-    knowlegde = Knowledge(uri=settings.milvus_db_url, token=settings.milvus_db_token)
-    iter = run_chat_agent_ui_mode(
-        knowledge=knowlegde,
-        thread_id=thread_id,
-        query=query,
-    )
+    runner = AgentRunner(thread_id)
 
     return Response(
-        iter,
+        runner.run_ui_mode(query),
         status=200,
         headers={
             "Content-Type": "text/event-stream",
@@ -61,18 +46,15 @@ def ask2():
 
 @frappe.whitelist()
 def history2():
+    """Get chat history for a thread."""
     thread_id = frappe.form_dict.get("thread_id")
+
     if not thread_id:
         frappe.throw("Missing thread")
         return
 
-    # Check the permission before allowing to read the history
-    thread = frappe.get_doc("AI Thread", thread_id)
-    thread.check_permission()
-
-    settings = frappe.get_single("AI Settings")
-    knowlegde = Knowledge(uri=settings.milvus_db_url, token=settings.milvus_db_token)
-    return get_chat_agent_history(knowlegde, thread_id)
+    runner = AgentRunner(thread_id)
+    return runner.get_history()
 
 
 @frappe.whitelist()
