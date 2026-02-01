@@ -25,7 +25,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         writer = get_ui_stream_writer()
         all_results = []
         for q in query:
-            results = await knowledge.asearch(q, limit=limit)
+            results = await knowledge.asearch(
+                q,
+                limit=limit,
+                task_type="QUESTION_ANSWERING",
+            )
             all_results.extend(results)
 
         if not all_results:
@@ -48,7 +52,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
 
         all_results = []
         for q in query:
-            results = knowledge.search(q, limit=limit)
+            results = knowledge.search(
+                q,
+                limit=limit,
+                task_type="QUESTION_ANSWERING",
+            )
             all_results.extend(results)
 
         if not all_results:

@@ -138,17 +138,7 @@ class TitleGenerationMiddleware(AgentMiddleware[TitleGenerationState, Any]):
         try:
             title = self._generate_title(state)
             if title:
-                # Stream title to frontend using UIStreamWriter
-                from gms.ai.agents_v2.utils.ui_stream_writer import get_ui_stream_writer
-
-                writer = get_ui_stream_writer()
-                writer.write_data(
-                    data_type="thread_title",
-                    payload={"title": title},
-                    data_id="thread_title",
-                    transient=True,
-                )
-                print(f"Generated and streamed AI title: {title}")
+                print(f"Generated AI title: {title}")
                 return {"thread_title": title}
         except Exception as e:
             # Don't fail the agent if title generation fails
