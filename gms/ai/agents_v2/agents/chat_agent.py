@@ -7,6 +7,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 from gms.ai.kb.kb import Knowledge
+from gms.ai.agents_v2.middleware.goal import GoalMiddleware
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
 from gms.ai.agents_v2.middleware.steps import StepsMiddleware
 from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
@@ -61,6 +62,7 @@ def create_chat_agent(
         tools=[],
         middleware=[
             StepsMiddleware(),  # Enable steps in SubAgent state
+            GoalMiddleware(),  # Generate goal before agent starts
             KBSearchMiddleware(knowledge=knowledge),
         ],
     )
@@ -73,6 +75,7 @@ def create_chat_agent(
         middleware=[
             EndStateNotifierMiddleware(),  # Register FIRST to run LAST in after_agent (reverse)
             StepsMiddleware(),  # Enable steps in main agent state
+            GoalMiddleware(),  # Generate goal before agent starts
             TitleGenerationMiddleware(),  # Generate title before/after agent
             StartStateNotifierMiddleware(),  # Register LAST to run LAST in before_agent
         ],

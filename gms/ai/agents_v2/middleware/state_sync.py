@@ -30,6 +30,7 @@ class BaseStateNotifierMiddleware(AgentMiddleware[AgentState, Any]):
             state_payload = {
                 "thread_id": thread_id,
                 "thread_title": state.get("thread_title"),
+                "goals": state.get("goals", []),
                 "steps": state.get("steps", []),
             }
 

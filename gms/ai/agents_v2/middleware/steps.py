@@ -27,12 +27,14 @@ class Step(TypedDict, total=False):
     Attributes:
         id: Unique identifier for this step
         type: Step type (e.g., "search_kb", "read_file", "browse")
+        goal_id: ID of the goal this step is linked to
         content: Type-specific content (e.g., {"query": [...]})
         progress: Current progress state
     """
 
     id: str
     type: str
+    goal_id: str | None
     content: dict[str, Any]
     progress: StepProgress
 
@@ -49,6 +51,7 @@ class SearchKBStep(TypedDict, total=False):
 
     id: str
     type: Literal["search_kb"]
+    goal_id: str | None
     content: SearchKBContent
     progress: StepProgress
 
@@ -71,6 +74,7 @@ class BrowseKBStep(TypedDict, total=False):
 
     id: str
     type: Literal["browse_kb"]
+    goal_id: str | None
     content: BrowseKBContent
     progress: StepProgress
 

@@ -18,11 +18,32 @@ Search for relevant documents in the knowledge base based on the given query.
 """
 
 
-def create_search_step(query: list[str]) -> SearchKBStep:
-    """Create a new search step with in-progress status."""
+def _get_active_goal_id(runtime: ToolRuntime) -> str | None:
+    """Get the active goal ID from the last goal in state.
+
+    Args:
+        runtime: ToolRuntime with access to agent state
+
+    Returns:
+        ID of the last (active) goal, or None if no goals
+    """
+    goals = runtime.state.get("goals", [])
+    if goals:
+        return goals[-1].get("id")
+    return None
+
+
+def create_search_step(query: list[str], goal_id: str | None = None) -> SearchKBStep:
+    """Create a new search step with in-progress status.
+
+    Args:
+        query: Search queries
+        goal_id: ID of the goal this step is linked to
+    """
     return SearchKBStep(
         id=str(uuid4()),
         type="search_kb",
+        goal_id=goal_id,
         content={"query": query},
         progress="in-progress",
     )
@@ -37,7 +58,7 @@ def complete_search_step(
     return step
 
 
-def create_browse_step(results: list) -> BrowseKBStep:
+def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBStep:
     """Create a browse step showing unique source documents.
 
     Extracts unique sources from search results based on ai_document_id.
@@ -45,6 +66,7 @@ def create_browse_step(results: list) -> BrowseKBStep:
     Args:
         results: List of SearchResult objects with metadata containing
                 ai_document_id and filename fields.
+        goal_id: ID of the goal this step is linked to
 
     Returns:
         BrowseKBStep with unique sources.
@@ -81,6 +103,7 @@ def create_browse_step(results: list) -> BrowseKBStep:
     return BrowseKBStep(
         id=str(uuid4()),
         type="browse_kb",
+        goal_id=goal_id,
         content={"sources": sources},
         progress="done",
     )
@@ -98,8 +121,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         """Async version of knowledge base search."""
         writer = get_ui_stream_writer()
 
+        # Get current goal ID for step linking (last goal is active)
+        goal_id = _get_active_goal_id(runtime)
+
         # Add the search step
-        step = create_search_step(query)
+        step = create_search_step(query, goal_id=goal_id)
         writer.write_step(step)
 
         all_results = []
@@ -122,7 +148,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         writer.write_step(step)
 
         # Create browse step showing sources
-        browse_step = create_browse_step(all_results)
+        browse_step = create_browse_step(all_results, goal_id=goal_id)
         writer.write_step(browse_step)
 
         return Command(
@@ -137,8 +163,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
     def read_knowledge_base(query: list[str], runtime: ToolRuntime):
         writer = get_ui_stream_writer()
 
+        # Get current goal ID for step linking (last goal is active)
+        goal_id = _get_active_goal_id(runtime)
+
         # Add the search step
-        step = create_search_step(query)
+        step = create_search_step(query, goal_id=goal_id)
         writer.write_step(step)
 
         all_results = []
@@ -161,7 +190,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         writer.write_step(step)
 
         # Create browse step showing sources
-        browse_step = create_browse_step(all_results)
+        browse_step = create_browse_step(all_results, goal_id=goal_id)
         writer.write_step(browse_step)
 
         return Command(
