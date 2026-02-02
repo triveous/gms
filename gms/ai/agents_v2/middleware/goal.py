@@ -233,41 +233,6 @@ class GoalMiddleware(AgentMiddleware[GoalState, Any]):
         self.set_goal_tool = create_set_goal_tool()
         self.tools = [self.set_goal_tool]
 
-    def before_agent(self, state: GoalState, runtime: Any) -> dict[str, Any] | None:
-        """Generate initial goal before the agent starts processing.
-
-        Uses the last human message to generate a short goal description.
-        Streams the goal to the UI via UIStreamWriter.
-
-        Args:
-            state: Current agent state with messages
-            runtime: Agent runtime context
-
-        Returns:
-            State update with goals, or None if generation fails
-        """
-        # Don't generate if we already have goals (resuming conversation)
-        existing_goals = state.get("goals", [])
-        if existing_goals:
-            return None
-
-        try:
-            goal = self._generate_initial_goal(state)
-            if goal:
-                print(f"Generated initial goal: {goal['text']}")
-
-                # Stream goal to UI
-                self._stream_goal(goal)
-
-                return {
-                    "goals": [goal],
-                }
-        except Exception as e:
-            # Don't fail the agent if goal generation fails
-            print(f"Goal generation failed: {e}")
-
-        return None
-
     def after_agent(self, state: GoalState, runtime: Any) -> dict[str, Any] | None:
         """Persist goals to the last message's additional_kwargs."""
         messages = state.get("messages", [])
