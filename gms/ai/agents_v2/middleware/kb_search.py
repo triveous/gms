@@ -4,6 +4,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import StructuredTool
 from langgraph.graph.state import Command
 from uuid import uuid4
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from gms.ai.agents_v2.middleware.steps import (
     SearchKBStep,
     BrowseKBStep,
@@ -165,8 +166,27 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         if not all_results:
             return "No content found for this query. Try a different query."
 
-        content = "\n".join([f"<content>{r.text}</content>" for r in all_results])
-        print(f"Total documents found: {len(all_results)}")
+        # Deduplicate results by ID and limit to max 50
+        seen_ids: set[str] = set()
+        unique_results = []
+        for r in all_results:
+            if r.id not in seen_ids:
+                seen_ids.add(r.id)
+                unique_results.append(r)
+                if len(unique_results) >= 50:
+                    break
+
+        content = "\n".join(
+            [
+                f"""<document>
+                    <content>{r.text}</content>
+                </document>"""
+                for r in unique_results
+            ]
+        )
+        print(
+            f"Total documents returned: {len(unique_results)} (from {len(all_results)} results)"
+        )
 
         # Create browse step showing sources
         browse_step = create_browse_step(all_results, goal_id=goal_id)
@@ -195,14 +215,23 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         print(filter_expr)
 
         all_results = []
-        for q in query:
-            results = knowledge.search(
-                q,
-                limit=limit,
-                task_type="QUESTION_ANSWERING",
-                filter_expr=filter_expr,
-            )
-            all_results.extend(results)
+        with ThreadPoolExecutor(max_workers=min(len(query), 5)) as executor:
+            futures = {
+                executor.submit(
+                    knowledge.search,
+                    q,
+                    limit=limit,
+                    task_type="QUESTION_ANSWERING",
+                    filter_expr=filter_expr,
+                ): q
+                for q in query
+            }
+            for future in as_completed(futures):
+                try:
+                    results = future.result()
+                    all_results.extend(results)
+                except Exception as e:
+                    print(f"Search failed for query {futures[future]}: {e}")
 
         # Mark the search step as complete
         complete_search_step(step, query, len(all_results))
@@ -211,11 +240,30 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         if not all_results:
             return "No content found for this query. Try a different query."
 
-        content = "\n".join([f"<content>{r.text}</content>" for r in all_results])
-        print(f"Total documents found: {len(all_results)}")
+        # Deduplicate results by ID and limit to max 50
+        seen_ids: set[str] = set()
+        unique_results = []
+        for r in all_results:
+            if r.id not in seen_ids:
+                seen_ids.add(r.id)
+                unique_results.append(r)
+                if len(unique_results) >= 50:
+                    break
+
+        content = "\n".join(
+            [
+                f"""<document>
+                    <content>{r.text}</content>
+                </document>"""
+                for r in unique_results
+            ]
+        )
+        print(
+            f"Total documents returned: {len(unique_results)} (from {len(all_results)} results)"
+        )
 
         # Create browse step showing sources
-        browse_step = create_browse_step(all_results, goal_id=goal_id)
+        browse_step = create_browse_step(unique_results, goal_id=goal_id)
         writer.write_step(browse_step)
 
         return Command(
