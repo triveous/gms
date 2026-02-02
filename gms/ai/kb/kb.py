@@ -270,7 +270,7 @@ class Knowledge:
                 metadata = {k: v for k, v in entity.items() if k != "text"}
                 search_results.append(
                     SearchResult(
-                        id=str(hit.get("id", "")),
+                        id=str(hit.get("pk", "")),
                         text=entity.get("text", ""),
                         metadata=metadata,
                         score=hit.get("distance", 0.0),

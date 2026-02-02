@@ -32,6 +32,8 @@ class AIAgent(Document):
     title_model: str
     data_overview: bool
     kb_search_middleware: bool
+    kb_search_top_k: int
+    kb_search_max_result_count: int
 
     @property
     def model_setting_dict(self):

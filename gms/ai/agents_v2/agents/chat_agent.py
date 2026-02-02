@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from deepagents import SubAgent, create_deep_agent
@@ -78,6 +77,8 @@ def create_chat_agent(
     # Use agent configuration or fallback to defaults
     model: str = ai_agent.model or DEFAULT_MODEL
     system_prompt: str = ai_agent.instruction or DEFAULT_SYSTEM_PROMPT
+    # Append current time to system prompt
+    system_prompt += f"\n\nCurrent Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
     # Build sub-agents from the AI Agent's agents child table
     subagents = []
@@ -94,14 +95,26 @@ def create_chat_agent(
         if sub_ai_agent.data_overview:
             sub_middleware.append(DataOverviewMiddleware())
         if sub_ai_agent.kb_search_middleware:
-            sub_middleware.append(KBSearchMiddleware(knowledge=knowledge))
+            sub_middleware.append(
+                KBSearchMiddleware(
+                    knowledge=knowledge,
+                    search_limit=sub_ai_agent.kb_search_top_k or 10,
+                    search_max_result=sub_ai_agent.kb_search_max_result_count or 50,
+                )
+            )
+
+        # Prepare sub-agent system prompt with current time
+        sub_system_prompt = sub_ai_agent.instruction or ""
+        sub_system_prompt += (
+            f"\n\nCurrent Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        )
 
         # Create SubAgent with configuration from the linked AI Agent
         subagent = SubAgent(
             name=sub_agent_row.tool_name,
             model=sub_ai_agent.model or SUB_AGENT_DEFAULT_MODEL,
             description=sub_agent_row.tool_description,
-            system_prompt=sub_ai_agent.instruction or "",
+            system_prompt=sub_system_prompt,
             tools=[],
             middleware=sub_middleware,
         )

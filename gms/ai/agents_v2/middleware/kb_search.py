@@ -106,13 +106,20 @@ def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBSte
     )
 
 
-def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
+OUTPUT_FIELDS = ["text", "ai_document_id", "filename", "page_no"]
+
+
+def create_read_knowledgebase_tool(
+    knowledge: Knowledge, limit: int = 10, max_result: int = 50
+):
     """Create a knowledge base search tool using the Knowledge class.
 
     Args:
         knowledge: Knowledge instance for searching
         limit: Maximum number of results per query
+        max_result: Maximum number of total unique results to return
     """
+    print(f"Setting up search limit {limit} max_result {max_result}")
 
     def _build_grant_filter(runtime: ToolRuntime) -> str | None:
         """Build Milvus filter expression from data_overview state.
@@ -156,6 +163,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
                 limit=limit,
                 task_type="QUESTION_ANSWERING",
                 filter_expr=filter_expr,
+                output_fields=OUTPUT_FIELDS,
             )
             all_results.extend(results)
 
@@ -166,6 +174,9 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         if not all_results:
             return "No content found for this query. Try a different query."
 
+        # Sort results by score (descending)
+        all_results.sort(key=lambda r: r.score, reverse=True)
+
         # Deduplicate results by ID and limit to max 50
         seen_ids: set[str] = set()
         unique_results = []
@@ -173,7 +184,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
             if r.id not in seen_ids:
                 seen_ids.add(r.id)
                 unique_results.append(r)
-                if len(unique_results) >= 50:
+                if len(unique_results) >= max_result:
                     break
 
         content = "\n".join(
@@ -184,6 +195,8 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
                 for r in unique_results
             ]
         )
+
+        print(f"Unique: {unique_results} Total: {all_results}")
         print(
             f"Total documents returned: {len(unique_results)} (from {len(all_results)} results)"
         )
@@ -223,6 +236,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
                     limit=limit,
                     task_type="QUESTION_ANSWERING",
                     filter_expr=filter_expr,
+                    output_fields=OUTPUT_FIELDS,
                 ): q
                 for q in query
             }
@@ -240,6 +254,9 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
         if not all_results:
             return "No content found for this query. Try a different query."
 
+        # Sort results by score (descending)
+        all_results.sort(key=lambda r: r.score, reverse=True)
+
         # Deduplicate results by ID and limit to max 50
         seen_ids: set[str] = set()
         unique_results = []
@@ -247,7 +264,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
             if r.id not in seen_ids:
                 seen_ids.add(r.id)
                 unique_results.append(r)
-                if len(unique_results) >= 50:
+                if len(unique_results) >= max_result:
                     break
 
         content = "\n".join(
@@ -258,6 +275,7 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
                 for r in unique_results
             ]
         )
+        print(f"Unique: {unique_results} Total: {all_results}")
         print(
             f"Total documents returned: {len(unique_results)} (from {len(all_results)} results)"
         )
@@ -292,16 +310,18 @@ class KBSearchMiddleware(AgentMiddleware):
     def __init__(
         self,
         knowledge: Knowledge,
-        search_limit: int = 20,
+        search_limit: int = 10,
+        search_max_result: int = 50,
     ):
         """Initialize the middleware with a Knowledge instance.
 
         Args:
             knowledge: Knowledge instance (cached externally)
             search_limit: Maximum results per query
+            search_max_result: Maximum number of total unique results to return
         """
         self.knowledge = knowledge
         self.read_knowledge_base = create_read_knowledgebase_tool(
-            knowledge, limit=search_limit
+            knowledge, limit=search_limit, max_result=search_max_result
         )
         self.tools = [self.read_knowledge_base]
