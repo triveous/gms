@@ -63,7 +63,6 @@ def create_chat_agent(
         middleware=[
             StepsMiddleware(),  # Enable steps in SubAgent state
             GoalMiddleware(),  # Generate goal before agent starts
-            DataOverviewMiddleware(),
             KBSearchMiddleware(knowledge=knowledge),
         ],
     )
@@ -78,7 +77,6 @@ def create_chat_agent(
             StepsMiddleware(),  # Enable steps in main agent state
             GoalMiddleware(),  # Generate goal before agent starts
             TitleGenerationMiddleware(),  # Generate title before/after agent
-            DataOverviewMiddleware(),  # Load data overview into system prompt
             StartStateNotifierMiddleware(),  # Register LAST to run LAST in before_agent
         ],
     )
