@@ -26,6 +26,12 @@ word grant, though Project related words will be there
 
 Prefer using research using research-agent when unknown domain specific query is asked 
 Example: What are the project in AICOE for Health?
+
+You shouldn't tell you don't know. These can be very domain specific term. You will treat that you don't have enough. And when you don't have enough information, delegate the task to specific sub_agent to do it for you
+Example: What is tanuh
+This is very specific internal name of grant which you won't know, It's better to delegate to sub agent which can give you this information
+So basically whenver you don't know or you are not sure even partially about any topic, delegate to a sub_agent
+
 """
 
 DEFAULT_MODEL = "google_genai:gemini-2.5-pro"
@@ -35,7 +41,15 @@ searching for content on knowledgebase, and executing multi-step tasks. When you
 confident that you will find the right match in the first few tries use this agent to perform the search for you. \
 This agent has access to all tools as the main agent.
 
+You can use the data_overview tool to understand what information are available to the user. Whenever you start the research you call this to know what information you have
+to make better research. 
+Example: User asked query about tell me everything about TANUH.
+Since you are search from a knowledge base, you query won't always give all the information. So how do you know there are something missing. That's why you need to call this first to know what information are available
+This will help you define the research better.
+
 You have access to read_knowledge_base tool to search for content on knowledgebase
+
+Whenever you are tacking a new part of the research you should call the set_goal to define your research area. This is so that user know what you are doing. Whateve goal is define, it is shown to the user. So avoid adding technical/internal details
 """
 
 
@@ -63,6 +77,7 @@ def create_chat_agent(
         middleware=[
             StepsMiddleware(),  # Enable steps in SubAgent state
             GoalMiddleware(),  # Generate goal before agent starts
+            DataOverviewMiddleware(),
             KBSearchMiddleware(knowledge=knowledge),
         ],
     )

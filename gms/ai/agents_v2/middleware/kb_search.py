@@ -118,10 +118,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
 
         Uses grant names from data_overview loaded by DataOverviewMiddleware.
         """
-        data_overview = runtime.state.get("data_overview", {})
-        grants = data_overview.get("grants", [])
+        import frappe
 
-        if not grants:
+        grants = frappe.get_list("Grant")
+
+        if not grants or len(grants) == 0:
             # No accessible grants - return expression that matches nothing
             return "grant_id == 'invalid'"
 
