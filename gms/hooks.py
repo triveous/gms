@@ -266,6 +266,11 @@ website_route_rules = [
     {"from_route": "/dashboard/<path:app_path>", "to_route": "dashboard"},
 ]
 
+website_redirects = [
+    # Redirect old dashboard URL to new dashboard URL
+    {"source": "/", "target": "/dashboard"},
+]
+
 override_whitelisted_methods = {
     "gms.api.get_grants_with_related": "gms.api.grants.get_grants_with_related"
 }
