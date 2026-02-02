@@ -23,6 +23,15 @@ class AIAgent(Document):
     enable_thinking_tool: bool
 
     sub_agents: list["AIAgent"]
+    agents: list["AIAgent"]
+
+    steps_middleware: bool
+    goal_middleware: bool
+    title_middleware: bool
+    title_prompt: str
+    title_model: str
+    data_overview: bool
+    kb_search_middleware: bool
 
     @property
     def model_setting_dict(self):

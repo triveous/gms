@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from deepagents import SubAgent, create_deep_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
+
+if TYPE_CHECKING:
+    from gms.ai.doctype.ai_agent.ai_agent import AIAgent
 from gms.ai.agents_v2.middleware.data_overview import DataOverviewMiddleware
 from gms.ai.agents_v2.middleware.goal import GoalMiddleware
 from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
@@ -54,46 +59,81 @@ Whenever you are tacking a new part of the research you should call the set_goal
 
 
 def create_chat_agent(
+    ai_agent_id: str,
     knowledge: Knowledge,
     checkpointer: BaseCheckpointSaver | None = None,
 ):
     """Create a chat agent with knowledge base search capability.
 
     Args:
+        ai_agent_id: ID of the AI Agent document containing configuration
         knowledge: Knowledge instance for searching the knowledge base
         checkpointer: Optional checkpointer for state persistence
     """
-    model: str = DEFAULT_MODEL
-    system_prompt: str = DEFAULT_SYSTEM_PROMPT
+    import frappe
 
-    # StepsMiddleware adds steps to state schema for both SubAgent and main agent
-    # This enables tools to update steps via Command, which propagates up
-    research_agent = SubAgent(
-        name="research-agent",
-        model=SUB_AGENT_DEFAULT_MODEL,
-        description="Research agent",
-        system_prompt=RESEARCH_AGENT_SYSTEM_PROMPT,
-        tools=[],
-        middleware=[
-            StepsMiddleware(),  # Enable steps in SubAgent state
-            GoalMiddleware(),  # Generate goal before agent starts
-            DataOverviewMiddleware(),
-            KBSearchMiddleware(knowledge=knowledge),
-        ],
-    )
+    # Load AI Agent document using cached_doc (prevents loading every time)
+    ai_agent: AIAgent = frappe.get_cached_doc("AI Agent", ai_agent_id)
+
+    # Use agent configuration or fallback to defaults
+    model: str = ai_agent.model or DEFAULT_MODEL
+    system_prompt: str = ai_agent.instruction or DEFAULT_SYSTEM_PROMPT
+
+    # Build sub-agents from the AI Agent's agents child table
+    subagents = []
+    for sub_agent_row in ai_agent.agents or []:
+        # Load the linked AI Agent document (cached)
+        sub_ai_agent: AIAgent = frappe.get_cached_doc("AI Agent", sub_agent_row.agent)
+
+        # Build middleware list for this sub-agent based on its flags
+        sub_middleware = []
+        if sub_ai_agent.steps_middleware:
+            sub_middleware.append(StepsMiddleware())
+        if sub_ai_agent.goal_middleware:
+            sub_middleware.append(GoalMiddleware())
+        if sub_ai_agent.data_overview:
+            sub_middleware.append(DataOverviewMiddleware())
+        if sub_ai_agent.kb_search_middleware:
+            sub_middleware.append(KBSearchMiddleware(knowledge=knowledge))
+
+        # Create SubAgent with configuration from the linked AI Agent
+        subagent = SubAgent(
+            name=sub_agent_row.tool_name,
+            model=sub_ai_agent.model or SUB_AGENT_DEFAULT_MODEL,
+            description=sub_agent_row.tool_description,
+            system_prompt=sub_ai_agent.instruction or "",
+            tools=[],
+            middleware=sub_middleware,
+        )
+        subagents.append(subagent)
+
+    # Build main agent middleware list based on flags
+    main_middleware = []
+    main_middleware.append(
+        EndStateNotifierMiddleware()
+    )  # Register FIRST to run LAST in after_agent
+    if ai_agent.steps_middleware:
+        main_middleware.append(StepsMiddleware())
+    if ai_agent.goal_middleware:
+        main_middleware.append(GoalMiddleware())
+    if ai_agent.title_middleware:
+        main_middleware.append(
+            TitleGenerationMiddleware(
+                model=ai_agent.title_model or None,
+                prompt=ai_agent.title_prompt or None,
+            )
+        )
+    main_middleware.append(
+        StartStateNotifierMiddleware()
+    )  # Register LAST to run LAST in before_agent
 
     return create_deep_agent(
+        name=ai_agent.agent_name,
         model=model,
         system_prompt=system_prompt,
         checkpointer=checkpointer,
-        subagents=[research_agent],
-        middleware=[
-            EndStateNotifierMiddleware(),  # Register FIRST to run LAST in after_agent (reverse)
-            StepsMiddleware(),  # Enable steps in main agent state
-            GoalMiddleware(),  # Generate goal before agent starts
-            TitleGenerationMiddleware(),  # Generate title before/after agent
-            StartStateNotifierMiddleware(),  # Register LAST to run LAST in before_agent
-        ],
+        subagents=subagents,
+        middleware=main_middleware,
     )
 
 

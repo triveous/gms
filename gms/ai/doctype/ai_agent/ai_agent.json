@@ -17,15 +17,17 @@
   "user_specific_instruction_section",
   "add_user_name_instruction",
   "tools_tab",
-  "agent_tools_section",
-  "enable_knowledgebase_tool",
-  "knowledgebase_total_retrieval",
-  "enable_todo_tools",
-  "enable_data_overview_tool",
-  "enable_thinking_tool",
+  "middleware_section",
+  "steps_middleware",
+  "goal_middleware",
+  "title_middleware",
+  "title_prompt",
+  "title_model",
+  "data_overview",
+  "kb_search_middleware",
   "sub_agents_tab",
   "basic_info_section",
-  "sub_agents"
+  "agents"
  ],
  "fields": [
   {
@@ -44,7 +46,7 @@
    "fieldname": "model",
    "fieldtype": "Select",
    "label": "Model",
-   "options": "google-gla:gemini-2.5-flash\ngoogle-gla:gemini-2.5-pro\ngoogle-gla:gemini-3-flash-preview\ngoogle-gla:gemini-3-pro-preview",
+   "options": "google_genai:gemini-2.5-flash\ngoogle_genai:gemini-2.5-pro\ngoogle_genai:gemini-3-flash-preview\ngoogle_genai:gemini-3-pro-preview",
    "reqd": 1
   },
   {
@@ -97,23 +99,6 @@
    "label": "Tools"
   },
   {
-   "fieldname": "agent_tools_section",
-   "fieldtype": "Section Break",
-   "label": "Agent Tools"
-  },
-  {
-   "default": "1",
-   "fieldname": "enable_knowledgebase_tool",
-   "fieldtype": "Check",
-   "label": "Enable KnowledgeBase Tool"
-  },
-  {
-   "default": "20",
-   "fieldname": "knowledgebase_total_retrieval",
-   "fieldtype": "Int",
-   "label": "KnowledgeBase Total Retrieval"
-  },
-  {
    "fieldname": "sub_agents_tab",
    "fieldtype": "Tab Break",
    "label": "Sub Agents"
@@ -124,34 +109,62 @@
    "label": "Basic Info"
   },
   {
-   "fieldname": "sub_agents",
+   "fieldname": "middleware_section",
+   "fieldtype": "Section Break",
+   "label": "Middleware"
+  },
+  {
+   "default": "0",
+   "fieldname": "steps_middleware",
+   "fieldtype": "Check",
+   "label": "Steps Middleware"
+  },
+  {
+   "default": "0",
+   "fieldname": "goal_middleware",
+   "fieldtype": "Check",
+   "label": "Goal Middleware"
+  },
+  {
+   "default": "0",
+   "fieldname": "title_middleware",
+   "fieldtype": "Check",
+   "label": "Title Middleware"
+  },
+  {
+   "default": "0",
+   "fieldname": "data_overview",
+   "fieldtype": "Check",
+   "label": "Data Overview"
+  },
+  {
+   "default": "0",
+   "fieldname": "kb_search_middleware",
+   "fieldtype": "Check",
+   "label": "KB Search Middleware"
+  },
+  {
+   "fieldname": "title_prompt",
+   "fieldtype": "Data",
+   "label": "Title Prompt"
+  },
+  {
+   "fieldname": "title_model",
+   "fieldtype": "Select",
+   "label": "Title Model",
+   "options": "google_genai:gemini-2.5-flash\ngoogle_genai:gemini-2.5-pro\ngoogle_genai:gemini-3-flash-preview\ngoogle_genai:gemini-3-pro-preview"
+  },
+  {
+   "fieldname": "agents",
    "fieldtype": "Table",
-   "label": "Sub Agents",
+   "label": "Agents",
    "options": "AI Sub Agent"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_todo_tools",
-   "fieldtype": "Check",
-   "label": "Enable Todo Tools"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_data_overview_tool",
-   "fieldtype": "Check",
-   "label": "Enable Data Overview Tool"
-  },
-  {
-   "default": "0",
-   "fieldname": "enable_thinking_tool",
-   "fieldtype": "Check",
-   "label": "Enable Thinking Tool"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 18:33:51.848159",
+ "modified": "2026-02-02 18:17:44.512141",
  "modified_by": "Administrator",
  "module": "AI",
  "name": "AI Agent",
