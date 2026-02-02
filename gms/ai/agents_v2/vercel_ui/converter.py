@@ -269,6 +269,13 @@ class LangGraphUIMessageConverter:
             yield TextStartChunk(id=text_id)
 
         if text:
+            # Deduplication: check if this exact text was already added
+            # This can happen when subgraphs=True emits the same event at multiple namespace levels
+            current_text = self.state.text_parts[text_id].text
+            if current_text.endswith(text):
+                # Skip duplicate - we've already processed this exact text delta
+                return
+
             # Emit delta
             self.state.text_parts[text_id].text += text
             yield TextDeltaChunk(id=text_id, delta=text)
