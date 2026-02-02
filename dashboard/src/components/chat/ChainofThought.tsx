@@ -8,115 +8,155 @@ import {
   ChainOfThoughtStep,
 } from '@/components/ai-elements/chain-of-thought';
 import { Shimmer } from '@/components/ai-elements/shimmer';
-import { Search, FileText, File } from 'lucide-react';
+import { Search, File } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export interface KBQuery {
+interface KBQuery {
   query: string;
   limit: number;
 }
 
-export interface KBSource {
-  name: string;
-}
-
-export interface KBStep {
+interface KBSource {
   id: string;
-  type: 'KB_SEARCH' | 'BROWSE_KB_RESULT';
-  kb_search?: {
-    goal_id: string;
-    queries: KBQuery[];
-  };
-  browse_kb_result?: {
-    goal_id: string;
-    sources: KBSource[];
+  title: string
+  page: number
+}
+
+interface ChainStep {
+  id: string;
+  type: 'search_kb' | 'browse_kb';
+  content: {
+    queries?: KBQuery[];
+    sources?: KBSource[];
   };
 }
 
-export interface Goal {
+interface Goal {
   id: string;
   description: string;
   final: boolean;
 }
 
-export interface DataBlock {
-  type: 'data-block';
-  id: 'plan' | 'step';
+interface DataBlock {
+  type: 'data-goal' | 'data-step';
+  id: string;
+  data: any;
+  transient?: boolean;
+}
+
+interface DataGoal extends DataBlock {
+  type: 'data-goal';
   data: {
-    usage: 'plan' | 'step';
-    plan_content?: {
-      goals: Goal[];
-    };
-    step_content?: {
-      steps: KBStep[];
-      progress: string;
-      final: boolean;
-    };
+    id: string;
+    text: string;
+    status: string;
   };
 }
 
-const ChainOfThoughtComponent = ({ 
-  open, 
-  data, 
-  status 
-}: { 
-  open: boolean; 
-  data?: DataBlock | DataBlock[]; 
+interface DataStep extends DataBlock {
+  type: 'data-step';
+  data: {
+    id: string;
+    type: string;
+    goal_id: string;
+    content: {
+      query?: string[];
+      sources?: string[] | { name: string }[];
+    };
+    progress: string;
+  };
+}
+
+const ChainOfThoughtComponent = ({
+  open,
+  data,
+  status
+}: {
+  open: boolean;
+  data?: DataBlock | DataBlock[];
   status?: string;
 }) => {
   const isComplete = status === 'ready';
-  
+
   const blocks = React.useMemo(() => {
     if (!data) return [];
     return Array.isArray(data) ? data : [data];
   }, [data]);
 
   const organizedGoals = React.useMemo(() => {
-    const goalsMap: Record<string, { goal: Goal; steps: KBStep[] }> = {};
+    const goalsMap: Record<string, { goal: Goal; steps: ChainStep[] }> = {};
     const goalOrder: string[] = [];
 
     if (!blocks || blocks.length === 0) return [];
 
-    // First pass: collect goals from 'plan' blocks
+    // Collect goals from 'data-goal'
     blocks.forEach(block => {
-      if (block.type === 'data-block' && block.id === 'plan' && block.data.plan_content) {
-        block.data.plan_content.goals.forEach(g => {
-          const gid = String(g.id);
-          if (!goalsMap[gid]) {
-            goalsMap[gid] = { goal: g, steps: [] };
-            goalOrder.push(gid);
-          } else {
-            goalsMap[gid].goal = g;
-          }
-        });
+      if (block.type === 'data-goal') {
+        const g = (block as DataGoal).data;
+        const gid = String(g.id);
+        const goalObj: Goal = {
+          id: gid,
+          description: g.text,
+          final: g.status === 'completed'
+        };
+
+        if (!goalsMap[gid]) {
+          goalsMap[gid] = { goal: goalObj, steps: [] };
+          goalOrder.push(gid);
+        } else {
+          goalsMap[gid].goal = goalObj;
+        }
       }
     });
 
-    // Second pass: collect steps from 'step' blocks and associate them with goals
+    // Collect steps from 'data-step'
     blocks.forEach(block => {
-      if (block.type === 'data-block' && block.id === 'step' && block.data.step_content) {
-        block.data.step_content.steps.forEach(s => {
-          const goalIdRaw = s.kb_search?.goal_id || s.browse_kb_result?.goal_id;
-          if (goalIdRaw !== undefined && goalIdRaw !== null) {
-            const gid = String(goalIdRaw);
-            // If goal doesn't exist in map yet, create a placeholder to ensure it's rendered
-            if (!goalsMap[gid]) {
-              goalsMap[gid] = { 
-                goal: { id: gid, description: 'Thinking...', final: false },
-                steps: [] 
-              };
-              goalOrder.push(gid);
-            }
-            // Add step if not already present
-            if (!goalsMap[gid].steps.find(existing => existing.id === s.id)) {
-              goalsMap[gid].steps.push(s);
-            }
+      if (block.type === 'data-step') {
+        const s = (block as DataStep).data;
+        const gid = String(s.goal_id);
+
+        if (gid) {
+          if (!goalsMap[gid]) {
+            goalsMap[gid] = {
+              goal: { id: gid, description: 'Thinking...', final: false },
+              steps: []
+            };
+            goalOrder.push(gid);
           }
-        });
+
+          let newStep: ChainStep | null = null;
+
+          if (s.type === 'search_kb') {
+            newStep = {
+              id: s.id,
+              type: 'search_kb',
+              content: {
+                queries: (s.content.query || []).map((q) => ({ query: q, limit: 5 }))
+              }
+            };
+          } else if (s.type === 'browse_kb' || s.type === 'read_kb') {
+            const sources = s.content.sources || [];
+            const mappedSources = sources.map((src) =>
+              typeof src === 'string' ? { name: src } : src
+            );
+
+            newStep = {
+              id: s.id,
+              type: 'browse_kb',
+              content: {
+                sources: mappedSources
+              }
+            };
+          }
+
+          if (newStep && !goalsMap[gid].steps.find(existing => existing.id === newStep!.id)) {
+            goalsMap[gid].steps.push(newStep);
+          }
+        }
       }
     });
 
@@ -133,12 +173,10 @@ const ChainOfThoughtComponent = ({
       </ChainOfThoughtHeader>
       <ChainOfThoughtContent>
         <div className="relative">
-          {/* Vertical line connecting all dots */}
           <div className="absolute left-[3px] top-2 bottom-2 w-[1px] bg-[#CBD5E1]"></div>
-          
+
           {organizedGoals.map((gObj) => (
             <React.Fragment key={gObj.goal.id}>
-              {/* Goal Step */}
               <div className="relative mb-4">
                 <ChainOfThoughtStep
                   icon={<div className="rounded-xl bg-[#CBD5E1] h-[8px] w-[8px] mt-0.5 relative z-10"></div>}
@@ -148,27 +186,24 @@ const ChainOfThoughtComponent = ({
                 />
               </div>
 
-              {/* Substeps for this goal */}
               {gObj.steps.map((step) => {
-                if (step.type === 'KB_SEARCH' && step.kb_search) {
+                if (step.type === 'search_kb' && step.content.queries) {
                   return (
                     <div key={step.id} className="mb-3 relative pl-6">
                       <div className="text-[12px] text-[#94A3B8] font-[400] mb-2">
                         Searching relevant information
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {step.kb_search.queries.map((query, idx) => (
+                        {step.content.queries.map((query, idx) => (
                           <Tooltip key={idx}>
                             <TooltipTrigger asChild>
-                              <div
-                                className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#CBD5E1] text-[13px] text-[#475569] max-w-[200px] cursor-default"
-                              >
+                              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#CBD5E1] text-[13px] text-[#475569] max-w-[200px] cursor-default">
                                 <Search className="h-3.5 w-3.5 text-[#64748B] shrink-0" />
                                 <span className="truncate">{query.query}</span>
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent 
-                              side="bottom" 
+                            <TooltipContent
+                              side="bottom"
                               sideOffset={4}
                               showArrow={false}
                               className="bg-[#F8FAFC] text-[#475569] border border-[#CBD5E1] shadow-sm font-medium py-1.5 px-3 text-[13px] rounded-[4px]"
@@ -180,30 +215,28 @@ const ChainOfThoughtComponent = ({
                       </div>
                     </div>
                   );
-                } else if (step.type === 'BROWSE_KB_RESULT' && step.browse_kb_result) {
+                } else if (step.type === 'browse_kb' && step.content.sources) {
                   return (
                     <div key={step.id} className="mb-3 relative pl-6">
                       <div className="text-[12px] text-[#94A3B8] font-[400] mb-2">
                         Reading files
                       </div>
                       <div className="border border-[#CBD5E1] rounded-md bg-white p-3 space-y-1">
-                        {step.browse_kb_result.sources.map((source, idx) => (
+                        {step.content.sources.map((source, idx) => (
                           <Tooltip key={idx}>
                             <TooltipTrigger asChild>
-                              <div
-                                className="flex items-center gap-2 py-1.5 text-[13px] text-[#475569] cursor-default overflow-hidden"
-                              >
+                              <div className="flex items-center gap-2 py-1.5 text-[13px] text-[#475569] cursor-default overflow-hidden">
                                 <File className="h-3.5 w-3.5 text-[#64748B] shrink-0" />
-                                <span className="truncate">{source.name}</span>
+                                <span className="truncate">{source.title}</span>
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent 
-                              side="bottom" 
+                            <TooltipContent
+                              side="bottom"
                               sideOffset={4}
                               showArrow={false}
                               className="bg-[#F8FAFC] text-[#475569] border border-[#CBD5E1] shadow-sm font-medium py-1.5 px-3 text-[13px] rounded-[4px]"
                             >
-                              {source.name}
+                              {source.title}
                             </TooltipContent>
                           </Tooltip>
                         ))}
@@ -215,18 +248,16 @@ const ChainOfThoughtComponent = ({
               })}
             </React.Fragment>
           ))}
-          
-          {/* If it's complete, optionally show a Finished step if required, 
-              but the new structure doesn't explicitly have a "finished" type anymore */}
+
           {isComplete && organizedGoals.length > 0 && (
-             <div className="relative mb-4">
-                <ChainOfThoughtStep
-                  icon={<div className="rounded-xl bg-[#CBD5E1] h-[8px] w-[8px] mt-0.5 relative z-10"></div>}
-                  className="text-[12px] text-[#334155] font-[400] [&>div:first-child>div:last-child]:hidden"
-                  label="Finished"
-                  status="complete"
-                />
-              </div>
+            <div className="relative mb-4">
+              <ChainOfThoughtStep
+                icon={<div className="rounded-xl bg-[#CBD5E1] h-[8px] w-[8px] mt-0.5 relative z-10"></div>}
+                className="text-[12px] text-[#334155] font-[400] [&>div:first-child>div:last-child]:hidden"
+                label="Finished"
+                status="complete"
+              />
+            </div>
           )}
         </div>
       </ChainOfThoughtContent>

@@ -3,7 +3,7 @@ import { AppProvider } from './contexts/AppContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 import './App.css'
-import ChatPanel from './components/ChatPanel'
+import ChatPanel from '@/components/chat/ChatPanel';
 import DesktopOnly from './components/DesktopOnly'
 import ProtectedRoute from './components/ProtectedRoute'
 import { ChatProvider } from './contexts/ChatContext'

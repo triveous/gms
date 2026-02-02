@@ -1,16 +1,16 @@
 import frappe
 from frappe import ValidationError, _
-from gms.ai.agents.state import AgentContext, PlanBlock, Goal
+from gms.ai.agents.builder import build_agent
+from gms.ai.agents.state import AgentContext, Goal, PlanBlock
 from gms.ai.agents.ui import CustomUIEventSender
+from gms.ai.agents_v2.agent_runner import AgentRunner
 from gms.ai.doctype.ai_thread.ai_thread import AIThread
 from gms.api.conversation import VercelAIAdapterCustom
-from werkzeug.wrappers import Response
-from pydantic_ai import TextPart, UserPromptPart
-from pydantic_ai.ui import MessagesBuilder, SSE_CONTENT_TYPE
-from gms.ai.agents.builder import build_agent
-from pydantic_ai import Agent, AgentRunResult
 from pydantic import BaseModel, Field
+from pydantic_ai import Agent, AgentRunResult, TextPart, UserPromptPart
+from pydantic_ai.ui import SSE_CONTENT_TYPE, MessagesBuilder
 from pydantic_core import to_jsonable_python
+from werkzeug.wrappers import Response
 
 
 # Build RAG agent
@@ -21,62 +21,55 @@ def build_rag_agent():
 
 
 @frappe.whitelist()
+def ask2():
+    """Run chat agent in UI mode with SSE streaming."""
+    thread_id = frappe.form_dict.get("thread_id")
+    query = frappe.form_dict.get("query")
+
+    if not query:
+        frappe.throw("Missing query")
+        return
+
+    runner = AgentRunner(thread_id)
+
+    return Response(
+        runner.run_ui_mode(query),
+        status=200,
+        headers={
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Stream-Type": "limited",
+        },
+    )
+
+
+@frappe.whitelist()
+def history2():
+    """Get chat history for a thread."""
+    thread_id = frappe.form_dict.get("thread_id")
+
+    if not thread_id:
+        frappe.throw("Missing thread")
+        return
+
+    runner = AgentRunner(thread_id)
+    return runner.get_history()
+
+
+@frappe.whitelist()
 def ask():
-    if not frappe.request.data:
-        frappe.throw("Missing details to initiate a chat")
-        return
-
-    try:
-        run_input = VercelAIAdapterCustom.build_run_input(frappe.request.data)
-        if len(run_input.messages) == 0:
-            frappe.throw("Missing query")
-            return
-    except ValidationError:
-        frappe.response["http_status_code"] = 422
-        frappe.throw("Invalid Request Data")
-        return
-
-    query = run_input.messages[-1].parts[0].text
+    thread_id = frappe.form_dict.get("thread_id")
+    query = frappe.form_dict.get("query")
     if not query:
         frappe.response["http_status_code"] = 400
         frappe.throw("Missing Query")
         return
 
-    thread_id = run_input.id
-    thread = get_thread(thread_id)
-    parent_run, message_history = get_message_history(thread_id)
-
-    # Create a convertor which convert the model response to UIMessage responnse
-    accept = frappe.request.headers.get("accept", SSE_CONTENT_TYPE)
-
-    # Ensure that we have a running loop, Agent internally create an HTTP Client which uses event loop
-    # Then when we create event loop for event stream, it probably replace the event loop.
-    # Now wer are creating the http.AsycnClient in the agent builder, so we need to ensure that there is a running loop before that
-    VercelAIAdapterCustom.set_loop()
-
-    agent_conf, agent = build_rag_agent()
-    adapter = VercelAIAdapterCustom(
-        agent=agent,
-        run_input=run_input,
-        accept=accept,
-    )
-    adapter.default_plan = PlanBlock.default("Analyzing your request")
-
-    event_stream = adapter.run_encoded_sync(
-        dep_builder=lambda send_stream: AgentContext(
-            agent_conf=agent_conf,
-            events=CustomUIEventSender(send_stream),
-            query=query,
-            thread=thread,
-            parent_run=parent_run,
-        ),
-        message_history=message_history,
-        on_start=lambda ctx: on_start(ctx),
-        on_complete=on_complete,
-    )
+    runner = AgentRunner(thread_id)
 
     return Response(
-        event_stream,
+        runner.run_ui_mode(query),
         status=200,
         headers={
             "Content-Type": "text/event-stream",
@@ -175,15 +168,13 @@ def get_thread(thread_id: str | None) -> tuple[bool, AIThread]:
 @frappe.whitelist()
 def history():
     thread_id = frappe.form_dict.get("thread_id")
+
     if not thread_id:
-        frappe.throw("Missing Thread")
+        frappe.throw("Missing thread")
         return
 
-    thread = frappe.get_doc("AI Thread", thread_id)
-    thread.check_permission()
-    _, model_message = get_message_history(thread_id)
-    ui_messages = VercelAIAdapterCustom.dump_messages(model_message)
-    return to_jsonable_python(ui_messages)
+    runner = AgentRunner(thread_id)
+    return runner.get_history()
 
 
 def get_message_history(thread_id: str | None):

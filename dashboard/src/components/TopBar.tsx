@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import React, { useEffect, useState } from 'react';
 import { User, ChevronsUpDown, ChevronDown, LayoutDashboard, Building2, Building } from 'lucide-react';
-import ChatToggleButton from '@/components/ChatToggleButton';
+import ChatToggleButton from './chat/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/Logo';
@@ -30,12 +30,12 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
     );
 
 
-    
+
     // Grant Switcher Logic
     const location = useLocation();
     const navigate = useNavigate();
     const { grantsList, lastVisitedGrant } = useAppContext();
-    
+
     const pathParts = location.pathname.split('/').filter(Boolean);
     const currentGrantId = pathParts[0] || lastVisitedGrant?.id || '';
 
@@ -69,7 +69,7 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
                     {/* Grant Switcher */}
                     {showGrantSwitcher && (
                         <div>
-                             <DropdownMenu>
+                            <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="gap-2 h-9 px-3 bg-[#E2E8F0] hover:bg-muted text-secondary-foreground font-medium">
                                         {currentGrantName}
@@ -81,8 +81,8 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
                                         List of CoE's
                                     </div>
                                     {grantsList.map((grant) => (
-                                        <DropdownMenuItem 
-                                            key={grant.id} 
+                                        <DropdownMenuItem
+                                            key={grant.id}
                                             onClick={() => navigate(`/${grant.id}`)}
                                             className={`gap-3 py-2.5 my-[8px] cursor-pointer ${location.pathname.includes(grant.id) ? 'bg-muted' : ''}`}
                                         >
