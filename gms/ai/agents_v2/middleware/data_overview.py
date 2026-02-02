@@ -7,20 +7,24 @@ The data is loaded once in before_agent and stored in state, then used
 in wrap_model_call to append to the system message.
 """
 
-from typing import Any, Callable
+import json
+from typing import Any
 
 import frappe
-from deepagents.middleware._utils import append_to_system_message
-from langchain.agents.middleware import AgentMiddleware
-from langchain.agents.middleware.types import ModelRequest, ModelResponse
-from typing_extensions import TypedDict
-
+from langchain.agents.middleware import AgentMiddleware, AgentState
+from langchain_core.tools import StructuredTool
 
 DATA_OVERVIEW_PROMPT_TEMPLATE = """## Data Overview in the Grant Management System
 
 The following is an overview of the current data in the system:
 
 {data_overview}
+"""
+
+DATA_OVERVIEW_TOOL_DESCRIPTION = """Get an overview of the data in the Grant Management System.
+
+Returns a structured overview of all grants, projects, and milestones that the user has access to.
+Use this tool to understand what grants, projects, and milestones exist in the system.
 """
 
 
@@ -92,10 +96,30 @@ def get_data_overview() -> dict:
         return {"grants": [], "error": "Failed to load data overview"}
 
 
-class DataOverviewState(TypedDict, total=False):
+def _data_overview_tool() -> str:
+    print("Getting data overview")
+    """Tool function that returns data overview as JSON string."""
+    overview = get_data_overview()
+    return json.dumps(overview, indent=2, default=str)
+
+
+def create_data_overview_tool() -> StructuredTool:
+    """Create the data_overview tool.
+
+    Returns:
+        StructuredTool that returns data overview information.
+    """
+    return StructuredTool.from_function(
+        func=_data_overview_tool,
+        name="data_overview",
+        description=DATA_OVERVIEW_TOOL_DESCRIPTION,
+    )
+
+
+class DataOverviewState(AgentState):
     """State with data overview field."""
 
-    data_overview: dict | None
+    data_overview: dict[str, Any]
 
 
 class DataOverviewMiddleware(AgentMiddleware[DataOverviewState, Any]):
@@ -104,6 +128,7 @@ class DataOverviewMiddleware(AgentMiddleware[DataOverviewState, Any]):
     This middleware:
     1. Loads data overview once in before_agent and stores in state
     2. Uses wrap_model_call to append the data overview to the system message
+    3. Provides a data_overview tool to fetch the overview on demand
 
     Usage:
         agent = create_deep_agent(
@@ -112,57 +137,7 @@ class DataOverviewMiddleware(AgentMiddleware[DataOverviewState, Any]):
         )
     """
 
-    state_schema = DataOverviewState
-
-    def before_agent(
-        self, state: DataOverviewState, runtime: Any
-    ) -> dict[str, Any] | None:
-        """Load data overview and store in state.
-
-        Args:
-            state: Current agent state
-            runtime: Agent runtime context
-
-        Returns:
-            State update with data_overview field
-        """
-
-        if state.get("data_overview") is not None:
-            return
-
-        data_overview = get_data_overview()
-        return {"data_overview": data_overview}
-
-    def wrap_model_call(
-        self,
-        request: ModelRequest,
-        handler: Callable[[ModelRequest], ModelResponse],
-    ) -> ModelResponse:
-        """Append data overview from state to the system prompt.
-
-        Args:
-            request: The model request being processed.
-            handler: The handler function to call with the modified request.
-
-        Returns:
-            The model response from the handler.
-        """
-        # Get data overview from state (loaded in before_agent)
-        data_overview = request.state.get("data_overview", {})
-
-        if data_overview:
-            # Convert dict to JSON string for the prompt
-            data_overview_json = frappe.as_json(data_overview, indent=2)
-
-            # Format the system prompt addition
-            data_overview_prompt = DATA_OVERVIEW_PROMPT_TEMPLATE.format(
-                data_overview=data_overview_json
-            )
-
-            # Append to system message
-            new_system_message = append_to_system_message(
-                request.system_message, data_overview_prompt
-            )
-            request = request.override(system_message=new_system_message)
-
-        return handler(request)
+    def __init__(self):
+        """Initialize the middleware with the data_overview tool."""
+        self.data_overview_tool = create_data_overview_tool()
+        self.tools = [self.data_overview_tool]

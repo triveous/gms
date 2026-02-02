@@ -4,7 +4,6 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import StructuredTool
 from langgraph.graph.state import Command
 from uuid import uuid4
-
 from gms.ai.agents_v2.middleware.steps import (
     SearchKBStep,
     BrowseKBStep,
@@ -119,10 +118,11 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
 
         Uses grant names from data_overview loaded by DataOverviewMiddleware.
         """
-        data_overview = runtime.state.get("data_overview", {})
-        grants = data_overview.get("grants", [])
+        import frappe
 
-        if not grants:
+        grants = frappe.get_list("Grant")
+
+        if not grants or len(grants) == 0:
             # No accessible grants - return expression that matches nothing
             return "grant_id == 'invalid'"
 
@@ -158,15 +158,15 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
             )
             all_results.extend(results)
 
+        # Mark the search step as complete
+        complete_search_step(step, query, len(all_results))
+        writer.write_step(step)
+
         if not all_results:
             return "No content found for this query. Try a different query."
 
         content = "\n".join([f"<content>{r.text}</content>" for r in all_results])
         print(f"Total documents found: {len(all_results)}")
-
-        # Mark the search step as complete
-        complete_search_step(step, query, len(all_results))
-        writer.write_step(step)
 
         # Create browse step showing sources
         browse_step = create_browse_step(all_results, goal_id=goal_id)
@@ -204,15 +204,15 @@ def create_read_knowledgebase_tool(knowledge: Knowledge, limit: int = 10):
             )
             all_results.extend(results)
 
+        # Mark the search step as complete
+        complete_search_step(step, query, len(all_results))
+        writer.write_step(step)
+
         if not all_results:
             return "No content found for this query. Try a different query."
 
         content = "\n".join([f"<content>{r.text}</content>" for r in all_results])
         print(f"Total documents found: {len(all_results)}")
-
-        # Mark the search step as complete
-        complete_search_step(step, query, len(all_results))
-        writer.write_step(step)
 
         # Create browse step showing sources
         browse_step = create_browse_step(all_results, goal_id=goal_id)

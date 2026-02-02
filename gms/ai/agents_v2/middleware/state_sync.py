@@ -91,7 +91,7 @@ class EndStateNotifierMiddleware(BaseStateNotifierMiddleware):
         self._send_state(state, phase="after")
 
         # Clear per-run state for next query
-        return {"goals": Replace([]), "steps": Replace([]), "data_overview": None}
+        return {"goals": Replace([]), "steps": Replace([])}
 
 
 class StateNotifierMiddleware(StartStateNotifierMiddleware, EndStateNotifierMiddleware):
