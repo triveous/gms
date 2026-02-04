@@ -11,6 +11,7 @@ import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 import OrgMembers, { type Partner, type Contributor } from '@/components/OrgMembers';
 import DialogButton from '@/components/DialogButton';
+import NotFound from '@/pages/NotFound';
 import { formatIndianAmount } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
 import { formatTextWithNumber } from '@/utils/textFormatters';
@@ -104,7 +105,7 @@ export default function Project() {
     const [selectedPeriod, setSelectedPeriod] = useState<string>('');
     const [comparisonQuarter, setComparisonQuarter] = useState<string>('');
     const [overallYearUtilization, setOverallUtilization] = useState(0);
-    const { data: projectResponse, error: projectError } = useFrappeGetCall<{ message: { project: ProjectDetails } }>('gms.api.project.get_project_details', {
+    const { data: projectResponse, error: projectError, isLoading: isLoadingProject } = useFrappeGetCall<{ message: { project: ProjectDetails } }>('gms.api.project.get_project_details', {
         project_id: projectId
     });
 
@@ -277,7 +278,8 @@ export default function Project() {
         }));
     }, [contributorsResult]);
 
-    if (!projectData) {
+    // Show loading state while data is being fetched
+    if (isLoadingProject || (!projectData && !projectError)) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center h-full">
@@ -285,6 +287,11 @@ export default function Project() {
                 </div>
             </DashboardLayout>
         );
+    }
+
+    // Show 404 page if project not found or error occurred (after loading completes)
+    if (projectError || !projectResponse) {
+        return <NotFound />;
     }
 
 

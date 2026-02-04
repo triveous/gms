@@ -8,6 +8,7 @@ import { SectionWrapper } from '@/components/SectionWrapper';
 import DashbaordFilterComponent from '@/components/DashbaordFilterComponent';
 import OrgMembers from '@/components/OrgMembers';
 import EmptyState from '@/components/EmptyState';
+import NotFound from '@/pages/NotFound';
 import { useFrappeGetCall, useFrappePostCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent } from '@/utils/formatters';
@@ -309,23 +310,16 @@ export default function Grant() {
         }));
     }, [contributorsResult]);
 
+    // Show 404 page if grant not found (after loading completes)
+    if (!isLoading && (error || !grantData.id)) {
+        return <NotFound />;
+    }
+
     return (
         <DashboardLayout showGrantSwitcher={true}>
             {isLoading && (
                 <div className="text-center text-muted-foreground py-6">
                     Loading grant details...
-                </div>
-            )}
-
-            {error && (
-                <div className="text-center text-red-600 py-6">
-                    Failed to load grant details.
-                </div>
-            )}
-
-            {!isLoading && !grantData.id && (
-                 <div className="text-center text-muted-foreground py-6">
-                    No grant details found.
                 </div>
             )}
 
