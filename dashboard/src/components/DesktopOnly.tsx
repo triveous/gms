@@ -14,7 +14,7 @@ export default function DesktopOnly() {
         </div>
 
         {/* Text Content */}
-        <h2 className="text-[#334155] text-[22px] font-bold mb-4 leading-tight">
+        <h2 className="text-[#334155] text-[22px] font-semibold mb-4 leading-tight">
           Best viewed on a larger screen
         </h2>
         

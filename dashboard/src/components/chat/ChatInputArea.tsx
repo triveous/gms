@@ -54,9 +54,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                         status={status}
                         className='bg-[#FEF2F2]  text-orange-500 hover:!text-orange-700 cursor-pointer'
                     >
-                        {showBeforeThinking ? (
-                            <Square className="w-4 h-4 text-orange-500 fill-orange-500 shrink-0" />
-                        ) : showThinkingActive ? (
+                        {(showBeforeThinking || showThinkingActive) ? (
                             <Loader2 className="w-5 h-5 text-orange-500 animate-spin shrink-0" />
                         ) : (
                             <svg className="w-5 h-5 text-orange-500 shrink-0" viewBox="0 0 20 20" fill="none">
