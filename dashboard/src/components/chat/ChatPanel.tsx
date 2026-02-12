@@ -42,8 +42,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
         transport: new DefaultChatTransport({
             api: '/api/method/gms.api.ai.ask',
             headers: {
-                // 'X-Frappe-CSRF-Token': (window as any).csrf_token
-                'X-Frappe-CSRF-Token': 'fd49c1ef66c75ed8b7414a272671e63545488a18dc30735c31400122'
+                'X-Frappe-CSRF-Token': (window as any).csrf_token
             },
             prepareSendMessagesRequest({ messages, id }) {
                 const textPart = messages[messages.length - 1].parts?.find(p => p.type === "text")

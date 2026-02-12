@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom';
 import ChatPanel from '@/components/chat/ChatPanel';
 import { useChatContext } from '@/contexts/ChatContext';
 import {
-    ResizableHandle,
     ResizablePanel,
     ResizablePanelGroup,
 } from '@/components/ui/resizable';
@@ -58,8 +57,6 @@ const ResizableLayout: React.FC = () => {
                 <Outlet />
             </ResizablePanel>
 
-
-            <ResizableHandle withHandle className='w-0' />
 
             {/* Chat Panel - Fixed Pixel Width (converted to %) */}
             <ResizablePanel 

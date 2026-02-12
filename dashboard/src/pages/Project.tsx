@@ -98,6 +98,8 @@ interface ProjectDetails {
 }
 
 
+import { ProjectSkeleton } from '@/components/PageSkeletons';
+
 export default function Project() {
     const { grantId, projectId } = useParams<{ grantId: string; projectId: string }>();
     const [projectData, setProjectData] = useState<ProjectDetails | null>(null);
@@ -282,9 +284,7 @@ export default function Project() {
     if (isLoadingProject || (!projectData && !projectError)) {
         return (
             <DashboardLayout>
-                <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Loading project details...</p>
-                </div>
+                <ProjectSkeleton />
             </DashboardLayout>
         );
     }

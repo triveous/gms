@@ -21,6 +21,8 @@ interface GrantUI {
     totalProjects: string | number;
 }
 
+import { GrantsSkeleton } from '@/components/PageSkeletons';
+
 export default function Grants() {
     const navigate = useNavigate();
     const { setGrantsList } = useAppContext();
@@ -144,11 +146,7 @@ export default function Grants() {
     return (
         <DashboardLayout>
             <SectionWrapper title="List of CoE's" contentClassName="space-y-4">
-                {isLoading && (
-                    <div className="text-center text-muted-foreground py-6">
-                        Loading grants...
-                    </div>
-                )}
+                {isLoading && <GrantsSkeleton />}
 
                 {error && (
                     <div className="text-center text-red-600 py-6">
@@ -254,3 +252,4 @@ export default function Grants() {
         </DashboardLayout>
     );
 }
+
