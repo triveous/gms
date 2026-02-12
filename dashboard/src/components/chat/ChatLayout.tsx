@@ -8,7 +8,7 @@ import { Message, MessageContent } from '@/components/ai-elements/message';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import ChatMessageItem from './ChatMessageItem';
 import type { SDKMessage, Conversation as ConversationType } from '@/types/chat';
-import ThinkingLoader from './ThinkingLoader';
+import BeforeThinkingLoader from './BeforeThinkingLoader';
 import type { QuickQuestion } from '@/types/chat';
 import QuickQuestions from './QuickQuestions';
 import ChatHeader from './ChatHeader';
@@ -88,7 +88,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                         {showBeforeThinking && (
                             <Message from="assistant">
                                 <MessageContent className="rounded-tl-none p-1">
-                                    <ThinkingLoader />
+                                    <BeforeThinkingLoader />
                                 </MessageContent>
                             </Message>
                         )}
