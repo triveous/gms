@@ -59,7 +59,7 @@ def grant_project_has_permission(doc, user=None, ptype=None):
         grantee_org = [
             d.get("organization")
             for d in contributors
-            if d.get("contribution_type") == "Grantee"
+            # if d.get("contribution_type") == "Grantee"
         ]
         # Members of grantee organization can create/read/update/delete the grant project
         return (
