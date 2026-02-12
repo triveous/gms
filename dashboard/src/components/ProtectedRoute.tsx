@@ -6,7 +6,7 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
 
   useEffect(() => {
     if (!currentUser && !isLoading && !isValidating) {
-      window.location.href = '/login?redirect-to=/dashboard'
+      window.location.href = '/login?redirect-to=/'
     }
 
   }, [currentUser])
