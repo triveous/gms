@@ -378,20 +378,20 @@ export default function Grant() {
                     </div>
                 </div>
 
-                <div className="w-px bg-border self-stretch" />
+                {/* <div className="w-px bg-border self-stretch" /> */}
 
                 {/* Overall Progress */}
-                <div className="flex flex-col gap-3">
+                {/* <div className="flex flex-col gap-3">
                     <div className="text-muted-foreground font-medium text-base leading-[150%]">Overall Progress</div>
                     <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">
                         {grantData.overallProgress}
                         {grantData.overallProgress !== '--' && '%'}
                     </div>
-                </div>
+                </div> */}
             </div>
 
             {/* Separator */}
-            <div className="h-px bg-border" />
+            {/* <div className="h-px bg-border" /> */}
 
 
 

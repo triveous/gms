@@ -59,7 +59,7 @@ const OrgMembers = ({ partners = [], contributors = [], quarter }: OrgMembersPro
             {/* Academic & Industry Partners Section */}
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-foreground">Academic & Industry Partners</h2>
+                    <h2 className="text-xl font-semibold text-foreground">Academic & Industry Partners</h2>
                     {partners.length > MAX_VISIBLE_PARTNERS && (
                         <Button 
                             variant="outline" 
@@ -123,7 +123,7 @@ const OrgMembers = ({ partners = [], contributors = [], quarter }: OrgMembersPro
             {/* People & teams Section */}
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-foreground">People & teams</h2>
+                    <h2 className="text-xl font-semibold text-foreground">People & teams</h2>
                     {contributors.length > MAX_VISIBLE_CONTRIBUTORS && (
                         <Button 
                             variant="outline" 

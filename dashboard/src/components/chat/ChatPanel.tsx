@@ -15,11 +15,13 @@ import ChatMessageItem from './ChatMessageItem';
 import type { SDKMessage, Conversation as ConversationType } from '@/types/chat';
 import { useChatScroll } from './hooks/useChatScroll';
 import { useChatHistory } from './hooks/useChatHistory';
-import ThinkingLoader from './ThinkingLoader';
+import BeforeThinkingLoader from './BeforeThinkingLoader';
 import type { QuickQuestion } from '@/types/chat';
 import QuickQuestions from './QuickQuestions';
 import ChatHeader from './ChatHeader';
 import ChatInputArea from './ChatInputArea';
+import ChainOfThoughtComponent from './ChainofThought';
+
 
 const ChatPanel: React.FC = () => {
     const { isChatOpen, closeChat } = useChatContext();
@@ -30,6 +32,7 @@ const ChatPanel: React.FC = () => {
     const [initialMessage, setInitialMessage] = useState<string | null>(null);
     const [isHistoryRequested, setIsHistoryRequested] = useState(false);
     const [activeToolUI, setActiveToolUI] = useState<{ tool: string; state: string; query?: string } | null>(null);
+    const [forceShowThinking, setForceShowThinking] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: conversationListData, mutate: refetchConversationList } = useFrappeGetDocList<ConversationType>('AI Thread', {
@@ -83,6 +86,20 @@ const ChatPanel: React.FC = () => {
     useEffect(() => {
         if (status === 'ready') {
             setActiveToolUI(null);
+            setForceShowThinking(false);
+        }
+    }, [status]);
+
+    // Force show "Thinking" after 3 seconds if still in beforeThinking state
+    useEffect(() => {
+        if (status === 'submitted' || status === 'streaming') {
+            const timer = setTimeout(() => {
+                setForceShowThinking(true);
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        } else {
+            setForceShowThinking(false);
         }
     }, [status]);
 
@@ -92,11 +109,13 @@ const ChatPanel: React.FC = () => {
 
     const isAssistantResponding = status === 'submitted' || status === 'streaming' || initialMessage !== null;
 
-    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p => p.type === 'data-block');
+    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p => 
+        p.type === 'data-block' || p.type === 'data-goal' || p.type === 'data-step'
+    );
     const hasTextPart = latestAssistantMessage?.parts?.some(p => p.type === 'text');
 
-    const showBeforeThinking = isAssistantResponding && !hasDataBlockPart && !hasTextPart;
-    const showThinkingActive = isAssistantResponding && hasDataBlockPart && !hasTextPart;
+    const showBeforeThinking = isAssistantResponding && !hasDataBlockPart && !hasTextPart && !forceShowThinking;
+    const showThinkingActive = isAssistantResponding && (hasDataBlockPart || forceShowThinking) && !hasTextPart;
 
 
     useChatHistory({
@@ -191,7 +210,19 @@ const ChatPanel: React.FC = () => {
                                 {showBeforeThinking && (
                                     <Message from="assistant">
                                         <MessageContent className="rounded-tl-none p-1">
-                                            <ThinkingLoader />
+                                            <BeforeThinkingLoader />
+                                        </MessageContent>
+                                    </Message>
+                                )}
+
+                                {showThinkingActive && !hasDataBlockPart && (
+                                    <Message from="assistant">
+                                        <MessageContent className="rounded-tl-none p-1">
+                                            <ChainOfThoughtComponent
+                                                open={true}
+                                                data={[]}
+                                                status={status}
+                                            />
                                         </MessageContent>
                                     </Message>
                                 )}

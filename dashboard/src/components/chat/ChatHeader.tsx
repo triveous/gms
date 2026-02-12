@@ -44,7 +44,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                             <Clock className="w-4 h-4" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[400px]">
+                    <DropdownMenuContent align="end" className="w-[400px] max-h-[662px] overflow-y-auto">
                         <DropdownMenuLabel className="text-muted-foreground text-sm font-normal">
                             Chat History
                         </DropdownMenuLabel>

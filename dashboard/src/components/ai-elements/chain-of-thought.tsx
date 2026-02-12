@@ -75,17 +75,19 @@ export const ChainOfThought = memo(
 
 export type ChainOfThoughtHeaderProps = ComponentProps<
   typeof CollapsibleTrigger
->;
+> & {
+  hideChevron?: boolean;
+};
 
 export const ChainOfThoughtHeader = memo(
-  ({ className, children, ...props }: ChainOfThoughtHeaderProps) => {
+  ({ className, children, hideChevron, ...props }: ChainOfThoughtHeaderProps) => {
     const { isOpen, setIsOpen } = useChainOfThought();
 
     return (
       <Collapsible onOpenChange={setIsOpen} open={isOpen}>
         <CollapsibleTrigger
           className={cn(
-            'flex w-[150px] items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground',
+            'flex w-[150px] items-center gap-1 text-muted-foreground text-sm transition-colors hover:text-foreground',
             className
           )}
           {...props}
@@ -94,12 +96,14 @@ export const ChainOfThoughtHeader = memo(
           <span className="flex-1 text-left">
             {children ?? 'Thinking'}
           </span>
-          <ChevronDownIcon
-            className={cn(
-              'size-4 transition-transform',
-              isOpen ? 'rotate-180' : 'rotate-270'
-            )}
-          />
+          {!hideChevron && (
+            <ChevronDownIcon
+              className={cn(
+                'size-4 transition-transform',
+                isOpen ? 'rotate-180' : 'rotate-270'
+              )}
+            />
+          )}
         </CollapsibleTrigger>
       </Collapsible>
     );

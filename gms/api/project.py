@@ -479,8 +479,8 @@ def fetch_project_partners(project_id, quarter_value, page=1, page_size=10, sort
 			"parenttype": "Grant Project Milestone",
 			"parentfield": "partners",
 		},
-		offset=offset,
-		limit=page_size,
+        limit_start=offset,
+        limit_page_length=page_size,
 	)
 	
 	if not partner_rows:
