@@ -19,7 +19,7 @@ const QuickQuestions: React.FC<QuickQuestionsProps> = ({ questions, onQuestionCl
                     <Button
                         key={q.name}
                         variant="outline"
-                        className="w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal shadow-none"
+                        className="w-auto justify-start text-sm h-auto py-2.5 px-3 text-left font-normal shadow-none ml-1"
                         onClick={() => onQuestionClick(q.question)}
                         disabled={disabled}
                     >

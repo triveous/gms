@@ -5,8 +5,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import React, { useEffect, useState } from 'react';
-import { User, ChevronsUpDown, ChevronDown, LayoutDashboard, Building2, Building } from 'lucide-react';
+import React from 'react';
+import { User, ChevronsUpDown, ChevronDown, LayoutDashboard, Building } from 'lucide-react';
 import ChatToggleButton from './chat/ChatToggleButton';
 import { useChatContext } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,11 +22,10 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
     const { isChatOpen } = useChatContext();
     const { logout, userData, user } = useAuth();
-    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1280);
 
     const { data: orgResponse } = useFrappeGetCall(
         'gms.api.organization.get_user_organization',
-        user ? undefined : null
+        user ? undefined : null as any
     );
 
 
@@ -41,14 +40,7 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
 
     const currentGrantName = grantsList.find(g => g.id === currentGrantId)?.alias || 'Select CoE';
 
-    useEffect(() => {
-        const handleResize = () => {
-            setIsLargeScreen(window.innerWidth >= 1280);
-        };
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const handleLogout = async () => {
         try {
@@ -61,7 +53,7 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
     return (
         <div className="bg-card sticky top-0 z-40 ">
             <div className="mx-auto px-[72px] h-16 flex items-center justify-between">
-                {/* Logo */}
+                {/* Left: Logo and Grant Switcher */}
                 <div className="flex items-center gap-4">
                     {/* Logo */}
                     <Logo />
@@ -96,8 +88,8 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
                     )}
                 </div>
 
-                {/* Right side buttons */}
-                <div className="flex items-center gap-6" style={{ marginRight: (isChatOpen && isLargeScreen) ? '380px' : '0', transition: 'margin-right 300ms ease-in-out' }}>
+                {/* Right: Org, User, Chat Toggle */}
+                <div className="flex items-center gap-6">
                     {/* Organization Name */}
                     {orgResponse?.message?.organization_name && (
                         <div className="flex items-center gap-2 text-[#475569] font-medium text-sm">
@@ -116,16 +108,17 @@ const TopBar: React.FC<TopBarProps> = ({ showGrantSwitcher = false }) => {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            {/* <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <DropdownMenuItem>Settings</DropdownMenuItem> */}
                             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Separator */}
-                    <div className="h-6 w-px bg-border" />
-
-                    {!isChatOpen && <ChatToggleButton />}
+                    {!isChatOpen && (
+                        <>
+                            <div className="h-6 w-px bg-border" />
+                            <ChatToggleButton />
+                        </>
+                    )}
                 </div>
             </div>
         </div>
