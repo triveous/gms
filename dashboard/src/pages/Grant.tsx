@@ -49,6 +49,8 @@ interface Project {
     lowlights?: string[];
 }
 
+import { GrantSkeleton } from '@/components/PageSkeletons';
+
 export default function Grant() {
     // const navigate = useNavigate();
     const { grantId } = useParams<{ grantId: string }>();
@@ -317,11 +319,7 @@ export default function Grant() {
 
     return (
         <DashboardLayout showGrantSwitcher={true}>
-            {isLoading && (
-                <div className="text-center text-muted-foreground py-6">
-                    Loading grant details...
-                </div>
-            )}
+            {isLoading && <GrantSkeleton />}
 
             {!isLoading && grantData.id && (
                 <>

@@ -4,26 +4,18 @@ import { cn } from '@/lib/utils';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useFrappeCreateDoc, useFrappeGetDocList, useFrappeGetCall, useFrappeDeleteDoc } from 'frappe-react-sdk';
-import {
-    Conversation,
-    ConversationContent,
-    ConversationScrollButton,
-} from '@/components/ai-elements/conversation';
-import { Message, MessageContent } from '@/components/ai-elements/message';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
-import ChatMessageItem from './ChatMessageItem';
 import type { SDKMessage, Conversation as ConversationType } from '@/types/chat';
 import { useChatScroll } from './hooks/useChatScroll';
 import { useChatHistory } from './hooks/useChatHistory';
-import BeforeThinkingLoader from './BeforeThinkingLoader';
 import type { QuickQuestion } from '@/types/chat';
-import QuickQuestions from './QuickQuestions';
-import ChatHeader from './ChatHeader';
-import ChatInputArea from './ChatInputArea';
-import ChainOfThoughtComponent from './ChainofThought';
+import ChatLayout from './ChatLayout';
 
+interface ChatPanelProps {
+    isDrawerMode?: boolean;
+}
 
-const ChatPanel: React.FC = () => {
+const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
     const { isChatOpen, closeChat } = useChatContext();
     const { createDoc } = useFrappeCreateDoc();
     const { deleteDoc } = useFrappeDeleteDoc();
@@ -169,108 +161,67 @@ const ChatPanel: React.FC = () => {
         }
     }, [currentConversaionId, initialMessage, sendMessage]);
 
-    return (
-        <>
-            {isChatOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 xl:hidden"
-                    onClick={closeChat}
-                />
-            )}
-
-            <div
-                className={cn(
-                    'fixed top-0 right-0 h-screen min-w-[447px] bg-background transition-transform duration-300 ease-in-out z-50',
-                    isChatOpen ? 'translate-x-0' : 'translate-x-full'
-                )}
-            >
-                <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <ChatHeader
-                        onNewChat={handleNewChat}
-                        onClose={closeChat}
-                        conversationList={conversationListData || []}
-                        onSelectConversation={handleConversationClick}
+    // Drawer mode (traditional fixed overlay)
+    if (isDrawerMode) {
+        return (
+            <>
+                {isChatOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 xl:hidden"
+                        onClick={closeChat}
                     />
+                )}
 
-                    {/* Main Content Container */}
-                    <div className="flex flex-col gap-4 p-6 pt-0 flex-1 overflow-hidden">
-
-                        {/* Conversation Area */}
-                        <Conversation className="relative flex-1 w-[399px] min-h-0 remove-scrollbar">
-                            <ConversationContent className='h-full max-w-[399px] flex flex-col-reverse overflow-y-auto bg-[#F8FAFC] rounded-md p-4 remove-scrollbar'>
-                                {(status === 'error' || error) && (
-                                    <div className="flex w-full justify-center py-2">
-                                        <span className="text-sm text-red-500">Oops! Something went wrong. Please try again.</span>
-                                    </div>
-                                )}
-
-                                {/* REMOVED DUPLICATE THINKING BLOCK HERE */}
-
-                                {showBeforeThinking && (
-                                    <Message from="assistant">
-                                        <MessageContent className="rounded-tl-none p-1">
-                                            <BeforeThinkingLoader />
-                                        </MessageContent>
-                                    </Message>
-                                )}
-
-                                {showThinkingActive && !hasDataBlockPart && (
-                                    <Message from="assistant">
-                                        <MessageContent className="rounded-tl-none p-1">
-                                            <ChainOfThoughtComponent
-                                                open={true}
-                                                data={[]}
-                                                status={status}
-                                            />
-                                        </MessageContent>
-                                    </Message>
-                                )}
-
-                                {messages.length === 0 ? (
-                                    <QuickQuestions
-                                        questions={quickQuestions}
-                                        onQuestionClick={(text) => handleSend({ text, files: [] })}
-                                        disabled={status !== 'ready'}
-                                    />
-                                ) : (
-                                    [...messages].reverse().map((message) => {
-                                        const lastMessage = messages[messages.length - 1];
-                                        const isLastMessage = message.id === lastMessage?.id;
-                                        const isAssistant = message.role === 'assistant';
-                                        const messageStatus = (isLastMessage && isAssistant) ? status : 'ready';
-
-                                        return (
-                                            <ChatMessageItem
-                                                key={message.id}
-                                                message={message as SDKMessage}
-                                                status={messageStatus}
-                                                isLast={isLastMessage && isAssistant}
-                                            />
-                                        );
-                                    })
-                                )}
-                            </ConversationContent>
-                            <ConversationScrollButton />
-                            <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-[#F8FAFC] to-transparent pointer-events-none rounded-t-md z-10" />
-                        </Conversation>
-
-                        {/* Input Area */}
-                        <ChatInputArea
-                            input={input}
-                            setInput={setInput}
-                            onSend={handleSend}
-                            status={status}
-                            disabled={(status !== 'ready' && status !== 'error') || initialMessage !== null}
-                            isAssistantResponding={!!isAssistantResponding}
-                            hasTextPart={hasTextPart}
-                            showBeforeThinking={!!showBeforeThinking}
-                            showThinkingActive={!!showThinkingActive}
-                        />
-                    </div>
+                <div
+                    className={cn(
+                        'fixed top-0 right-0 h-screen min-w-[447px] bg-background transition-transform duration-300 ease-in-out z-50',
+                        isChatOpen ? 'translate-x-0' : 'translate-x-full'
+                    )}
+                >
+                    <ChatLayout
+                    isDrawerMode
+                    onNewChat={handleNewChat}
+                    onClose={closeChat}
+                    conversationList={conversationListData || []}
+                    onSelectConversation={handleConversationClick}
+                    messages={messages}
+                    status={status}
+                    error={error}
+                    quickQuestions={quickQuestions}
+                    handleSend={handleSend}
+                    input={input}
+                    setInput={setInput}
+                    isAssistantResponding={!!isAssistantResponding}
+                    hasTextPart={!!hasTextPart}
+                    showBeforeThinking={!!showBeforeThinking}
+                    showThinkingActive={!!showThinkingActive}
+                />
                 </div>
-            </div>
-        </>
+            </>
+        );
+    }
+
+    // Panel mode (resizable panel)
+    return (
+        <div className="h-full w-full bg-background border-l border-border">
+            <ChatLayout
+            onNewChat={handleNewChat}
+            onClose={closeChat}
+            conversationList={conversationListData || []}
+            onSelectConversation={handleConversationClick}
+            messages={messages}
+            status={status}
+            error={error}
+            quickQuestions={quickQuestions}
+            handleSend={handleSend}
+            input={input}
+            setInput={setInput}
+            isAssistantResponding={!!isAssistantResponding}
+            hasTextPart={!!hasTextPart}
+            showBeforeThinking={!!showBeforeThinking}
+            showThinkingActive={!!showThinkingActive}
+        />
+        </div>
     );
 };
 
