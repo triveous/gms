@@ -120,7 +120,7 @@ export function BudgetUtilizationChart({
                             }}
                         />
                         <span className="text-muted-foreground">{chartConfig[name as keyof typeof chartConfig]?.label || name}:</span>
-                        <span className="font-bold">₹ {Number(value).toLocaleString('en-IN')} Cr.</span>
+                        <span className="font-medium">₹ {Number(value).toLocaleString('en-IN')} Crs.</span>
                       </div>
                   )}
                   labelFormatter={(value, payload) => {

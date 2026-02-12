@@ -93,7 +93,7 @@ export function UploadedFilesDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[1000px] p-0 gap-0 overflow-hidden rounded-xl" showCloseButton={false}>
         <div className="flex items-center justify-between p-6 pb-2">
-            <DialogTitle className="text-xl font-bold">Uploaded files</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Uploaded files</DialogTitle>
             <DialogClose className="h-9 rounded-md px-3 bg-secondary/50 hover:bg-secondary/70 text-secondary-foreground text-sm font-medium transition-colors flex items-center gap-2">
                 <X className="h-4 w-4" />
                 Close
@@ -107,7 +107,7 @@ export function UploadedFilesDialog() {
                         <TableRow className='text-[#020617]'>
                             <TableHead className="w-[150px] p-2">
                                 <button 
-                                    className={`flex items-center gap-2 hover:text-foreground text-[#020617] ${sortBy === 'file_name' ? 'font-bold' : ''}`}
+                                    className={`flex items-center gap-2 hover:text-foreground text-[#020617] ${sortBy === 'file_name' ? 'font-semibold' : ''}`}
                                     onClick={() => toggleSort('file_name')}
                                 >
                                     File name

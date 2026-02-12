@@ -546,7 +546,7 @@ export default function Project() {
                             <div className="p-4 border border-orange-200 rounded-lg bg-orange-50/30">
                                 <div className="text-sm text-muted-foreground mb-2">Impact created</div>
                                 <div className="flex items-baseline gap-2 mb-2">
-                                    <span className="text-3xl font-bold text-foreground">{formatTextWithNumber(projectMilestoneData?.milestone?.metrics?.['Impact Created'] || '')}</span>
+                                    <span className="text-3xl font-semibold text-foreground">{formatTextWithNumber(projectMilestoneData?.milestone?.metrics?.['Impact Created'] || '')}</span>
                                     {/* <span className="text-sm text-muted-foreground">citizens</span> */}
                                 </div>
                                 {impactTrend && (
@@ -560,7 +560,7 @@ export default function Project() {
                             <div className="p-4 border border-orange-200 rounded-lg bg-orange-50/30">
                                 <div className="text-sm text-muted-foreground mb-2">AI breakthroughs</div>
                                 <div className="flex items-baseline gap-2 mb-2">
-                                    <span className="text-3xl font-bold text-foreground">{projectMilestoneData?.milestone?.metrics?.['AI Breakthroughs']}</span>
+                                    <span className="text-3xl font-semibold text-foreground">{projectMilestoneData?.milestone?.metrics?.['AI Breakthroughs']}</span>
                                 </div>
                                 {aiTrend && (
                                     <div className="flex items-center w-3 gap-2">

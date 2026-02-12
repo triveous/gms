@@ -47,18 +47,11 @@ export default function Grants() {
 
         const amount = Number(value);
 
-        if (amount >= 1_00_00_000) {
-            // Crores (>= 1 Cr)
+        if (amount >= 1_00_000) {
+            // Convert everything >= 1 Lakh to Crores
             return `₹ ${(amount / 1_00_00_000).toLocaleString('en-IN', {
                 maximumFractionDigits: 2
             })} Cr`;
-        }
-
-        if (amount >= 1_00_000) {
-            // Lakhs
-            return `₹${(amount / 1_00_000).toLocaleString('en-IN', {
-                maximumFractionDigits: 2
-            })} Lakhs`;
         }
 
         // Default fallback (just number)
@@ -197,7 +190,7 @@ export default function Grants() {
                                 <div className="text-sm text-muted-foreground">
                                     Total Budget
                                 </div>
-                                <div className="text-xl font-bold">
+                                <div className="text-xl font-semibold">
                                     {grant.totalBudget}
                                 </div>
                             </div>
@@ -210,7 +203,7 @@ export default function Grants() {
                                     Total Budget Spend
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <div className="text-xl font-bold">
+                                    <div className="text-xl font-semibold">
                                         {grant.budgetSpend}
                                     </div>
                                     {grant.budgetSpendPercent !== '--' && (
@@ -224,7 +217,7 @@ export default function Grants() {
                             <div className="w-px bg-border" />
 
                             {/* Overall Progress */}
-                            <div>
+                            {/* <div>
                                 <div className="text-sm text-muted-foreground">
                                     Overall Progress
                                 </div>
@@ -234,14 +227,14 @@ export default function Grants() {
                                 </div>
                             </div>
 
-                            <div className="w-px bg-border" />
+                            <div className="w-px bg-border" /> */}
 
                             {/* Total Projects */}
                             <div>
                                 <div className="text-sm text-muted-foreground">
                                     Total Projects
                                 </div>
-                                <div className="text-xl font-bold">
+                                <div className="text-xl font-semibold">
                                     {grant.totalProjects}
                                 </div>
                             </div>

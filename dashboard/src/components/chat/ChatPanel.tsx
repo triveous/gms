@@ -24,6 +24,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
     const [initialMessage, setInitialMessage] = useState<string | null>(null);
     const [isHistoryRequested, setIsHistoryRequested] = useState(false);
     const [activeToolUI, setActiveToolUI] = useState<{ tool: string; state: string; query?: string } | null>(null);
+    const [forceShowThinking, setForceShowThinking] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const { data: conversationListData, mutate: refetchConversationList } = useFrappeGetDocList<ConversationType>('AI Thread', {
@@ -77,6 +78,20 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
     useEffect(() => {
         if (status === 'ready') {
             setActiveToolUI(null);
+            setForceShowThinking(false);
+        }
+    }, [status]);
+
+    // Force show "Thinking" after 3 seconds if still in beforeThinking state
+    useEffect(() => {
+        if (status === 'submitted' || status === 'streaming') {
+            const timer = setTimeout(() => {
+                setForceShowThinking(true);
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        } else {
+            setForceShowThinking(false);
         }
     }, [status]);
 
@@ -86,11 +101,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
 
     const isAssistantResponding = status === 'submitted' || status === 'streaming' || initialMessage !== null;
 
-    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p => p.type === 'data-block');
+    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p => 
+        p.type === 'data-block' || p.type === 'data-goal' || p.type === 'data-step'
+    );
     const hasTextPart = latestAssistantMessage?.parts?.some(p => p.type === 'text');
 
-    const showBeforeThinking = isAssistantResponding && !hasDataBlockPart && !hasTextPart;
-    const showThinkingActive = isAssistantResponding && hasDataBlockPart && !hasTextPart;
+    const showBeforeThinking = isAssistantResponding && !hasDataBlockPart && !hasTextPart && !forceShowThinking;
+    const showThinkingActive = isAssistantResponding && (hasDataBlockPart || forceShowThinking) && !hasTextPart;
 
 
     useChatHistory({

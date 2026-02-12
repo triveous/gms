@@ -185,7 +185,7 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
             <div className="bg-white rounded-lg border border-none p-6 mt-4">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-xl font-bold text-foreground">People & teams</h1>
+                    <h1 className="text-xl font-semibold text-foreground">People & teams</h1>
                 </div>
 
                 {/* Table */}

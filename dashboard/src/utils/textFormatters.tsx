@@ -21,7 +21,7 @@ export const formatTextWithNumber = (text: string): React.JSX.Element => {
 
         return (
             <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold text-foreground">{numberPart}</span>
+                <span className="text-3xl font-semibold text-foreground">{numberPart}</span>
                 {textPart && (
                     <span className="text-sm font-normal text-gray-500">{textPart}</span>
                 )}

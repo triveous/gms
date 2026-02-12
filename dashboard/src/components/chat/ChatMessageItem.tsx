@@ -16,8 +16,7 @@ const groupMessageParts = (parts: any[]) => {
     const isDataPart = (part: any) =>
         part.type === 'data-block' ||
         part.type === 'data-goal' ||
-        part.type === 'data-step' ||
-        part.type === 'data-state';
+        part.type === 'data-step';
 
     parts.forEach((part: any) => {
         if (isDataPart(part)) {

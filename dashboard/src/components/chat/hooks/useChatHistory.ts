@@ -24,12 +24,22 @@ export const useChatHistory = ({
     useEffect(() => {
         if (conversationHistoryData?.message) {
             const transformedMessages = conversationHistoryData.message
-                .map((msg: { id: string; role: 'user' | 'assistant'; parts: Record<string, unknown>[] }) => ({
-                    id: msg.id,
-                    role: msg.role,
-                    parts: msg.parts,
-                    content: '' // SDK expects content, we use parts mostly
-                }))
+                .map((msg: { id: string; role: 'user' | 'assistant'; parts: Record<string, unknown>[] }) => {
+                    const sortedParts = msg.parts ? [...msg.parts].sort((a: any, b: any) => {
+                        const isTextA = a.type === 'text';
+                        const isTextB = b.type === 'text';
+                        if (isTextA && !isTextB) return 1;
+                        if (!isTextA && isTextB) return -1;
+                        return 0;
+                    }) : [];
+
+                    return {
+                        id: msg.id,
+                        role: msg.role,
+                        parts: sortedParts,
+                        content: '' // SDK expects content, we use parts mostly
+                    };
+                })
                 .filter((msg: { id: string; role: string; parts: Record<string, unknown>[] }) => {
                     if (msg.role === 'user') return true;
                     // Keep text or data-block parts
