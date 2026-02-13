@@ -195,6 +195,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
                     hasTextPart={!!hasTextPart}
                     showBeforeThinking={!!showBeforeThinking}
                     showThinkingActive={!!showThinkingActive}
+                    hasDataBlockPart={!!hasDataBlockPart}
                 />
                 </div>
             </>
@@ -220,6 +221,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
             hasTextPart={!!hasTextPart}
             showBeforeThinking={!!showBeforeThinking}
             showThinkingActive={!!showThinkingActive}
+            hasDataBlockPart={!!hasDataBlockPart}
         />
         </div>
     );
