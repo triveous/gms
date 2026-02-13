@@ -55,7 +55,7 @@ class VercelUIStreamHandler:
     @staticmethod
     def encode(chunk: BaseChunk) -> str:
         """Encode a chunk as an SSE data line."""
-        return f"data: {chunk.encode()}\n\n"
+        return f"data: {chunk.encode(5)}\n\n"
 
     def start(self) -> Generator[str, None, None]:
         """
