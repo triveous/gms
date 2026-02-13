@@ -9,6 +9,7 @@ import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import ChatMessageItem from './ChatMessageItem';
 import type { SDKMessage, Conversation as ConversationType } from '@/types/chat';
 import BeforeThinkingLoader from './BeforeThinkingLoader';
+import ChainOfThoughtComponent from './ChainofThought';
 import type { QuickQuestion } from '@/types/chat';
 import QuickQuestions from './QuickQuestions';
 import ChatHeader from './ChatHeader';
@@ -36,6 +37,7 @@ interface ChatLayoutProps {
     hasTextPart: boolean;
     showBeforeThinking: boolean;
     showThinkingActive: boolean;
+    hasDataBlockPart: boolean;
 
     isDrawerMode?: boolean;
 }
@@ -56,6 +58,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     hasTextPart,
     showBeforeThinking,
     showThinkingActive,
+    hasDataBlockPart,
     isDrawerMode = false,
 }) => {
     const containerWidthClass = isDrawerMode
@@ -89,6 +92,18 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                             <Message from="assistant">
                                 <MessageContent className="rounded-tl-none p-1">
                                     <BeforeThinkingLoader />
+                                </MessageContent>
+                            </Message>
+                        )}
+
+                        {showThinkingActive && !hasDataBlockPart && (
+                            <Message from="assistant">
+                                <MessageContent className="rounded-tl-none p-1">
+                                    <ChainOfThoughtComponent
+                                        open={true}
+                                        data={[]}
+                                        status={status}
+                                    />
                                 </MessageContent>
                             </Message>
                         )}
