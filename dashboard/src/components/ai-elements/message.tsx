@@ -311,7 +311,7 @@ export const MessageResponse = memo(
     <Streamdown
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        "[&_table]:rounded-[4px] [&_table]:block [&_table]:overflow-x-auto",
+        "[&_table]:rounded-[4px] [&_table]:w-fit [&_table]:block [&_table]:overflow-x-auto",
         "[&_th]:min-w-[124px] [&_td]:min-w-[124px]",
         "[&_ul]:!list-disc",
         "[&_ul]:!list-outside",
