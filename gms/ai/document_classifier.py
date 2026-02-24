@@ -120,7 +120,7 @@ class DocumentClassifier:
             logger.error(f"Error loading grants from DB: {e}")
             return ["NO_GRANTS_FOUND"]
     
-    CLASSIFICATION_PROMPT_TEMPLATE = """
+    EXTRACTION_PROMPT_TEMPLATE = """
     You are a strict structured data extraction engine.
 
 INPUT:
@@ -242,7 +242,10 @@ Return STRICT JSON object:
   "timeline": {{
     "program_year": "string",
     "quarter": "Q1 | Q2 | Q3 | Q4",
-    "reporting_period": "string"
+    "reporting_period": "string",
+    "period_start": "YYYY-MM-DD",
+    "period_end": "YYYY-MM-DD",
+    "submitted_at": "datetime (ISO format)"
   }},
     // You MUST extract ALL project sections in the document.
     // For EACH numbered project section, generate EXACTLY ONE milestone object.
@@ -254,12 +257,10 @@ Return STRICT JSON object:
   "milestones": [
     {{
       "title": "string",
-      "project": "string (Grant Project ID)",
+      "project": "string (Project Name)"
+      "projectId": "string (Grant Project ID)",
       "milestone_type": "string (Milestone Type ID)",
-      "submitted_at": "datetime (ISO format)",
-      "forecasted_amount": "string",
-      "period_start": "YYYY-MM-DD",
-      "period_end": "YYYY-MM-DD",
+      "forecasted_amount": "string (value should be completely numeric like 30000000 instead of 3 cr)",
       "artifacts": [
         {{
           "link": "string",
@@ -289,9 +290,7 @@ Return STRICT JSON object:
           "data_int": integer | null,
           "data_float": float | null,
           "data_string": string | null,
-          "data_boolean": boolean | null,
-          "isPresent": boolean,
-          "isCorrectFormat": boolean
+          "data_boolean": boolean | null
         }}
       ]
     }}
@@ -322,11 +321,6 @@ Metrics data typing:
 - BOOLEAN → fill data_boolean
 All unused fields must be null.
 
-Metric Validation Rules:
-- isPresent: true if the metric value is found in the document, false otherwise.
-- isCorrectFormat: true if the value matches the expected type (INT, FLOAT, STRING, BOOLEAN) and formatting instructions. false if the type is incorrect or the format is invalid.
-- If isPresent is false, then isCorrectFormat should be false.
-
 ------------------------------------------------------------
 STRICT OUTPUT RULES
 ------------------------------------------------------------
@@ -338,6 +332,40 @@ STRICT OUTPUT RULES
 - Use only IDs provided in input
 - One milestone per project section
 - If value missing → null
+
+------------------------------------------------------------
+Document Content:
+{document_content}
+"""
+
+    VALIDATION_PROMPT_TEMPLATE = """
+    You are a data validation engine. You will be provided with extracted milestone data and the source document text.
+    Your task is to validate each metric value against the document.
+
+INPUT:
+1. Extracted Data (JSON)
+2. Source Document (Text)
+
+Extracted Data:
+{extracted_data}
+
+------------------------------------------------------------
+VALIDATION RULES
+------------------------------------------------------------
+
+For EACH milestone and EACH metric value in the extracted data:
+1. isPresent: true if the metric value is found/supported in the document, false otherwise.
+2. isCorrectFormat: true if the value matches the expected type (INT, FLOAT, STRING, BOOLEAN) and formatting instructions. false if the type is incorrect or if the value does not follow the format instruection (if the foarmat instruction present then only check the format).
+3. If isPresent is false, then isCorrectFormat should be false.
+4. errorMessage: if the value is present but the format is wrong, means the metrics value doesn't follow the format instruction then provide the reason, why the value is not following the formatting instruction.
+
+------------------------------------------------------------
+OUTPUT STRUCTURE
+------------------------------------------------------------
+
+Return the SAME JSON structure as the input, but with "isPresent", "isCorrectFormat", "errorMessage" fields populated for each entry in "metrics_values".
+
+Return STRICT JSON object.
 
 ------------------------------------------------------------
 Document Content:
@@ -369,111 +397,92 @@ Document Content:
             logger.error(f"Failed to initialize ChatGoogleGenerativeAI: {e}")
             self.model = None
 
+    def extract_data(
+        self,
+        filename: str,
+        content: str,
+        doc_id: str = "doc_1",
+    ) -> dict[str, Any]:
+        """Extract raw milestone data from the document.
+
+        Args:
+            filename: The uploaded filename
+            content: The extracted text content from the document
+            doc_id: Optional document ID
+
+        Returns:
+            Dictionary with extraction results
+        """
+        if not self.model:
+            return {"error": "LLM model not initialized"}
+
+        if not content or len(content.strip()) < 10:
+            return {"error": "Document contains insufficient text"}
+
+        try:
+            self.GRANTS = self._load_grants_from_db()
+            grant_list = "\n".join([f'- "{grant}"' for grant in self.GRANTS])
+            metrics_config = fetch_milestone_metrics_configuration()
+
+            prompt = self.EXTRACTION_PROMPT_TEMPLATE.format(
+                grant_list=grant_list,
+                document_content=content,
+                quarterly_progress_metrics=metrics_config.get("QUARTERLY_PROGRESS_REPORT", "[]"),
+                yearly_plan_metrics=metrics_config.get("YEARLY_PLAN", "[]")
+            )
+
+            response = self.model.invoke(prompt)
+            return self._parse_llm_response(response.content.strip())
+
+        except Exception as e:
+            return {"error": f"Extraction error: {str(e)}"}
+
+    def validate_data(
+        self,
+        extracted_data: dict[str, Any],
+        content: str,
+    ) -> dict[str, Any]:
+        """Validate extracted milestone data against the source document.
+
+        Args:
+            extracted_data: The JSON data to validate
+            content: The source text content
+
+        Returns:
+            Validated JSON data
+        """
+        if not self.model:
+            return {"error": "LLM model not initialized"}
+
+        try:
+            prompt = self.VALIDATION_PROMPT_TEMPLATE.format(
+                extracted_data=json.dumps(extracted_data, indent=2),
+                document_content=content
+            )
+
+            response = self.model.invoke(prompt)
+            return self._parse_llm_response(response.content.strip())
+
+        except Exception as e:
+            return {"error": f"Validation error: {str(e)}"}
+
     def classify_document(
         self,
         filename: str,
         content: str,
         doc_id: str = "doc_1",
     ) -> dict[str, Any]:
-        """Classify a document against the grant list.
+        """Coordination method for backward compatibility and simplicity."""
+        extraction_result = self.extract_data(filename, content, doc_id)
+        if "error" in extraction_result:
+            return extraction_result
 
-        Args:
-            filename: The uploaded filename
-            content: The extracted text content from the document
-            doc_id: Optional document ID (defaults to "doc_1")
-
-        Returns:
-            Dictionary with classification results:
-            {
-                "document_id": str,
-                "filename": str,
-                "matched_grant": str,  # grant name (for logging/printing)
-                "matched_grant_id": str,  # grant id (for logging/printing)
-                "confidence": float,
-                "reasoning": str,
-                "error": str (optional)
-            }
-        """
-        if not self.model:
-            error_msg = "LLM model not initialized"
-            logger.error(error_msg)
-            return {
-                "document_id": doc_id,
-                "filename": filename,
-                "matched_grant": "NO_MATCH",
-                "matched_grant_id": None,
-                "confidence": 0.0,
-                "reasoning": "Classification service unavailable",
-                "error": error_msg,
-            }
-
-        if not content or len(content.strip()) < 10:
-            error_msg = "Document contains insufficient text for classification"
-            logger.error(error_msg)
-            return {
-                "document_id": doc_id,
-                "filename": filename,
-                "matched_grant": "NO_MATCH",
-                "matched_grant_id": None,
-                "confidence": 0.0,
-                "reasoning": "Document has no readable text content",
-                "error": error_msg,
-            }
-
-        try:
-            # Always reload grants for latest data
-            self.GRANTS = self._load_grants_from_db()
-            grant_list = "\n".join([f'- "{grant}"' for grant in self.GRANTS])
-            
-            # Fetch dynamic metrics
-            metrics_config = fetch_milestone_metrics_configuration()
-
-            # Prepare the prompt with the document content
-            prompt = self.CLASSIFICATION_PROMPT_TEMPLATE.format(
-                grant_list=grant_list,
-                document_content=content,  # Limit to first 5000 chars for token efficiency
-                quarterly_progress_metrics=metrics_config.get("QUARTERLY_PROGRESS_REPORT", "[]"),
-                yearly_plan_metrics=metrics_config.get("YEARLY_PLAN", "[]")
-            )
-
-            # Invoke the model
-            logger.info(f"Classifying document: {filename}")
-            response = self.model.invoke(prompt)
-
-            # Parse the response
-            response_text = response.content.strip()
-            logger.debug(f"Raw LLM response: {response_text}")
-
-            # Extract JSON from response
-            classification_result = self._parse_llm_response(response_text)
-
-            # Extract grant name/id for logging/printing
-            matched_grant = classification_result.get("matched_grant", {})
-            if isinstance(matched_grant, dict):
-                grant_name = matched_grant.get("grant_name", "NO_MATCH")
-                grant_id = matched_grant.get("grant_id", None)
-            else:
-                grant_name = str(matched_grant)
-                grant_id = None
-
-            return {
-                "document_id": doc_id,
-                "filename": filename,
-                "llm_response": classification_result,
-            }
-
-        except Exception as e:
-            error_msg = f"Classification error: {str(e)}"
-            logger.error(error_msg, exc_info=True)
-            return {
-                "document_id": doc_id,
-                "filename": filename,
-                "matched_grant": "NO_MATCH",
-                "matched_grant_id": None,
-                "confidence": 0.0,
-                "reasoning": "Classification failed",
-                "error": error_msg,
-            }
+        validation_result = self.validate_data(extraction_result, content)
+        return {
+            "document_id": doc_id,
+            "filename": filename,
+            "llm_response": validation_result,
+        }
 
     def _parse_llm_response(self, response_text: str) -> dict[str, Any]:
         """Parse the LLM response to extract JSON.

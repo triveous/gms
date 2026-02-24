@@ -55,6 +55,7 @@ from .types import (
 
 from gms.ai.agents_v2.middleware.steps import STEPS_PARTS_KEY
 from gms.ai.agents_v2.middleware.goal import GOALS_PARTS_KEY
+from gms.ai.agents_v2.middleware.task import TASK_PARTS_KEY
 
 
 class UIMessagePart(TypedDict, total=False):
@@ -585,6 +586,84 @@ def get_goals_parts(message: BaseMessage) -> list[dict]:
     return parts
 
 
+def get_task_parts(message: BaseMessage) -> list[dict]:
+    """
+    Get persisted tasks from a message's additional_kwargs.
+
+    Reads task IDs from TASK_PARTS_KEY in additional_kwargs, then enriches
+    each task with the **live status from Frappe** so that status transitions
+    made outside the agent (e.g. "Validating", "Reviewing" set by submit_file.py)
+    are always reflected correctly in chat history.
+
+    Args:
+        message: The message to read data from
+
+    Returns:
+        List of data-task part dicts, or empty list if none.
+    """
+    parts = []
+
+    tasks_parts = message.additional_kwargs.get(TASK_PARTS_KEY, [])
+    if not tasks_parts:
+        return parts
+
+    # Try to enrich each task with live status from Frappe
+    try:
+        import frappe  # Only available inside a Frappe request context
+
+        for task in tasks_parts:
+            task_id = task.get("id", "")
+            enriched = dict(task)  # copy so we don't mutate the checkpoint object
+
+            if task_id and frappe.db.exists("Grant Document Extraction Task", task_id):
+                doc_fields = frappe.db.get_value(
+                    "Grant Document Extraction Task",
+                    task_id,
+                    ["status", "raw_extraction_json", "uploaded_file"],
+                    as_dict=True
+                )
+                if doc_fields:
+                    live_status = doc_fields.get("status")
+                    if live_status:
+                        enriched["status"] = live_status
+                        # Keep nested data dict in sync too
+                        if isinstance(enriched.get("data"), dict):
+                            enriched["data"] = {**enriched["data"], "status": live_status}
+                    
+                    # Include llm_response and file_id for UI handling
+                    import json
+                    try:
+                        raw_json = doc_fields.get("raw_extraction_json")
+                        if raw_json:
+                            enriched["llm_response"] = json.loads(raw_json)
+                    except Exception:
+                        pass
+                    
+                    enriched["file_id"] = doc_fields.get("uploaded_file")
+
+            parts.append(
+                {
+                    "type": "data-task",
+                    "id": task_id,
+                    "data": enriched,
+                }
+            )
+
+    except Exception:
+        # Fallback: return stored values as-is (e.g. outside Frappe context)
+        for task in tasks_parts:
+            parts.append(
+                {
+                    "type": "data-task",
+                    "id": task.get("id", ""),
+                    "data": task,
+                }
+            )
+
+    return parts
+
+
+
 def _should_include_type(type_name: str, include_types: set[str] | None) -> bool:
     """Check if a content type should be included."""
     if include_types is None:
@@ -755,6 +834,11 @@ def convert_message_to_ui_message(
     goals_parts = get_goals_parts(message)
     if goals_parts:
         parts.extend(goals_parts)
+
+    # Read persisted tasks from additional_kwargs
+    task_parts = get_task_parts(message)
+    if task_parts:
+        parts.extend(task_parts)
 
     return UIMessage(id=message_id, role=role, parts=parts)
 

@@ -2,8 +2,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from deepagents import SubAgent, create_deep_agent
-from langchain_core.messages import HumanMessage
+from langchain.tools import ToolRuntime
+from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import StructuredTool
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
@@ -18,6 +20,7 @@ from gms.ai.agents_v2.middleware.state_sync import (
     StartStateNotifierMiddleware,
 )
 from gms.ai.agents_v2.middleware.steps import StepsMiddleware
+from gms.ai.agents_v2.middleware.task import TaskMiddleware
 from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
@@ -57,6 +60,50 @@ Whenever you are tacking a new part of the research you should call the set_goal
 """
 
 
+def _request_file_upload(runtime: "ToolRuntime"):
+    """Request the user to upload a document/file for extraction. Call this tool when the user expresses intent to upload a file."""
+    import frappe
+    from langgraph.config import get_stream_writer
+    from langgraph.types import Command
+
+    doc = frappe.new_doc("Grant Document Extraction Task")
+    doc.status = "Submitting"
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+
+    task_id = doc.name
+
+    data_payload = {"task": task_id, "status": "Submitting"}
+
+    writer = get_stream_writer()
+    if writer:
+        writer({"type": "data-task", "id": task_id, "data": data_payload})
+
+    frappe.publish_realtime("data-task", data_payload)
+
+    # Persist task to agent state so TaskMiddleware.after_agent() stores it in
+    # AIMessage.additional_kwargs[TASK_PARTS_KEY] – identical to how
+    # StepsMiddleware handles data-steps.
+    return Command(
+        update={
+            "tasks": [{"id": task_id, "status": "Submitting", "data": data_payload}],
+            "messages": [
+                ToolMessage(
+                    content=f"Created Grant Document Extraction Task '{task_id}'. Awaiting user file upload. Tell the user you have opened the file upload prompt.",
+                    tool_call_id=runtime.tool_call_id,
+                )
+            ],
+        }
+    )
+
+
+request_file_upload = StructuredTool.from_function(
+    func=_request_file_upload,
+    name="request_file_upload",
+    description="Request the user to upload a document/file for extraction. Call this tool when the user expresses intent to upload a file.",
+)
+
+
 def create_chat_agent(
     ai_agent_id: str,
     knowledge: Knowledge,
@@ -72,7 +119,7 @@ def create_chat_agent(
     import frappe
 
     # Load AI Agent document using cached_doc (prevents loading every time)
-    ai_agent: AIAgent = frappe.get_cached_doc("AI Agent", ai_agent_id)
+    ai_agent: AIAgent = frappe.get_cached_doc("AI Agent", "ulfovrcs4m")
 
     # Use agent configuration or fallback to defaults
     model: str = ai_agent.model or DEFAULT_MODEL
@@ -129,6 +176,7 @@ def create_chat_agent(
         main_middleware.append(StepsMiddleware())
     if ai_agent.goal_middleware:
         main_middleware.append(GoalMiddleware())
+    main_middleware.append(TaskMiddleware())  # Always register – data-task must always persist
     if ai_agent.title_middleware:
         main_middleware.append(
             TitleGenerationMiddleware(
@@ -147,6 +195,7 @@ def create_chat_agent(
         checkpointer=checkpointer,
         subagents=subagents,
         middleware=main_middleware,
+        tools=[request_file_upload],
     )
 
 
