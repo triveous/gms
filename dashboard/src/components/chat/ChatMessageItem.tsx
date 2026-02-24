@@ -8,7 +8,7 @@ interface ChatMessageItemProps {
     message: SDKMessage;
     status: string;
     isLast: boolean;
-    taskState: { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean };
+    taskState: { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null };
     onFileChange: (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => void;
     onOpenReview: (type: 'progress' | 'plan') => void;
 }
@@ -166,8 +166,9 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                                                             { step: 5, label: 'Submit document' }
                                                         ].map((s, idx, arr) => {
                                                             const isActive = uploadStep === s.step;
-                                                            const isCompleted = uploadStep > s.step;
-                                                            const isStepFailed = isRejected && (s.step === 4 || s.step === 5);
+                                                            const isCompleted = uploadStep > s.step && (taskState.errorStep === null || s.step < taskState.errorStep);
+                                                            const isStepFailed = (isRejected && (s.step === 4 || s.step === 5)) ||
+                                                                (taskState.errorStep !== null && s.step >= taskState.errorStep);
 
                                                             return (
                                                                 <div key={s.step} className="relative flex items-start gap-4 pb-8 last:pb-0">
@@ -200,16 +201,21 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                                                                     <div className="flex flex-col w-full pt-[2px]">
                                                                         <span className={cn(
                                                                             "text-[14px] transition-colors duration-200",
-                                                                            isActive || isCompleted ? "text-[#0F172A] font-medium" : "text-[#0F172A]"
+                                                                            (isActive || isCompleted) && !isStepFailed ? "text-[#0F172A] font-medium" : "text-[#0F172A]"
                                                                         )}>
                                                                             {s.label}
                                                                         </span>
-                                                                        {s.step === 4 && isRejected && (
+                                                                        {s.step === taskState.errorStep && taskState.errorMessage && (
+                                                                            <div className="mt-2 text-[14px] text-[#EF4444] leading-relaxed font-normal">
+                                                                                {taskState.errorMessage}
+                                                                            </div>
+                                                                        )}
+                                                                        {s.step === 4 && isRejected && !taskState.errorStep && (
                                                                             <div className="mt-2 text-[14px] text-[#EF4444] leading-relaxed font-normal">
                                                                                 Your document has been rejected. Please make the necessary corrections and re-upload.
                                                                             </div>
                                                                         )}
-                                                                        {s.step === 4 && uploadStep === 4 && !isRejected && (
+                                                                        {s.step === 4 && uploadStep === 4 && !isRejected && !taskState.errorStep && (
                                                                             <div className="mt-2 text-[14px] text-[#64748B]">
                                                                                 Please confirm if the details are correct
                                                                                 <button

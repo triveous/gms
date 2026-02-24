@@ -68,6 +68,7 @@ def _request_file_upload(runtime: "ToolRuntime"):
 
     doc = frappe.new_doc("Grant Document Extraction Task")
     doc.status = "Submitting"
+    doc.reviewed_by = frappe.session.user
     doc.insert(ignore_permissions=True)
     frappe.db.commit()
 
@@ -119,7 +120,7 @@ def create_chat_agent(
     import frappe
 
     # Load AI Agent document using cached_doc (prevents loading every time)
-    ai_agent: AIAgent = frappe.get_cached_doc("AI Agent", "ulfovrcs4m")
+    ai_agent: AIAgent = frappe.get_cached_doc("AI Agent", ai_agent_id)
 
     # Use agent configuration or fallback to defaults
     model: str = ai_agent.model or DEFAULT_MODEL

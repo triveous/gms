@@ -228,10 +228,22 @@ STRICT:
 - If metric not present → omit.
 
 ------------------------------------------------------------
-STEP 5 — OUTPUT STRUCTURE
+STEP 5 — OUTPUT STRUCTURE AND VALIDATION ERRORS
 ------------------------------------------------------------
 
-Return STRICT JSON object:
+CRITICAL ERROR CHECK:
+Before generating the final output, you MUST verify two conditions:
+1. PERIOD CHECK: You must check if `period_start` and `period_end` are present in the document or can be inferred. If they are missing, you MUST return an error.
+2. PROJECT CHECK: You must check if the projects you found in the document exist in the provided Grant List. If the document references a project that is NOT in the selected Grant ID's project list, you MUST return an error. (It is okay if the document has fewer projects than the Grant List, but NO unknown projects are allowed).
+
+If either condition fails, you MUST stop and return EXACTLY this JSON structure and nothing else:
+
+{{
+  "isError": true,
+  "errorMessage": "String describing the error (e.g., 'Unknown project found' or 'Reporting period not found in document') very important: message should be small with in 15 words"
+}}
+
+If both conditions pass, return the STRICT JSON object below:
 
 {{
   "matched_grant": {{
@@ -345,6 +357,7 @@ Document Content:
 INPUT:
 1. Extracted Data (JSON)
 2. Source Document (Text)
+3. Milestone Period Already Present: {milestone_exists}
 
 Extracted Data:
 {extracted_data}
@@ -360,10 +373,21 @@ For EACH milestone and EACH metric value in the extracted data:
 4. errorMessage: if the value is present but the format is wrong, means the metrics value doesn't follow the format instruction then provide the reason, why the value is not following the formatting instruction.
 
 ------------------------------------------------------------
-OUTPUT STRUCTURE
+OUTPUT STRUCTURE AND VALIDATION ERRORS
 ------------------------------------------------------------
 
-Return the SAME JSON structure as the input, but with "isPresent", "isCorrectFormat", "errorMessage" fields populated for each entry in "metrics_values".
+CRITICAL ERROR CHECK:
+Before generating the final output, you MUST verify the following condition:
+1. If "Milestone Period Already Present" is true, you MUST return an error because a milestone for this period already exists.
+
+If the condition fails, you MUST stop and return EXACTLY this JSON structure and nothing else:
+
+{{
+  "isError": true,
+  "errorMessage": "Milestone for this period already exists."
+}}
+
+If the condition passes, return the SAME JSON structure as the input, but with "isPresent", "isCorrectFormat", "errorMessage" fields populated for each entry in "metrics_values".
 
 Return STRICT JSON object.
 
@@ -437,16 +461,107 @@ Document Content:
         except Exception as e:
             return {"error": f"Extraction error: {str(e)}"}
 
+    def update_extraction_task(self, task_id: str, extraction_result: dict[str, Any]) -> None:
+        """Update Grant Document Extraction Task with extracted metadata.
+        
+        Args:
+            task_id: The ID of the Grant Document Extraction Task
+            extraction_result: The result from extract_data
+        """
+        if not task_id or extraction_result.get("isError"):
+            return
+
+        try:
+            timeline = extraction_result.get("timeline", {})
+            period_start = timeline.get("period_start")
+            period_end = timeline.get("period_end")
+            
+            matched_grant = extraction_result.get("matched_grant", {})
+            grant_id = matched_grant.get("grant_id")
+            
+            document_type = extraction_result.get("document_type")
+            
+            updates = {}
+            
+            if period_start:
+                updates["period_start"] = period_start
+                updates["isperiodstartpresent"] = 1
+                
+            if period_end:
+                updates["period_end"] = period_end
+                updates["isperiodendpresent"] = 1
+                
+            if grant_id:
+                updates["matched_grant"] = grant_id
+                
+            if document_type == "QUARTERLY_PROGRESS_REPORT":
+                updates["milestone_type"] = "Progress Report Extraction"
+            elif document_type == "YEARLY_PLAN":
+                updates["milestone_type"] = "Yearly Plan Extraction"
+                
+            if updates:
+                frappe.db.set_value("Grant Document Extraction Task", task_id, updates)
+                frappe.db.commit()
+                logger.info(f"Updated Grant Document Extraction Task {task_id} with {updates}")
+                
+        except Exception as e:
+            logger.error(f"Error updating extraction task {task_id}: {e}")
+
+    def check_milestone_exists(self, extraction_result: dict[str, Any]) -> bool:
+        """Check if a milestone for the extracted period already exists in the database."""
+        try:
+            timeline = extraction_result.get("timeline", {})
+            period_start = timeline.get("period_start")
+            period_end = timeline.get("period_end")
+
+            if not period_start or not period_end:
+                return False
+
+            milestones = extraction_result.get("milestones", [])
+            project_ids = []
+            for m in milestones:
+                if m.get("projectId"):
+                    project_ids.append(m.get("projectId"))
+
+            matched_grant = extraction_result.get("matched_grant", {})
+            matched_grant_id = matched_grant.get("grant_id")
+
+            if not project_ids and matched_grant_id:
+                projects = frappe.get_all("Grant Project", filters={"grant": matched_grant_id}, limit=1, ignore_permissions=True)
+                if projects:
+                    project_ids = [projects[0].name]
+
+            if project_ids:
+                existing = frappe.get_all(
+                    "Grant Project Milestone",
+                    filters={
+                        "project": ["in", project_ids],
+                        "milestone_type": "Progress Update",
+                        "period_start": period_start,
+                        "period_end": period_end,
+                        "docstatus": ["<", 2]
+                    },
+                    limit=1,
+                    ignore_permissions=True
+                )
+                return bool(existing)
+        except Exception as e:
+            logger.error(f"Error checking existing milestones: {e}")
+            
+        return False
+
     def validate_data(
         self,
         extracted_data: dict[str, Any],
         content: str,
+        milestone_exists: bool = False
     ) -> dict[str, Any]:
         """Validate extracted milestone data against the source document.
 
         Args:
             extracted_data: The JSON data to validate
             content: The source text content
+            milestone_exists: Whether a milestone for this period already exists
 
         Returns:
             Validated JSON data
@@ -457,7 +572,8 @@ Document Content:
         try:
             prompt = self.VALIDATION_PROMPT_TEMPLATE.format(
                 extracted_data=json.dumps(extracted_data, indent=2),
-                document_content=content
+                document_content=content,
+                milestone_exists="true" if milestone_exists else "false"
             )
 
             response = self.model.invoke(prompt)
@@ -477,7 +593,8 @@ Document Content:
         if "error" in extraction_result:
             return extraction_result
 
-        validation_result = self.validate_data(extraction_result, content)
+        milestone_exists = self.check_milestone_exists(extraction_result)
+        validation_result = self.validate_data(extraction_result, content, milestone_exists)
         return {
             "document_id": doc_id,
             "filename": filename,

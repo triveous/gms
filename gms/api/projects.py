@@ -106,7 +106,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	milestones = frappe.get_list(
 		"Grant Project Milestone",
 		fields=["name", "period_start"],
-		filters={"project": ["in", project_ids]},
+		filters={"project": ["in", project_ids],  "milestone_type": "Progress Update"},
 	)
 	
 	# Helper: Calculate quarter start/end dates
@@ -204,7 +204,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 		milestones_for_projects = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
-			filters={"name": ["in", milestone_ids_to_fetch]},
+			filters={"name": ["in", milestone_ids_to_fetch], "milestone_type": "Progress Update"},
 		)
 		milestone_project_map = {m["name"]: m["project"] for m in milestones_for_projects}
 	
@@ -215,7 +215,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 		all_milestones = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
-			filters={"name": ["in", all_milestone_ids]},
+			filters={"name": ["in", all_milestone_ids], "milestone_type": "Progress Update"},
 		)
 		unique_project_ids = sorted(list(set([m["project"] for m in all_milestones])))
 		all_projects = [{"id": pid, "name": project_map.get(pid)} for pid in unique_project_ids]
@@ -324,7 +324,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	milestones = frappe.get_list(
 		"Grant Project Milestone",
 		fields=["name", "period_start"],
-		filters={"project": ["in", project_ids]},
+		filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
 	)
 	
 	# Helper: Calculate quarter start/end dates
@@ -415,7 +415,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 		milestones_all = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
-			filters={"name": ["in", milestone_ids_all]},
+			filters={"name": ["in", milestone_ids_all], "milestone_type": "Progress Update"},
 		)
 		unique_project_ids = sorted(list(set([m["project"] for m in milestones_all])))
 		all_projects = [{"id": pid, "name": project_map.get(pid)} for pid in unique_project_ids]
@@ -467,7 +467,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 		milestones_for_projects = frappe.get_list(
 			"Grant Project Milestone",
 			fields=["name", "project"],
-			filters={"name": ["in", milestone_ids_to_fetch]},
+			filters={"name": ["in", milestone_ids_to_fetch], "milestone_type": "Progress Update"},
 		)
 		milestone_project_map = {m["name"]: m["project"] for m in milestones_for_projects}
 	
@@ -572,7 +572,10 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
             "creation",
             "forecasted_amount",
         ],
-        filters={"project": ["in", project_ids]},
+        filters={
+            "project": ["in", project_ids],
+            "milestone_type": "Progress Update"
+        },
         order_by="creation desc",
         limit_page_length=0,
     )
@@ -901,7 +904,7 @@ def compare_quarter_metrics_grant_forcast(grant_id, quarter_value, compare_with)
     all_milestones = frappe.get_list(
         "Grant Project Milestone",
         fields=["name", "period_start", "forecasted_amount"],
-        filters={"project": ["in", project_ids]},
+        filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
         order_by="creation desc",
         limit_page_length=0,
     )
@@ -1081,7 +1084,7 @@ def compare_quarter_metrics_grant_project_spesific(
         milestones = frappe.get_list(
             "Grant Project Milestone",
             fields=["name", "period_start"],
-            filters={"project": project_id},
+            filters={"project": project_id, "milestone_type": "Progress Update"},
             limit_page_length=0,
         )
 

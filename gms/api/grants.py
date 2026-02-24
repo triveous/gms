@@ -71,7 +71,7 @@ def get_grants_with_related(limit=50):
         milestones = frappe.get_list(
             "Grant Project Milestone",
             fields=["name", "project"],
-            filters={"project": ["in", project_ids]},
+            filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
             limit_page_length=0,
         )
         milestone_ids = [m["name"] for m in milestones]

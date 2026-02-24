@@ -47,6 +47,26 @@ def resume_with_file():
         # Read file data
         file_content = file.read()
         
+        # Task ID for tracking
+        task_id = frappe.form_dict.get("task_id")
+        
+        # Save the uploaded file to Frappe's File doctype immediately
+        file_doc = frappe.get_doc({
+            "doctype": "File",
+            "file_name": file.filename,
+            "is_private": 1,
+            "content": file_content
+        })
+        file_doc.save(ignore_permissions=True)
+        file_id = file_doc.name
+        
+        if task_id:
+            frappe.db.set_value("Grant Document Extraction Task", task_id, {
+                "uploaded_file": file_id,
+                "uploaded_datetime": frappe.utils.now_datetime()
+            })
+            frappe.db.commit()
+
         def generator():
             handler = VercelUIStreamHandler()
             yield from handler.start()
@@ -57,8 +77,11 @@ def resume_with_file():
             # Initialize classifier
             classifier = DocumentClassifier()
             
-            # Task ID for tracking
-            task_id = frappe.form_dict.get("task_id")
+            if task_id:
+                frappe.db.set_value("Grant Document Extraction Task", task_id, "status", "Extracting")
+                frappe.publish_realtime("data-task", {"task": task_id, "status": "Extracting"})
+                frappe.db.commit()
+                yield from handler.process_event("custom", {"task": task_id, "status": "Extracting", "type": "data-task"})
 
             # STEP 1: Extraction
             extraction_result = classifier.extract_data(
@@ -68,45 +91,78 @@ def resume_with_file():
             )
             
             if task_id:
+                classifier.update_extraction_task(task_id, extraction_result)
+            
+            if task_id:
                 frappe.db.set_value("Grant Document Extraction Task", task_id, {
-                    "status": "Validating",
-                    "raw_extraction_json": json.dumps(extraction_result)
+                    "status": "Validating" if not extraction_result.get("isError") else "Extracting",
+                    "raw_extraction_json": json.dumps(extraction_result) if not extraction_result.get("isError") else "{""}",
+                    "extraction_error": json.dumps(extraction_result) if extraction_result.get("isError") else "{""}"
                 })
+                
+                # Check for extraction error constraints (e.g., missing period, unknown projects)
+                if extraction_result.get("isError"):
+                    frappe.publish_realtime("data-task", {
+                        "task": task_id, 
+                        "status": "Extracting",
+                        "isError": True,
+                        "errorMessage": extraction_result.get("errorMessage")
+                    })
+                    frappe.db.commit()
+                    yield from handler.process_event("custom", {
+                        "task": task_id, 
+                        "status": "extracting", 
+                        "type": "data-task",
+                        "isError": True,
+                        "errorMessage": extraction_result.get("errorMessage")
+                    })
+                    yield from handler.finish()
+                    return
+
                 frappe.publish_realtime("data-task", {"task": task_id, "status": "Validating"})
                 frappe.db.commit()
                 # Also send via SSE
                 yield from handler.process_event("custom", {"task": task_id, "status": "Validating", "type": "data-task"})
 
+            milestone_exists = classifier.check_milestone_exists(extraction_result)
+
             # STEP 2: Validation
             validation_result = classifier.validate_data(
                 extracted_data=extraction_result,
-                content=extracted_text
+                content=extracted_text,
+                milestone_exists=milestone_exists
             )
 
             if task_id:
                 frappe.db.set_value("Grant Document Extraction Task", task_id, {
-                    "status": "Reviewing",
-                    "raw_extraction_json": json.dumps(validation_result)
+                    "status": "Reviewing" if not validation_result.get("isError") else "Validating",
+                    "raw_extraction_json": json.dumps(validation_result) if not validation_result.get("isError") else "{""}",
+                    "extraction_error": json.dumps(validation_result) if validation_result.get("isError") else "{""}"
                 })
+                
+                if validation_result.get("isError"):
+                    frappe.publish_realtime("data-task", {
+                        "task": task_id, 
+                        "status": "Validating",
+                        "isError": True,
+                        "errorMessage": validation_result.get("errorMessage")
+                    })
+                    frappe.db.commit()
+                    yield from handler.process_event("custom", {
+                        "task": task_id, 
+                        "status": "validating", 
+                        "type": "data-task",
+                        "isError": True,
+                        "errorMessage": validation_result.get("errorMessage")
+                    })
+                    yield from handler.finish()
+                    return
+
                 frappe.db.commit()
 
 
             classification_result = validation_result
             
-            # Save the uploaded file to Frappe's File doctype
-            file_doc = frappe.get_doc({
-                "doctype": "File",
-                "file_name": file.filename,
-                "is_private": 1,
-                "content": file_content
-            })
-            file_doc.save(ignore_permissions=True)
-            file_id = file_doc.name
-            
-            if task_id:
-                frappe.db.set_value("Grant Document Extraction Task", task_id, "uploaded_file", file_id)
-                frappe.db.commit()
-
             # Save classification to thread for the agent to access
             try:
                 frappe.db.set_value(

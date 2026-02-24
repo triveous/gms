@@ -64,7 +64,7 @@ const getInitialUploadStep = (parts: any[]): any => {
 const getInitialReviewData = (parts: any[]): any => {
     const taskPart = parts.find((p: any) => p.type === 'data-task');
     if (!taskPart) return null;
- 
+
     const data = taskPart.data || {};
     const nestedData = data.data || {};
     const llm_response = data.llm_response || nestedData.llm_response;
@@ -128,18 +128,18 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     hasDataBlockPart,
     isDrawerMode = false,
 }) => {
-    const [taskStates, setTaskStates] = React.useState<Record<string, { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean }>>({});
+    const [taskStates, setTaskStates] = React.useState<Record<string, { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null }>>({});
     const [reviewDialogState, setReviewDialogState] = React.useState<{ open: boolean; type: 'progress' | 'plan'; activeMessageId: string | null }>({
         open: false,
         type: 'progress',
         activeMessageId: null
     });
 
-    const updateTaskState = (messageId: string, updates: Partial<{ uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean }>) => {
+    const updateTaskState = (messageId: string, updates: Partial<{ uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null }>) => {
         setTaskStates(prev => ({
             ...prev,
             [messageId]: {
-                ...(prev[messageId] || { uploadStep: 0, reviewData: null, isSubmitting: false, isRejected: false }),
+                ...(prev[messageId] || { uploadStep: 0, reviewData: null, isSubmitting: false, isRejected: false, errorStep: null, errorMessage: null }),
                 ...updates
             }
         }));
@@ -164,7 +164,9 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     uploadStep: initialStep,
                     reviewData: getInitialReviewData(parts),
                     isSubmitting: false,
-                    isRejected: false
+                    isRejected: false,
+                    errorStep: null,
+                    errorMessage: null
                 };
                 hasChanges = true;
             }
@@ -223,10 +225,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                                     const statusStr = (findDeep(taskData, 'status') || '').toLowerCase();
                                     const step = statusToStep(statusStr);
 
+                                    const isError = findDeep(taskData, 'isError') === true;
+                                    const errorMessage = findDeep(taskData, 'errorMessage');
+
                                     // Always update step, even if it's 0 (allows resetting to upload prompt on rejection)
                                     updateTaskState(messageId, {
                                         uploadStep: step,
-                                        isRejected: statusStr === 'rejected'
+                                        isRejected: statusStr === 'rejected',
+                                        errorStep: isError ? step : null,
+                                        errorMessage: isError ? errorMessage : null
                                     });
 
                                     // Deep search for llm_response and metadata
