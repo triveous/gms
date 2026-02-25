@@ -106,6 +106,25 @@ def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBSte
     )
 
 
+def create_browse_step__with_chunks(results: list) -> dict:
+    """Create a payload containing all chunk details from search results."""
+    chunks = []
+    for result in results:
+        metadata = result.metadata
+        chunks.append({
+            "doc_id": metadata.get("ai_document_id", ""),
+            "filename": metadata.get("filename", ""),
+            "page_no": metadata.get("page_no", None),
+            "raw_text": metadata.get("raw_text", ""),
+        })
+
+    return {
+        "id": str(uuid4()),
+        "type": "browse_kb",
+        "payload": chunks,
+    }
+
+
 OUTPUT_FIELDS = ["text", "ai_document_id", "filename", "page_no"]
 
 
@@ -283,6 +302,9 @@ def create_read_knowledgebase_tool(
         # Create browse step showing sources
         browse_step = create_browse_step(unique_results, goal_id=goal_id)
         writer.write_step(browse_step)
+
+        browser_step_with_chunks = create_browse_step__with_chunks(all_results)
+        writer.write_data("kb-chunks",browser_step_with_chunks)
 
         return Command(
             update={
