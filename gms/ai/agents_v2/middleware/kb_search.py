@@ -112,6 +112,7 @@ def create_browse_step__with_chunks(results: list) -> dict:
     for result in results:
         metadata = result.metadata
         chunks.append({
+            "pk": result.id,
             "doc_id": metadata.get("ai_document_id", ""),
             "filename": metadata.get("filename", ""),
             "page_no": metadata.get("page_no", None),
