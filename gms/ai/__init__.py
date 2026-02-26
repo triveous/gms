@@ -18,7 +18,7 @@ def init_logfire():
         os.environ['LANGSMITH_TRACING'] = 'true'
         os.environ['LOGFIRE_TOKEN'] = frappe.conf.get("logfire_token")
             
-        logfire.configure(environment="prod")
+        logfire.configure(environment="prod",scrubbing=False)
         print("Logfire Configured")    
     except:
         traceback.print_exception() 
