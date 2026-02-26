@@ -81,6 +81,24 @@ class VercelUIStreamHandler:
         for chunk in self.converter.convert_stream_event(stream_mode, data):
             yield self.encode(chunk)
 
+    def write_task(self, task: dict[str, Any]) -> Generator[str, None, None]:
+        """
+        Write a task update to the stream.
+
+        Args:
+            task: Task dictionary containing 'id', 'status', etc.
+
+        Yields:
+            SSE-formatted data-task chunk.
+        """
+        task_id = task.get("id", "")
+        data = {
+            "type": "data-task",
+            "id": task_id,
+            "data": task,
+        }
+        yield from self.process_event("custom", data)
+
     def finish(self) -> Generator[str, None, None]:
         """
         Finish the stream and yield finish chunks as SSE.

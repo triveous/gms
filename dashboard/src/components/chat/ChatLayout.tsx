@@ -50,11 +50,8 @@ const getInitialUploadStep = (parts: any[]): any => {
     if (!taskPart) return null;
 
     const data = taskPart.data || {};
-    const nestedData = data.data || {};
 
-    // if (data.llm_response || nestedData.llm_response) return 4;
-
-    const status = (data.status || nestedData.status || '').toLowerCase();
+    const status = (data.status || '').toLowerCase();
     if (status === 'submitting' || !status) return 0;
 
     const step = statusToStep(status);
@@ -66,15 +63,14 @@ const getInitialReviewData = (parts: any[]): any => {
     if (!taskPart) return null;
 
     const data = taskPart.data || {};
-    const nestedData = data.data || {};
-    const llm_response = data.llm_response || nestedData.llm_response;
+    const llm_response = data.llm_response;
 
     if (llm_response) {
         return {
             ...llm_response,
-            task_id: data?.data?.task || nestedData.task,
-            file_id: data.file || nestedData.file,
-            filename: data.filename || nestedData.filename
+            task_id: data?.task,
+            file_id: data?.file,
+            filename: data?.filename
         };
     }
     return null;
@@ -129,7 +125,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     isDrawerMode = false,
 }) => {
     const [taskStates, setTaskStates] = React.useState<Record<string, { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null }>>({});
-    const [reviewDialogState, setReviewDialogState] = React.useState<{ open: boolean; type: 'progress' | 'plan'; activeMessageId: string | null }>({
+    const [reviewDialogState, setReviewDialogState] = React.useState<{ open: boolean; type: 'progress' | 'plan' | 'dpr'; activeMessageId: string | null }>({
         open: false,
         type: 'progress',
         activeMessageId: null
@@ -151,6 +147,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         let hasChanges = false;
 
         messages.forEach(msg => {
+
             if (msg.role !== 'assistant') return;
             if (newStates[msg.id]) return;
 
@@ -158,15 +155,20 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
             // Try to find if this message has a task
             const hasTask = parts.find((p: any) => p.type === 'data-task');
+
             if (hasTask) {
                 const initialStep = getInitialUploadStep(parts);
+                const taskData = hasTask.data || {};
+                const isError = findDeep(taskData, 'isError') === true;
+                const errorMessage = findDeep(taskData, 'errorMessage');
+
                 newStates[msg.id] = {
                     uploadStep: initialStep,
                     reviewData: getInitialReviewData(parts),
                     isSubmitting: false,
                     isRejected: false,
-                    errorStep: null,
-                    errorMessage: null
+                    errorStep: isError ? initialStep : null,
+                    errorMessage: isError ? errorMessage : (hasTask?.data?.errorMessage || null)
                 };
                 hasChanges = true;
             }
@@ -221,7 +223,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                             try {
                                 const data = JSON.parse(trimmedLine.slice(6));
                                 if (data.type === 'data-task') {
-                                    const taskData = data.data || data;
+                                    const taskData = data;
                                     const statusStr = (findDeep(taskData, 'status') || '').toLowerCase();
                                     const step = statusToStep(statusStr);
 
@@ -244,21 +246,21 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                                                 ...llm_response,
                                                 file_id: findDeep(taskData, 'file_id'),
                                                 filename: findDeep(taskData, 'filename'),
-                                                task_id: findDeep(taskData, 'task') || findDeep(taskData, 'task_id')
+                                                task_id: taskData?.id
                                             },
                                             uploadStep: 4
                                         });
                                     }
                                 } else if (data.type === 'data-resume-data' || data.type === 'resume-data') {
-                                    const resumeData = data.data || data;
+                                    const resumeData = data;
                                     updateTaskState(messageId, { reviewData: resumeData, uploadStep: 4 });
                                 } else if (data.type === 'data-submit-result') {
-                                    if (data.data?.status === 'submitted') {
+                                    if (data?.status === 'submitted') {
                                         toast.success('Submitted successfully');
                                         updateTaskState(messageId, { uploadStep: 6 });
                                         setReviewDialogState(prev => ({ ...prev, open: false }));
-                                    } else if (data.data?.status === 'rejected') {
-                                        toast.info(data.data?.message || 'Submission discarded');
+                                    } else if (data?.status === 'rejected') {
+                                        toast.info(data?.message || 'Submission discarded');
                                         updateTaskState(messageId, { uploadStep: 0, isRejected: true });
                                         setReviewDialogState(prev => ({ ...prev, open: false }));
                                     }
@@ -325,16 +327,14 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                             try {
                                 const data = JSON.parse(trimmedLine.slice(6));
                                 if (data.type === 'data-task') {
-                                    if (data.data?.status === 'approved') {
+                                    if (data?.status === 'approved') {
                                         updateTaskState(messageId, { uploadStep: 6, isRejected: false });
                                     }
                                 } else if (data.type === 'data-submit-result') {
-                                    if (data.data?.status === 'submitted') {
-
+                                    if (data?.data?.status === 'submitted') {
                                         updateTaskState(messageId, { uploadStep: 6, isRejected: false });
                                         setReviewDialogState(prev => ({ ...prev, open: false }));
-                                    } else if (data.data?.status === 'rejected') {
-
+                                    } else if (data?.data?.status === 'rejected') {
                                         updateTaskState(messageId, { uploadStep: 4, isRejected: true });
                                         setReviewDialogState(prev => ({ ...prev, open: false }));
                                     }

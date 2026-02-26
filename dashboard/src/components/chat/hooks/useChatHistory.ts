@@ -43,7 +43,7 @@ export const useChatHistory = ({
                 .filter((msg: { id: string; role: string; parts: Record<string, unknown>[] }) => {
                     if (msg.role === 'user') return true;
                     // Keep text or data-block parts
-                    return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-block');
+                    return msg.parts?.some((p) => p['type'] === 'text' || p['type'] === 'data-block' || p['type'] === 'data-task');
                 });
 
             // Cast to any to bypass strict AI SDK message type checks if necessary, 

@@ -23,12 +23,14 @@ from gms.ai.agents_v2.middleware.steps import (
 )
 from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.middleware.data_overview import DataOverviewMiddleware
+from gms.ai.agents_v2.middleware.file_upload import FileUploadMiddleware
+from gms.ai.agents_v2.middleware.state_sync import (
+    EndStateNotifierMiddleware,
+    StartStateNotifierMiddleware,
+)
 from gms.ai.agents_v2.middleware.task import (
     TASK_PARTS_KEY,
-    Task,
     TaskMiddleware,
-    TasksState,
-    tasks_reducer,
 )
 
 __all__ = [
@@ -54,10 +56,10 @@ __all__ = [
     "KBSearchMiddleware",
     "TitleGenerationMiddleware",
     "DataOverviewMiddleware",
+    "FileUploadMiddleware",
+    "StartStateNotifierMiddleware",
+    "EndStateNotifierMiddleware",
     # Task
     "TASK_PARTS_KEY",
-    "Task",
     "TaskMiddleware",
-    "TasksState",
-    "tasks_reducer",
 ]

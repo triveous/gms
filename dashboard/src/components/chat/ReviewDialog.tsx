@@ -45,7 +45,7 @@ interface ProjectData {
 interface ReviewDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    type?: 'progress' | 'plan';
+    type?: 'progress' | 'plan' | 'dpr';
     data?: any;
     onSubmit?: () => Promise<void>;
     onCancel?: () => Promise<void>;
@@ -140,24 +140,30 @@ export function ReviewDialog({ open, onOpenChange, type = 'progress', data, onSu
                         <div className="flex items-center justify-between p-6 border-b">
                             <div>
                                 <DialogTitle className="text-[22px] font-semibold text-slate-900 mb-3">
-                                    {type === 'plan' ? 'Review Plan' : 'Review Progress'}
+                                    {type === 'plan' ? 'Review Plan' : type === 'dpr' ? 'Review DPR details' : 'Review Progress'}
                                 </DialogTitle>
-                                <div className="flex gap-2">
-                                    <Badge variant="secondary" className="bg-[#F1F5F9] text-[#475569] hover:bg-slate-200 font-normal border-[#E2E8F0] border text-sm py-1 px-3">
-                                        Year Timeline: {timeline?.program_year ? (
-                                            timeline.program_year
-                                        ) : (
-                                            <span className="text-[#EF4444] font-medium">Missing !</span>
-                                        )}
-                                    </Badge>
-                                    <Badge variant="secondary" className="bg-[#F1F5F9] text-[#475569] hover:bg-slate-200 font-normal border-[#E2E8F0] border text-sm py-1 px-3">
-                                        Quarter: {timeline?.quarter ? (
-                                            `${timeline.quarter} ${timeline.reporting_period || ''}`
-                                        ) : (
-                                            <span className="text-[#EF4444] font-medium">Missing !</span>
-                                        )}
-                                    </Badge>
-                                </div>
+                                {type === 'dpr' ? (
+                                    <div className="text-[#64748B] text-[14px] italic mt-1">
+                                        Note: Only key details were shown to verify COE and its projects; the full document will used for AI features.
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <Badge variant="secondary" className="bg-[#F1F5F9] text-[#475569] hover:bg-slate-200 font-normal border-[#E2E8F0] border text-sm py-1 px-3">
+                                            Year Timeline: {timeline?.program_year ? (
+                                                timeline.program_year
+                                            ) : (
+                                                <span className="text-[#EF4444] font-medium">Missing !</span>
+                                            )}
+                                        </Badge>
+                                        <Badge variant="secondary" className="bg-[#F1F5F9] text-[#475569] hover:bg-slate-200 font-normal border-[#E2E8F0] border text-sm py-1 px-3">
+                                            Quarter: {timeline?.quarter ? (
+                                                `${timeline.quarter} ${timeline.reporting_period || ''}`
+                                            ) : (
+                                                <span className="text-[#EF4444] font-medium">Missing !</span>
+                                            )}
+                                        </Badge>
+                                    </div>
+                                )}
                             </div>
                             <Button variant="secondary" className="bg-[#F8FAFC] flex items-center gap-1 hover:bg-slate-200 text-slate-700 font-medium" onClick={() => onOpenChange(false)}>
                                 <X className="w-4 h-4" />
@@ -167,7 +173,89 @@ export function ReviewDialog({ open, onOpenChange, type = 'progress', data, onSu
 
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-6 bg-white">
-                            {projectsToRender.length > 0 ? (
+                            {type === 'dpr' ? (
+                                <div className="space-y-6">
+                                    {/* CoE Details Table */}
+                                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                                        {[
+                                            { label: 'CoE Name :', value: data?.grant_details?.title },
+                                            { label: 'Alias/Short Name:', value: data?.grant_details?.alias },
+                                            { label: 'Lead Institute:', value: data?.grant_details?.lead_organization },
+                                            {
+                                                label: 'Timeline:',
+                                                value: (data?.grant_details?.start_date || data?.grant_details?.end_date)
+                                                    ? `${data.grant_details.start_date || ''} - ${data.grant_details.end_date || ''}`
+                                                    : 'Missing !'
+                                            },
+                                            { label: 'Approval Number:', value: data?.grant_details?.approval_identifier },
+                                            {
+                                                label: 'Total Budget:',
+                                                value: data?.grant_details?.approved_amount != null
+                                                    ? `${(Number(data.grant_details.approved_amount) / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 2 })} Cr.`
+                                                    : 'Missing !'
+                                            },
+                                        ].map((row, i) => (
+                                            <div key={i} className={cn("grid grid-cols-[200px_1fr]", i < 5 && "border-b border-slate-200")}>
+                                                <div className="bg-[#E2E8F0]/30 py-4 px-4 text-[14px] font-medium text-slate-900">
+                                                    {row.label}
+                                                </div>
+                                                <div className="bg-white py-4 px-4 text-[14px] text-slate-900">
+                                                    {!row.value || row.value === 'Missing !' ? (
+                                                        <span className="text-[#EF4444] font-medium">Missing !</span>
+                                                    ) : row.value}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Projects Accordion */}
+                                    {data?.projects?.length > 0 ? (
+                                        <Accordion type="single" collapsible defaultValue={`dpr-project-0`} className="w-full space-y-4">
+                                            {data.projects.map((project: any, pIdx: number) => (
+                                                <AccordionItem key={pIdx} value={`dpr-project-${pIdx}`} className="border-0 shadow-none">
+                                                    <AccordionTrigger className="px-0 py-4 hover:bg-transparent hover:no-underline text-[16px] font-semibold text-left text-slate-900">
+                                                        {project.title || `Project ${pIdx + 1}`}
+                                                    </AccordionTrigger>
+                                                    <AccordionContent className="p-0 border border-slate-200 rounded-lg overflow-hidden">
+                                                        <div className="flex flex-col">
+                                                            {[
+                                                                { label: 'Project Name :', value: project.title },
+                                                                { label: 'Project Lead', value: project.lead_organization },
+                                                                {
+                                                                    label: 'Timeline',
+                                                                    value: (project.start_date || project.end_date)
+                                                                        ? `${project.start_date || ''} - ${project.end_date || ''}`
+                                                                        : 'Missing !'
+                                                                },
+                                                                { label: 'Approval Number:', value: project.approval_identifier },
+                                                                {
+                                                                    label: 'Total Budget:',
+                                                                    value: project.approved_amount != null
+                                                                        ? `${(Number(project.approved_amount) / 10000000).toLocaleString('en-IN', { maximumFractionDigits: 2 })} Cr.`
+                                                                        : 'Missing !'
+                                                                },
+                                                            ].map((row, i) => (
+                                                                <div key={i} className={cn("grid grid-cols-[200px_1fr]", i < 4 && "border-b border-slate-200")}>
+                                                                    <div className="bg-[#E2E8F0]/30 py-4 px-4 text-[14px] font-medium text-slate-900">
+                                                                        {row.label}
+                                                                    </div>
+                                                                    <div className="bg-white py-4 px-4 text-[14px] text-slate-900">
+                                                                        {!row.value || row.value === 'Missing !' ? (
+                                                                            <span className="text-[#EF4444] font-medium">Missing !</span>
+                                                                        ) : row.value}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            ))}
+                                        </Accordion>
+                                    ) : (
+                                        <div className="py-10 text-center text-slate-500">No projects data found.</div>
+                                    )}
+                                </div>
+                            ) : projectsToRender.length > 0 ? (
                                 <Accordion type="single" collapsible defaultValue={projectsToRender[0]?.id} className="w-full space-y-4">
                                     {projectsToRender.map((project: ProjectData) => (
                                         <AccordionItem key={project.id} value={project.id} className="border-0 border-b border-slate-200 mb-0 shadow-none data-[state=open]:border-slate-200">

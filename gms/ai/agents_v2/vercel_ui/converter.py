@@ -619,7 +619,7 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
                 doc_fields = frappe.db.get_value(
                     "Grant Document Extraction Task",
                     task_id,
-                    ["status", "raw_extraction_json", "uploaded_file"],
+                    ["status", "raw_extraction_json", "uploaded_file", "extraction_error"],
                     as_dict=True
                 )
                 if doc_fields:
@@ -633,9 +633,18 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
                     # Include llm_response and file_id for UI handling
                     import json
                     try:
-                        raw_json = doc_fields.get("raw_extraction_json")
-                        if raw_json:
-                            enriched["llm_response"] = json.loads(raw_json)
+                        error_json = doc_fields.get("extraction_error")
+                        if error_json:
+                            error_data = json.loads(error_json)
+                            if isinstance(error_data, dict) and error_data.get("isError"):
+                                enriched["isError"] = True
+                                enriched["errorMessage"] = error_data.get("errorMessage")
+                        
+                        if not enriched.get("isError"):
+                            raw_json = doc_fields.get("raw_extraction_json")
+                            if raw_json:
+                                enriched["llm_response"] = json.loads(raw_json)
+                        
                     except Exception:
                         pass
                     

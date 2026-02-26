@@ -10,7 +10,7 @@ interface ChatMessageItemProps {
     isLast: boolean;
     taskState: { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null };
     onFileChange: (event: React.ChangeEvent<HTMLInputElement>, taskId: string) => void;
-    onOpenReview: (type: 'progress' | 'plan') => void;
+    onOpenReview: (type: 'progress' | 'plan' | 'dpr') => void;
 }
 
 const groupMessageParts = (parts: any[]) => {
@@ -222,7 +222,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                                                                                     className="mt-4 flex items-center justify-center gap-2 px-4 py-2 border border-[#E2E8F0] rounded-lg text-[#0F172A] text-[14px] font-medium hover:bg-slate-50 transition-colors bg-white w-fit shadow-sm"
                                                                                     onClick={() => {
                                                                                         const docType = taskState.reviewData?.document_type;
-                                                                                        const type = docType === 'YEARLY_PLAN' ? 'plan' : 'progress';
+                                                                                        const type = docType === 'YEARLY_PLAN' ? 'plan' : docType === 'DPR' ? 'dpr' : 'progress';
                                                                                         onOpenReview(type);
                                                                                     }}
                                                                                 >

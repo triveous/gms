@@ -135,6 +135,23 @@ class UIStreamWriter:
         }
         self.write(data)
 
+    def write_task(self, task: dict[str, Any]) -> None:
+        """
+        Write a task update to the stream.
+
+        Sends a data-task chunk with the task data.
+
+        Args:
+            task: Task dictionary containing 'id', 'status', etc.
+        """
+        task_id = task.get("id", "")
+        data: dict[str, Any] = {
+            "type": "data-task",
+            "id": task_id,
+            "data": dict(task),
+        }
+        self.write(data)
+
     def write_data(
         self, data_type: str, payload: Any, data_id: str | None = None
     ) -> None:

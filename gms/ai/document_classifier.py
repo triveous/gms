@@ -129,17 +129,47 @@ INPUT:
 3. One document (full text).
 
 Grant List {grant_list}
-The document may be:
-  - YEARLY PLAN
-  - QUARTERLY PROGRESS REPORT
-
-The document contains multiple project sections.
-Each project section must generate ONE milestone object.
+The document may be one of the following types:
+  - DPR
+  - YEARLY_PLAN
+  - QUARTERLY_PROGRESS_REPORT
 
 ------------------------------------------------------------
-STEP 1 — IDENTIFY GRANT
+STEP 1 — IDENTIFY DOCUMENT TYPE
 ------------------------------------------------------------
 
+If the document contains:
+- Overall grant proposal
+- Total grant budget and high-level project definitions
+- List of new projects to be executed under the grant
+- Terms like "Detailed Project Report" or "DPR"
+
+→ DPR
+
+If document contains:
+- Status (Did Well / On Track / At Risk)
+- Budget Spent
+- Overall Progress %
+- TRL/MRL/CRL/SIRL
+- Impact Created
+
+→ QUARTERLY_PROGRESS_REPORT
+
+If document contains:
+- Quarter goals
+- Planned deliverables
+- Budget allocation per quarter
+- No status or performance reporting
+
+→ YEARLY_PLAN
+
+Return exactly one of: "DPR" | "YEARLY_PLAN" | "QUARTERLY_PROGRESS_REPORT"
+
+------------------------------------------------------------
+STEP 2 — IDENTIFY GRANT (For YEARLY_PLAN / QUARTERLY_PROGRESS_REPORT only)
+------------------------------------------------------------
+If document type is DPR, skip identifying a single PRE-EXISTING parent GRANT, because the DPR DEFINES the grant.
+If document type is YEARLY_PLAN or QUARTERLY_PROGRESS_REPORT:
 Identify the single parent GRANT using:
 - Explicit grant name mention
 - Project titles
@@ -159,41 +189,14 @@ Return:
 }}
 
 ------------------------------------------------------------
-STEP 2 — IDENTIFY DOCUMENT TYPE
+STEP 3 — IDENTIFY TIMELINE (For YEARLY_PLAN / QUARTERLY_PROGRESS_REPORT only)
 ------------------------------------------------------------
-
-If document contains:
-- Status (Did Well / On Track / At Risk)
-- Budget Spent
-- Overall Progress %
-- TRL/MRL/CRL/SIRL
-- Impact Created
-
-→ QUARTERLY_PROGRESS_REPORT
-
-If document contains:
-- Quarter goals
-- Planned deliverables
-- Budget allocation per quarter
-- No status or performance reporting
-
-→ YEARLY_PLAN
-
-Return:
-"document_type": "YEARLY_PLAN | QUARTERLY_PROGRESS_REPORT"
-
-------------------------------------------------------------
-STEP 3 — IDENTIFY TIMELINE
-------------------------------------------------------------
-
 Extract:
-
 - program_year (e.g., 2025-2026)
 - quarter (Q1 | Q2 | Q3 | Q4)
 - reporting_period (e.g., "Oct-Dec 2025")
 
 Quarter → Date Mapping:
-
 Q1 (Apr-Jun) → 04-01 to 06-30
 Q2 (Jul-Sep) → 07-01 to 09-30
 Q3 (Oct-Dec) → 10-01 to 12-31
@@ -207,18 +210,12 @@ Compute:
 If reporting period missing → infer from quarter label.
 
 ------------------------------------------------------------
-STEP 4 — ALLOWED METRICS
+STEP 4 — ALLOWED METRICS (For YEARLY_PLAN / QUARTERLY_PROGRESS_REPORT only)
 ------------------------------------------------------------
-
-
-IF QUARTERLY_PROGRESS_REPORT,
-ONLY USE:
-
+IF QUARTERLY_PROGRESS_REPORT, ONLY USE:
 {quarterly_progress_metrics}
 
-IF YEARLY_PLAN,
-ONLY USE:
-
+IF YEARLY_PLAN, ONLY USE:
 {yearly_plan_metrics}
 
 STRICT:
@@ -232,19 +229,27 @@ STEP 5 — OUTPUT STRUCTURE AND VALIDATION ERRORS
 ------------------------------------------------------------
 
 CRITICAL ERROR CHECK:
-Before generating the final output, you MUST verify two conditions:
+Before generating the final output, verify the conditions based on document type.
+
+For YEARLY_PLAN or QUARTERLY_PROGRESS_REPORT:
 1. PERIOD CHECK: You must check if `period_start` and `period_end` are present in the document or can be inferred. If they are missing, you MUST return an error.
-2. PROJECT CHECK: You must check if the projects you found in the document exist in the provided Grant List. If the document references a project that is NOT in the selected Grant ID's project list, you MUST return an error. (It is okay if the document has fewer projects than the Grant List, but NO unknown projects are allowed).
+2. PROJECT CHECK: You must check if the projects you found in the document exist in the provided Grant List. If the document references a project that is NOT in the selected Grant ID's project list, you MUST return an error.
 
-If either condition fails, you MUST stop and return EXACTLY this JSON structure and nothing else:
+For DPR:
+1. Ensure the document defines a grant title and at least one project. If missing, return an error.
+2. Ensure the Grant should have atleas one Funder, else return an error.
+3. Ensure the Grant and project should have timeline (start_date, end_date), else return an error.
 
+
+If any condition fails, you MUST stop and return EXACTLY this JSON structure and nothing else:
 {{
   "isError": true,
   "errorMessage": "String describing the error (e.g., 'Unknown project found' or 'Reporting period not found in document') very important: message should be small with in 15 words"
 }}
 
-If both conditions pass, return the STRICT JSON object below:
+If conditions pass, return ONE of the following STRICT JSON architectures based on type:
 
+**ARCHITECTURE A: FOR YEARLY_PLAN or QUARTERLY_PROGRESS_REPORT**
 {{
   "matched_grant": {{
     "grant_name": "string",
@@ -309,7 +314,6 @@ If both conditions pass, return the STRICT JSON object below:
   ]
 }}
 
-
 ------------------------------------------------------------
 FIELD RULES
 ------------------------------------------------------------
@@ -333,19 +337,110 @@ Metrics data typing:
 - BOOLEAN → fill data_boolean
 All unused fields must be null.
 
-------------------------------------------------------------
-STRICT OUTPUT RULES
-------------------------------------------------------------
+====================================================================================
 
+
+
+**ARCHITECTURE B: FOR DPR**
+{{
+  "document_type": "DPR",
+  "grant_details": {{
+    "title": "string (Grant Title)",
+    "alias": "string (Short name or abbreviation)",
+    "start_date": "YYYY-MM-DD (if mentioned)",
+    "end_date": "YYYY-MM-DD (if mentioned)",
+    "approval_identifier": "string (e.g. Sanction Order Number)",
+    "approved_amount": integer | float (Total Grant Amount),
+    "lead_organization": "string (Main Implementing Agency / Partner)",
+    "contributors": [
+      {{
+        "organization_name": "string (Funder or Coordinating Agency)",
+        "contribution_type": "Funder | Coordinator | Grantee" 
+      }}
+    ]
+  }},
+  "projects": [
+    {{
+      "title": "string (Project Title)" (use exact same title present in the dpr document, it must be in headings or in bold font, before it there might be mentioned that "Projects overview"),
+      "alias": "string (Short name or abbreviation)",
+      "start_date": "YYYY-MM-DD",
+      "end_date": "YYYY-MM-DD",
+      "lead_organization": "string (Implementing Agency for this specific project)"
+    }}
+  ]
+}}
+
+-----------------------------------------------------
+DISTINGUISHING FUNDER vs. GRANTEE vs. COORDINATOR
+
+
+INSTRUCTIONS:
+
+Perform a deep-text audit to assign organizations to the roles of Funder, Grantee, and Coordinator. You must cite specific sections or headers as evidence.
+
+1. IDENTIFY THE FUNDER (The Capital Source)
+Definition: The governmental or private entity providing the financial corpus.
+Search Parameters:
+
+a. Designation can be mentioned for example "Fonder is"
+
+b. Look for the phrase "Request for Grant" or "Grant provided by".
+
+c. Identify the entity named in the Sanction Order or Sanctioning Authority context.
+
+d. Check the top-most header on the cover page (e.g., "Ministry of Education" or "MeitY").
+
+e. Strict Rule: A Funder is almost never a University. If you find "IIT [X]" in a budget table, check if they are receiving the money or providing it. If they are requesting it, they are not the Funder.
+
+
+2. IDENTIFY THE GRANTEE / LEAD ORGANIZATION (The Prime Recipient)
+Definition: The primary institution responsible for the legal and financial execution of the grant.
+Search Parameters:
+
+a. Designation can be mentioned for example "Grantee is"
+
+b. Identify the institution of the Principal Investigator (PI).
+
+c. Look for terms like "Host Institute," "Implementing Agency," or "Lead Organization."
+
+d. Check the "Budget Summary" section; the entity whose bank account/administrative overhead is listed first is the Grantee.
+
+e. Search for the phrase: "The project will be centralized at [Organization Name]."
+
+
+3. IDENTIFY THE COORDINATOR (The Administrative Orchestrator)
+Definition: The entity responsible for "Harmonizing," "Liaising," and "Supervising" multiple project sites.
+Search Parameters:
+
+a. Designation can be mentioned for example "Coordinator is"
+
+b. Look for acronyms like CPMU (Central Project Management Unit), PMU (Project Management Unit), or CC (Coordinating Centre).
+
+c. Check the Manpower/Budget role descriptions. If an organization has staff titles like "National Coordinator," "Site Supervisor," or "Liaison Officer," that organization is the Coordinator.
+
+d. Contextual Evidence: Phrases such as "Overall supervision and coordinating between different site representatives" or "Consortium management."
+
+-----------
+
+Analyze the provided document to extract the timeline (start_date and end_date of grant and for each project from DPR) for the overall grant and each individual project/PoC (Proof of Concept). Follow these steps to locate and verify the data:
+
+
+1.Identify the Overall Grant Duration: Search the Executive Summary, Budget Tables, and Resource Requirements sections. Look for mentions of 'Total Years,' 'Project Duration,' or 'Budget Plan for X Years.'
+
+2.Locate Phase-Specific Timelines: Distinguish between different stages (e.g., Phase 1 vs. Phase 2). Look for headers like 'Key Activities,' 'Milestones,' or 'Work Plan.'
+
+3.Analyze Visual Gantt Charts: Scan for tables with column headers such as 'Q1–Q16' (representing 4 years in quarters), 'Month 1–Month 48,' or specific date ranges (e.g., 'Apr-24 to Sep-24').
+
+4.Extract Project-Specific Milestones: For each sub-project (e.g., PoC 1, PoC 2), look for dedicated work packages (WP) or task lists. Note the start and end point of these tasks on the horizontal axis of the charts.
+
+5.Cross-Reference Textual Evidence: Search for phrases like 'took X months,' 'over a two-year period,' or 'by the end of 2026' to validate the visual data found in charts.
+
+====================================================================================================================================
+STRICT OUTPUT RULES
 - Output must be valid JSON
-- No markdown
-- No comments
-- No explanation text
-- Use only IDs provided in input
-- One milestone per project section
+- No markdown, no comments, no explanation text
 - If value missing → null
 
-------------------------------------------------------------
 Document Content:
 {document_content}
 """
@@ -362,15 +457,27 @@ INPUT:
 Extracted Data:
 {extracted_data}
 
-------------------------------------------------------------
-VALIDATION RULES
-------------------------------------------------------------
+--------------------------------------------------------------
+VALIDATION RULES FOR YEARLY PLAN OR QUARTERLY PROGRESS REPORT
+--------------------------------------------------------------
 
 For EACH milestone and EACH metric value in the extracted data:
 1. isPresent: true if the metric value is found/supported in the document, false otherwise.
 2. isCorrectFormat: true if the value matches the expected type (INT, FLOAT, STRING, BOOLEAN) and formatting instructions. false if the type is incorrect or if the value does not follow the format instruection (if the foarmat instruction present then only check the format).
 3. If isPresent is false, then isCorrectFormat should be false.
 4. errorMessage: if the value is present but the format is wrong, means the metrics value doesn't follow the format instruction then provide the reason, why the value is not following the formatting instruction.
+
+
+--------------------------------------------------------------
+VALIDATION RULES FOR DPR
+--------------------------------------------------------------
+
+For Grant
+1. Title, alias, start date, end date, approval identifier, approved amount, one contributor with Funder contribution type should be present if not present then you should show error with proper errorMessage
+
+For Project
+1. Title, and Lead Organization should be present if not present then you should show error with proper errorMessage
+
 
 ------------------------------------------------------------
 OUTPUT STRUCTURE AND VALIDATION ERRORS
@@ -384,7 +491,7 @@ If the condition fails, you MUST stop and return EXACTLY this JSON structure and
 
 {{
   "isError": true,
-  "errorMessage": "Milestone for this period already exists."
+  "errorMessage": "Milestone for the <periodv ex: Q1 2015-2016> already exists."
 }}
 
 If the condition passes, return the SAME JSON structure as the input, but with "isPresent", "isCorrectFormat", "errorMessage" fields populated for each entry in "metrics_values".
@@ -498,6 +605,8 @@ Document Content:
                 updates["milestone_type"] = "Progress Report Extraction"
             elif document_type == "YEARLY_PLAN":
                 updates["milestone_type"] = "Yearly Plan Extraction"
+            elif document_type == "DPR":
+                updates["milestone_type"] = "DPR Extraction"
                 
             if updates:
                 frappe.db.set_value("Grant Document Extraction Task", task_id, updates)
@@ -510,6 +619,9 @@ Document Content:
     def check_milestone_exists(self, extraction_result: dict[str, Any]) -> bool:
         """Check if a milestone for the extracted period already exists in the database."""
         try:
+            if extraction_result.get("document_type") == "DPR":
+                return False
+
             timeline = extraction_result.get("timeline", {})
             period_start = timeline.get("period_start")
             period_end = timeline.get("period_end")
@@ -568,6 +680,10 @@ Document Content:
         """
         if not self.model:
             return {"error": "LLM model not initialized"}
+
+        if extracted_data.get("document_type") == "DPR":
+            # For DPR, validation is currently bypassed because there are no metrics to validate.
+            return extracted_data
 
         try:
             prompt = self.VALIDATION_PROMPT_TEMPLATE.format(

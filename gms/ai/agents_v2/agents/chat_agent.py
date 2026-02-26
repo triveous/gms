@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from deepagents import SubAgent, create_deep_agent
 from langchain.tools import ToolRuntime
@@ -12,16 +12,17 @@ from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 
 if TYPE_CHECKING:
     from gms.ai.doctype.ai_agent.ai_agent import AIAgent
-from gms.ai.agents_v2.middleware.data_overview import DataOverviewMiddleware
-from gms.ai.agents_v2.middleware.goal import GoalMiddleware
-from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
-from gms.ai.agents_v2.middleware.state_sync import (
+from gms.ai.agents_v2.middleware import (
+    DataOverviewMiddleware,
     EndStateNotifierMiddleware,
+    FileUploadMiddleware,
+    GoalMiddleware,
+    KBSearchMiddleware,
     StartStateNotifierMiddleware,
+    StepsMiddleware,
+    TaskMiddleware,
+    TitleGenerationMiddleware,
 )
-from gms.ai.agents_v2.middleware.steps import StepsMiddleware
-from gms.ai.agents_v2.middleware.task import TaskMiddleware
-from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
 from gms.ai.kb.kb import Knowledge
@@ -58,51 +59,6 @@ You have access to read_knowledge_base tool to search for content on knowledgeba
 
 Whenever you are tacking a new part of the research you should call the set_goal to define your research area. This is so that user know what you are doing. Whateve goal is define, it is shown to the user. So avoid adding technical/internal details
 """
-
-
-def _request_file_upload(runtime: "ToolRuntime"):
-    """Request the user to upload a document/file for extraction. Call this tool when the user expresses intent to upload a file."""
-    import frappe
-    from langgraph.config import get_stream_writer
-    from langgraph.types import Command
-
-    doc = frappe.new_doc("Grant Document Extraction Task")
-    doc.status = "Submitting"
-    doc.reviewed_by = frappe.session.user
-    doc.insert(ignore_permissions=True)
-    frappe.db.commit()
-
-    task_id = doc.name
-
-    data_payload = {"task": task_id, "status": "Submitting"}
-
-    writer = get_stream_writer()
-    if writer:
-        writer({"type": "data-task", "id": task_id, "data": data_payload})
-
-    frappe.publish_realtime("data-task", data_payload)
-
-    # Persist task to agent state so TaskMiddleware.after_agent() stores it in
-    # AIMessage.additional_kwargs[TASK_PARTS_KEY] – identical to how
-    # StepsMiddleware handles data-steps.
-    return Command(
-        update={
-            "tasks": [{"id": task_id, "status": "Submitting", "data": data_payload}],
-            "messages": [
-                ToolMessage(
-                    content=f"Created Grant Document Extraction Task '{task_id}'. Awaiting user file upload. Tell the user you have opened the file upload prompt.",
-                    tool_call_id=runtime.tool_call_id,
-                )
-            ],
-        }
-    )
-
-
-request_file_upload = StructuredTool.from_function(
-    func=_request_file_upload,
-    name="request_file_upload",
-    description="Request the user to upload a document/file for extraction. Call this tool when the user expresses intent to upload a file.",
-)
 
 
 def create_chat_agent(
@@ -177,7 +133,10 @@ def create_chat_agent(
         main_middleware.append(StepsMiddleware())
     if ai_agent.goal_middleware:
         main_middleware.append(GoalMiddleware())
-    main_middleware.append(TaskMiddleware())  # Always register – data-task must always persist
+    
+    main_middleware.append(FileUploadMiddleware())  # Adds request_file_upload tool
+    main_middleware.append(TaskMiddleware())        # Always register – data-task must always persist
+    
     if ai_agent.title_middleware:
         main_middleware.append(
             TitleGenerationMiddleware(
@@ -196,7 +155,7 @@ def create_chat_agent(
         checkpointer=checkpointer,
         subagents=subagents,
         middleware=main_middleware,
-        tools=[request_file_upload],
+        tools=[],  # Tools are provided by middleware
     )
 
 
