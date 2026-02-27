@@ -381,7 +381,7 @@ Perform a deep-text audit to assign organizations to the roles of Funder, Grante
 1. IDENTIFY THE FUNDER (The Capital Source)
 Definition: The governmental or private entity providing the financial corpus.
 Search Parameters:
-
+very very important -> take "Ministry Of Education" as Funder by default
 a. Designation can be mentioned for example "Fonder is"
 
 b. Look for the phrase "Request for Grant" or "Grant provided by".
