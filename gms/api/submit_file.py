@@ -232,6 +232,7 @@ def submit_extracted_milestone():
                 submit = frappe.form_dict.get("submit")
                 extracted_data_param = frappe.form_dict.get("extracted_data")
                 file_id = frappe.form_dict.get("file_id")
+                grant_id = frappe.form_dict.get("grant_id")
                 print("TASK ID:", task_id)
                 if submit is None or extracted_data_param is None:
                     yield from handler.process_event("custom", {
@@ -266,17 +267,46 @@ def submit_extracted_milestone():
                     document_type = data_source.get("document_type")
                     
                     if document_type == "DPR":
-                        created_docs = []
+                        updated_docs = []
                         grant_details = data_source.get("grant_details", {})
                         projects_data = data_source.get("projects", [])
-                        
-                        # Process contributors
-                        contributors = grant_details.get("contributors", [])
-                        processed_contributors = []
-                        for c in contributors:
+
+                        # Resolve the existing grant: prefer LLM matched_grant, fall back to grant_id from frontend
+
+                        if not grant_id or not frappe.db.exists("Grant", grant_id):
+                            yield from handler.process_event("custom", {
+                                "type": "error",
+                                "message": "Could not identify the grant. Please ensure the DPR matches an existing grant in the system."
+                            })
+                            yield from handler.finish()
+                            return
+
+                        # ── Load existing grant and update its core fields ──
+                        grant_doc = frappe.get_doc("Grant", grant_id)
+
+                        if grant_details.get("title"):
+                            grant_doc.title = grant_details["title"]
+                        if grant_details.get("alias"):
+                            grant_doc.alias = grant_details["alias"]
+                        if grant_details.get("start_date"):
+                            grant_doc.start_date = grant_details["start_date"]
+                        if grant_details.get("end_date"):
+                            grant_doc.end_date = grant_details["end_date"]
+                        if grant_details.get("approval_identifier"):
+                            grant_doc.approval_identifier = grant_details["approval_identifier"]
+                        if grant_details.get("approved_amount") is not None:
+                            grant_doc.approved_amount = grant_details["approved_amount"]
+
+                        # ── Upsert contributors ──
+                        # Build a lookup of existing contributor orgs so we don't duplicate
+                        existing_contributor_orgs = {
+                            row.organization for row in grant_doc.get("contributors", [])
+                        }
+                        for c in grant_details.get("contributors", []):
                             org_name = c.get("organization_name")
-                            if not org_name: continue
-                            
+                            if not org_name:
+                                continue
+
                             org_id = frappe.db.get_value("Grant Organization", {"organization_name": org_name}, "name")
                             if not org_id:
                                 try:
@@ -286,57 +316,54 @@ def submit_extracted_milestone():
                                     })
                                     new_org.insert(ignore_permissions=True)
                                     org_id = new_org.name
-                                except Exception: continue
-                            
-                            processed_contributors.append({
-                                "doctype": "Grant Contributor",
-                                "organization": org_id,
-                                "contribution_type": c.get("contribution_type") or "Funder"
-                            })
-                        
-                        # Create Grant
-                        grant_doc_data = {
-                            "doctype": "Grant",
-                            "title": grant_details.get("title") or "Untitled Grant",
-                            "alias": grant_details.get("alias") or "UG",
-                            "start_date": grant_details.get("start_date") or frappe.utils.nowdate(),
-                            "end_date": grant_details.get("end_date"),
-                            "approval_identifier": grant_details.get("approval_identifier") or "TBD",
-                            "approved_amount": grant_details.get("approved_amount") or 0.0,
-                            "contributors": processed_contributors
-                        }
-                        
-                        grant_doc = frappe.get_doc(grant_doc_data)
-                        grant_doc.insert(ignore_permissions=True)
-                        grant_id = grant_doc.name
-                        created_docs.append(grant_id)
-                        
-                        # Create Lead Organization Partner
-                        lead_org_name = grant_details.get("lead_organization")
-                        lead_partner_id = None
-                        if lead_org_name:
-                            try:
-                                partner_doc = frappe.get_doc({
-                                    "doctype": "Grant Partner",
-                                    "grant": grant_id,
-                                    "title": lead_org_name
+                                except Exception:
+                                    continue
+
+                            if org_id not in existing_contributor_orgs:
+                                grant_doc.append("contributors", {
+                                    "doctype": "Grant Contributor",
+                                    "organization": org_id,
+                                    "contribution_type": c.get("contribution_type") or "Funder"
                                 })
-                                partner_doc.insert(ignore_permissions=True)
-                                lead_partner_id = partner_doc.name
-                            except Exception: pass
-                            
+                                existing_contributor_orgs.add(org_id)
+
+                        grant_doc.save(ignore_permissions=True)
+                        updated_docs.append(grant_id)
+
+                        # ── Upsert lead organization partner ──
+                        lead_org_name = grant_details.get("lead_organization")
+                        if lead_org_name:
+                            lead_partner_id = frappe.db.get_value(
+                                "Grant Partner", {"title": lead_org_name, "grant": grant_id}, "name"
+                            )
+                            if not lead_partner_id:
+                                try:
+                                    partner_doc = frappe.get_doc({
+                                        "doctype": "Grant Partner",
+                                        "grant": grant_id,
+                                        "title": lead_org_name
+                                    })
+                                    partner_doc.insert(ignore_permissions=True)
+                                    lead_partner_id = partner_doc.name
+                                except Exception:
+                                    pass
+
                             if lead_partner_id:
                                 frappe.db.set_value("Grant", grant_id, "lead_organization", lead_partner_id)
-                        
-                        # Create Projects
+
+                        # ── Upsert projects ──
                         for p in projects_data:
                             project_title = p.get("title")
-                            if not project_title: continue
-                            
+                            if not project_title:
+                                continue
+
+                            # Resolve / create the project's lead org partner
                             p_lead_org = p.get("lead_organization")
                             p_partner_id = None
                             if p_lead_org:
-                                p_partner_id = frappe.db.get_value("Grant Partner", {"title": p_lead_org, "grant": grant_id}, "name")
+                                p_partner_id = frappe.db.get_value(
+                                    "Grant Partner", {"title": p_lead_org, "grant": grant_id}, "name"
+                                )
                                 if not p_partner_id:
                                     try:
                                         new_p_partner = frappe.get_doc({
@@ -346,27 +373,47 @@ def submit_extracted_milestone():
                                         })
                                         new_p_partner.insert(ignore_permissions=True)
                                         p_partner_id = new_p_partner.name
-                                    except Exception: pass
-                                    
-                            project_doc_data = {
-                                "doctype": "Grant Project",
-                                "grant": grant_id,
-                                "title": project_title,
-                                "alias": p.get("alias"),
-                                "start_date": p.get("start_date"),
-                                "end_date": p.get("end_date")
-                            }
-                            if p_partner_id:
-                                project_doc_data["lead_organization"] = p_partner_id
-                                
-                            try:
-                                proj_doc = frappe.get_doc(project_doc_data)
-                                proj_doc.insert(ignore_permissions=True)
-                                created_docs.append(proj_doc.name)
-                            except Exception as e:
-                                frappe.log_error(f"Failed to create Grant Project: {e}")
-                                
-                        # Attach file to Grant
+                                    except Exception:
+                                        pass
+
+                            # Check if a project with this title already exists under the grant
+                            existing_project_id = frappe.db.get_value(
+                                "Grant Project", {"title": project_title, "grant": grant_id}, "name"
+                            )
+
+                            if existing_project_id:
+                                # Update existing project
+                                proj_doc = frappe.get_doc("Grant Project", existing_project_id)
+                                if p.get("alias"):
+                                    proj_doc.alias = p["alias"]
+                                if p.get("start_date"):
+                                    proj_doc.start_date = p["start_date"]
+                                if p.get("end_date"):
+                                    proj_doc.end_date = p["end_date"]
+                                if p_partner_id:
+                                    proj_doc.lead_organization = p_partner_id
+                                proj_doc.save(ignore_permissions=True)
+                                updated_docs.append(existing_project_id)
+                            else:
+                                # Insert new project
+                                project_doc_data = {
+                                    "doctype": "Grant Project",
+                                    "grant": grant_id,
+                                    "title": project_title,
+                                    "alias": p.get("alias"),
+                                    "start_date": p.get("start_date"),
+                                    "end_date": p.get("end_date")
+                                }
+                                if p_partner_id:
+                                    project_doc_data["lead_organization"] = p_partner_id
+                                try:
+                                    proj_doc = frappe.get_doc(project_doc_data)
+                                    proj_doc.insert(ignore_permissions=True)
+                                    updated_docs.append(proj_doc.name)
+                                except Exception as e:
+                                    frappe.log_error(f"Failed to upsert Grant Project '{project_title}': {e}")
+
+                        # ── Attach file to Grant ──
                         if file_id:
                             try:
                                 file_doc = frappe.get_doc("File", file_id)
@@ -379,7 +426,8 @@ def submit_extracted_milestone():
                                     "attached_to_name": grant_id,
                                 })
                                 attached_file.insert(ignore_permissions=True)
-                            except Exception: pass
+                            except Exception:
+                                pass
 
                         frappe.db.commit()
 
@@ -390,9 +438,9 @@ def submit_extracted_milestone():
 
                         yield from handler.write_task({"id": task_id, "status": "approved"})
                         yield from handler.process_event("custom", {
-                            "type": "data-submit-result", 
-                            "status": "submitted", 
-                            "created_docs": created_docs
+                            "type": "data-submit-result",
+                            "status": "submitted",
+                            "updated_docs": updated_docs
                         })
 
                     else:

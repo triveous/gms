@@ -355,7 +355,7 @@ All unused fields must be null.
     "contributors": [
       {{
         "organization_name": "string (Funder or Coordinating Agency)",
-        "contribution_type": "Funder | Coordinator | Grantee" 
+        "contribution_type": "Funder | Coordinator " 
       }}
     ]
   }},
@@ -371,12 +371,12 @@ All unused fields must be null.
 }}
 
 -----------------------------------------------------
-DISTINGUISHING FUNDER vs. GRANTEE vs. COORDINATOR
+DISTINGUISHING FUNDER vs. COORDINATOR
 
 
 INSTRUCTIONS:
 
-Perform a deep-text audit to assign organizations to the roles of Funder, Grantee, and Coordinator. You must cite specific sections or headers as evidence.
+Perform a deep-text audit to assign organizations to the roles of Funder and Coordinator. You must cite specific sections or headers as evidence.
 
 1. IDENTIFY THE FUNDER (The Capital Source)
 Definition: The governmental or private entity providing the financial corpus.
@@ -393,22 +393,7 @@ d. Check the top-most header on the cover page (e.g., "Ministry of Education" or
 e. Strict Rule: A Funder is almost never a University. If you find "IIT [X]" in a budget table, check if they are receiving the money or providing it. If they are requesting it, they are not the Funder.
 
 
-2. IDENTIFY THE GRANTEE / LEAD ORGANIZATION (The Prime Recipient)
-Definition: The primary institution responsible for the legal and financial execution of the grant.
-Search Parameters:
-
-a. Designation can be mentioned for example "Grantee is"
-
-b. Identify the institution of the Principal Investigator (PI).
-
-c. Look for terms like "Host Institute," "Implementing Agency," or "Lead Organization."
-
-d. Check the "Budget Summary" section; the entity whose bank account/administrative overhead is listed first is the Grantee.
-
-e. Search for the phrase: "The project will be centralized at [Organization Name]."
-
-
-3. IDENTIFY THE COORDINATOR (The Administrative Orchestrator)
+2. IDENTIFY THE COORDINATOR (The Administrative Orchestrator)
 Definition: The entity responsible for "Harmonizing," "Liaising," and "Supervising" multiple project sites.
 Search Parameters:
 

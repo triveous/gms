@@ -124,18 +124,18 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     hasDataBlockPart,
     isDrawerMode = false,
 }) => {
-    const [taskStates, setTaskStates] = React.useState<Record<string, { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null }>>({});
+    const [taskStates, setTaskStates] = React.useState<Record<string, { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null; grant_id: string | null }>>({});
     const [reviewDialogState, setReviewDialogState] = React.useState<{ open: boolean; type: 'progress' | 'plan' | 'dpr'; activeMessageId: string | null }>({
         open: false,
         type: 'progress',
         activeMessageId: null
     });
 
-    const updateTaskState = (messageId: string, updates: Partial<{ uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null }>) => {
+    const updateTaskState = (messageId: string, updates: Partial<{ uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null; grant_id: string | null }>) => {
         setTaskStates(prev => ({
             ...prev,
             [messageId]: {
-                ...(prev[messageId] || { uploadStep: 0, reviewData: null, isSubmitting: false, isRejected: false, errorStep: null, errorMessage: null }),
+                ...(prev[messageId] || { uploadStep: 0, reviewData: null, isSubmitting: false, isRejected: false, errorStep: null, errorMessage: null, grant_id: null }),
                 ...updates
             }
         }));
@@ -157,20 +157,21 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             const hasTask = parts.find((p: any) => p.type === 'data-task');
 
             if (hasTask) {
-                const initialStep = getInitialUploadStep(parts);
-                const taskData = hasTask.data || {};
-                const isError = findDeep(taskData, 'isError') === true;
-                const errorMessage = findDeep(taskData, 'errorMessage');
-
-                newStates[msg.id] = {
-                    uploadStep: initialStep,
-                    reviewData: getInitialReviewData(parts),
-                    isSubmitting: false,
-                    isRejected: false,
-                    errorStep: isError ? initialStep : null,
-                    errorMessage: isError ? errorMessage : (hasTask?.data?.errorMessage || null)
-                };
-                hasChanges = true;
+                    const initialStep = getInitialUploadStep(parts);
+                    const taskData = hasTask.data || {};
+                    const isError = findDeep(taskData, 'isError') === true;
+                    const errorMessage = findDeep(taskData, 'errorMessage');
+                    newStates[msg.id] = {
+                        uploadStep: initialStep,
+                        reviewData: getInitialReviewData(parts),
+                        isSubmitting: false,
+                        isRejected: false,
+                        errorStep: isError ? initialStep : null,
+                        errorMessage: isError ? errorMessage : (hasTask?.data?.errorMessage || null),
+                        grant_id: hasTask?.data?.grant_id || null
+                    };
+    
+                    hasChanges = true;
             }
         });
 
@@ -229,13 +230,13 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
                                     const isError = findDeep(taskData, 'isError') === true;
                                     const errorMessage = findDeep(taskData, 'errorMessage');
-
                                     // Always update step, even if it's 0 (allows resetting to upload prompt on rejection)
                                     updateTaskState(messageId, {
                                         uploadStep: step,
                                         isRejected: statusStr === 'rejected',
                                         errorStep: isError ? step : null,
-                                        errorMessage: isError ? errorMessage : null
+                                        errorMessage: isError ? errorMessage : null,
+                                        grant_id: data?.data?.grant_id || taskStates[messageId]?.grant_id || null
                                     });
 
                                     // Deep search for llm_response and metadata
@@ -279,6 +280,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
 
     const handleReviewSubmit = async (messageId: string, isSubmit: boolean = true) => {
         const state = taskStates[messageId];
+        
         if (!state?.reviewData) {
             toast.error('No data to submit');
             return;
@@ -294,6 +296,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
             formData.append('extracted_data', JSON.stringify(state.reviewData));
             formData.append('thread_id', threadId);
             formData.append('task_id', state.reviewData.task_id || '');
+            formData.append('grant_id', state.grant_id || '');
 
             const response = await fetch('/api/method/gms.api.submit_file.submit_extracted_milestone', {
                 method: 'POST',
