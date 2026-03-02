@@ -6,12 +6,12 @@ def init_ai():
     os.environ["GOOGLE_API_KEY"] = frappe.conf.get("google_api_key")
 
 def init_logfire():
-    import logfire
     import os
     import frappe
     import traceback
     
     try:
+        import logfire
         # Enable langsmith tracing
         os.environ['LANGSMITH_OTEL_ENABLED'] = 'true'
         os.environ['LANGSMITH_OTEL_ONLY'] = 'true'
@@ -20,8 +20,10 @@ def init_logfire():
             
         logfire.configure(environment="prod",scrubbing=False)
         print("Logfire Configured")    
-    except:
-        traceback.print_exception() 
+    except ImportError:
+        print("Logfire module not found. Skipping logfire configuration.")
+    except Exception:
+        traceback.print_exc() 
 
 
 init_logfire()
