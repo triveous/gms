@@ -77,10 +77,15 @@ class AgentRunner:
                 "AI Settings", "AI Settings", "milvus_db_token"
             )
 
+            collection_name = frappe.get_cached_value(
+                "AI Settings", "AI Settings", "milvus_kb_collection"
+            )
+
             # Create new Knowledge instance
             knowledge = Knowledge(
                 uri=milvus_db_url,
                 token=milvus_db_token,
+                collection_name=collection_name
             )
             cls._knowledge_cache[cache_key] = knowledge
             print(
