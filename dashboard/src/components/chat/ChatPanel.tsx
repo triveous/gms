@@ -16,7 +16,7 @@ interface ChatPanelProps {
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
-    const { isChatOpen, closeChat } = useChatContext();
+    const { isChatOpen, closeChat, pendingMessage, setPendingMessage } = useChatContext();
     const { createDoc } = useFrappeCreateDoc();
     const { deleteDoc } = useFrappeDeleteDoc();
     const [input, setInput] = useState('');
@@ -160,6 +160,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
             setTimeout(() => setInitialMessage(null), 0);
         }
     }, [currentConversaionId, initialMessage, sendMessage]);
+
+    useEffect(() => {
+        if (isChatOpen && pendingMessage) {
+            handleSend({ text: pendingMessage, files: [] });
+            setPendingMessage(null);
+        }
+    }, [isChatOpen, pendingMessage, setPendingMessage]);
 
     // Drawer mode (traditional fixed overlay)
     if (isDrawerMode) {

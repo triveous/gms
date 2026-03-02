@@ -828,6 +828,48 @@ def get_grant_projects_by_quarter(grant_id, quarter_value):
 
 
 @frappe.whitelist()
+def get_projects_by_grant(grant_id):
+    """
+    Fetch all projects associated with a specific grant.
+    Returns: title, start_date, lead_organization (title), and update_date (modified)
+    """
+    if not grant_id:
+        frappe.throw("Grant ID is required")
+
+    projects = frappe.get_list(
+        "Grant Project",
+        fields=[
+            "name",
+            "title",
+            "start_date",
+            "lead_organization",
+            "modified as update_date",
+        ],
+        filters={"grant": grant_id},
+        limit_page_length=0,
+    )
+
+    if not projects:
+        return []
+
+    # Fetch partner titles for lead_organization
+    partner_ids = [p["lead_organization"] for p in projects if p["lead_organization"]]
+    if partner_ids:
+        partners = frappe.get_all(
+            "Grant Partner",
+            filters={"name": ["in", partner_ids]},
+            fields=["name", "title"],
+            limit_page_length=0,
+        )
+        partner_map = {p["name"]: p["title"] for p in partners}
+
+        for project in projects:
+            project["lead_organization"] = partner_map.get(project["lead_organization"], project["lead_organization"])
+
+    return projects
+
+
+@frappe.whitelist()
 def compare_quarter_metrics_grant_forcast(grant_id, quarter_value, compare_with):
     # print("-----------> compare_quarter_metrics_grant called with grant_id:", grant_id, "quarter_value:", quarter_value, "compare_with:", compare_with)
     """
