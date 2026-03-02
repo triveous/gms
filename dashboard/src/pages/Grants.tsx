@@ -7,6 +7,7 @@ import { SectionWrapper } from '@/components/SectionWrapper';
 import { useFrappeGetCall } from 'frappe-react-sdk';
 import { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '@/contexts/AppContext';
+import { usePageContext } from '@/contexts/PageContext';
 
 interface GrantUI {
     id: string;
@@ -26,6 +27,7 @@ import { GrantsSkeleton } from '@/components/PageSkeletons';
 export default function Grants() {
     const navigate = useNavigate();
     const { setGrantsList } = useAppContext();
+    const { setPageContext } = usePageContext();
 
     const { data, error, isLoading } = useFrappeGetCall(
         'gms.api.grants.get_grants_with_related',
@@ -71,8 +73,8 @@ export default function Grants() {
 
         // Convert to readable date formats
         const months = [
-            'January','February','March','April','May','June',
-            'July','August','September','October','November','December'
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
         ];
 
         const startFormatted = `${months[s.getMonth()]} ${s.getFullYear()}`;
@@ -110,7 +112,7 @@ export default function Grants() {
             id: safe(g.name),
             name: safe(g.title),
             leadInstitute: safe(g.organization.title),
-            timeline:formatTimeline(g.start_date, g.end_date),
+            timeline: formatTimeline(g.start_date, g.end_date),
             totalBudget: formatIndianAmount(g.approved_amount),
             alias: safe(g.alias),
             // Fields we DON'T have yet → default "--"
@@ -126,9 +128,14 @@ export default function Grants() {
         if (formattedGrants.length > 0) {
             const simplifiedGrants = formattedGrants.map(g => ({
                 id: g.id,
-                alias: g.alias // Assuming 'name' in formattedGrants is the title/alias we want to show
+                alias: g.alias
             }));
             setGrantsList(simplifiedGrants);
+            // Push context to chat
+            setPageContext({
+                page: 'grants_list',
+                grants: formattedGrants.map(g => ({ title: g.name }))
+            });
         }
     }, [formattedGrants, setGrantsList]);
 

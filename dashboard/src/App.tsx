@@ -7,6 +7,7 @@ import ResizableLayout from '@/components/ResizableLayout';
 import DesktopOnly from './components/DesktopOnly'
 import ProtectedRoute from './components/ProtectedRoute'
 import { ChatProvider } from './contexts/ChatContext'
+import { PageContextProvider } from './contexts/PageContext'
 import Grant from './pages/Grant'
 import Grants from './pages/Grants'
 import NotFound from './pages/NotFound'
@@ -24,34 +25,36 @@ function App() {
 			<AppProvider>
 				<AuthProvider>
 					<ChatProvider>
-						<DesktopOnly />
-						{isDashboardRoot ? (
-							<BrowserRouter basename="/dashboard">
-								<Routes>
-									<Route element={<ProtectedRoute><ResizableLayout /></ProtectedRoute>}>
-										<Route index element={<Grants />} />
-										<Route path=":grantId">
-											<Route index element={<Grant />} />
-											<Route path="partners" element={<PartnersList scope="grant" />} />
-											<Route path="contributors" element={<ContributorsList scope="grant" />} />
-											<Route path=":projectId">
-												<Route index element={<Project />} />
-												<Route path="partners" element={<PartnersList scope="project" />} />
-												<Route path="contributors" element={<ContributorsList scope="project" />} />
+						<PageContextProvider>
+							<DesktopOnly />
+							{isDashboardRoot ? (
+								<BrowserRouter basename="/dashboard">
+									<Routes>
+										<Route element={<ProtectedRoute><ResizableLayout /></ProtectedRoute>}>
+											<Route index element={<Grants />} />
+											<Route path=":grantId">
+												<Route index element={<Grant />} />
+												<Route path="partners" element={<PartnersList scope="grant" />} />
+												<Route path="contributors" element={<ContributorsList scope="grant" />} />
+												<Route path=":projectId">
+													<Route index element={<Project />} />
+													<Route path="partners" element={<PartnersList scope="project" />} />
+													<Route path="contributors" element={<ContributorsList scope="project" />} />
+												</Route>
 											</Route>
 										</Route>
-									</Route>
-									<Route path="*" element={<NotFound />} />
-								</Routes>
-							</BrowserRouter>
-						) : (
-							<BrowserRouter>
-								<Routes>
-									<Route path="/" element={<Navigate to="/dashboard" replace />} />
-									<Route path="*" element={<NotFound />} />
-								</Routes>
-							</BrowserRouter>
-						)}
+										<Route path="*" element={<NotFound />} />
+									</Routes>
+								</BrowserRouter>
+							) : (
+								<BrowserRouter>
+									<Routes>
+										<Route path="/" element={<Navigate to="/dashboard" replace />} />
+										<Route path="*" element={<NotFound />} />
+									</Routes>
+								</BrowserRouter>
+							)}
+						</PageContextProvider>
 					</ChatProvider>
 				</AuthProvider>
 			</AppProvider>

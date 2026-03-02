@@ -16,6 +16,7 @@ import { TrendingBadge } from '@/components/TrendingBadge';
 import { useAppContext } from '@/contexts/AppContext';
 import { SimpleProjectCard } from '@/components/SimpleProjectCard';
 import { PendingDocuments } from '@/components/PendingDocuments';
+import { usePageContext } from '@/contexts/PageContext';
 
 interface GrantUI {
     id: string;
@@ -61,6 +62,7 @@ export default function Grant() {
     const [comparisonQuarter, setComparisonQuarter] = useState('');
     const [projectsData, setProjectData] = useState<Project[]>([]);
     const { setLastVisitedGrant } = useAppContext();
+    const { setPageContext } = usePageContext();
 
     const { data, error, isLoading } = useFrappeGetCall(
         'gms.api.grant.get_single_grant_info',
@@ -244,6 +246,18 @@ export default function Grant() {
     useEffect(() => {
         setProjectData(formattedProjects);
     }, [formattedProjects]);
+
+    // Push page context for chat whenever grant or projects data changes
+    useEffect(() => {
+        if (!grantData.id) return;
+        setPageContext({
+            page: 'grant_details',
+            grantTitle: grantData.title,
+            selectedQuarter: selectedPeriod,
+            projects: (hasQuarters ? formattedProjects : (allProjectsRes?.message || []))
+                .map((p: any) => ({ title: p.title }))
+        });
+    }, [grantData, selectedPeriod, formattedProjects, allProjectsRes]);
 
     const budgetMetrics = useMemo(() => {
         if (!projectsRes?.message?.projects) {

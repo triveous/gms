@@ -96,7 +96,7 @@ class AgentRunner:
         cls._knowledge_cache_key = None
 
     def run_ui_mode(
-        self, ai_agent_id: str, thread_id: str | None, query: str
+        self, ai_agent_id: str, thread_id: str | None, query: str, context: str
     ) -> Generator[str, None, None]:
         """Run agent in UI mode, returning SSE stream.
 
@@ -131,6 +131,7 @@ class AgentRunner:
             ai_agent_id=ai_agent_id,
             knowledge=self.knowledge,
             checkpointer=checkpointer,
+            context=context
         )
         state = {"messages": [HumanMessage(content=query)]}
 
