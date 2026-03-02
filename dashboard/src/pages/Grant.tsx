@@ -14,6 +14,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { safe, formatIndianAmount, formatTimeline, calculateBudgetSpendPercent } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
 import { useAppContext } from '@/contexts/AppContext';
+import { SimpleProjectCard } from '@/components/SimpleProjectCard';
+import { PendingDocuments } from '@/components/PendingDocuments';
 
 interface GrantUI {
     id: string;
@@ -68,16 +70,16 @@ export default function Grant() {
     // Helper to find latest quarter for year
     const findLatestQuarter = (period: string) => {
         if (!period || period.startsWith('Q')) return period;
-        
+
         // It's a year value, find the corresponding group
         if (grantData.quartersList) {
             const yearlyGroup = grantData.quartersList.find((g: any) => g.label === 'Yearly Wise');
             const yearItem = yearlyGroup?.items.find((i: any) => i.value === period);
-            
+
             if (yearItem) {
                 // Find group matching year title
-                const quarterGroup = grantData.quartersList.find((g: any) => 
-                     g.label !== 'Yearly Wise' && g.label.includes(yearItem.title)
+                const quarterGroup = grantData.quartersList.find((g: any) =>
+                    g.label !== 'Yearly Wise' && g.label.includes(yearItem.title)
                 );
                 if (quarterGroup?.items?.length > 0) {
                     return quarterGroup.items[0].value;
@@ -95,7 +97,19 @@ export default function Grant() {
         { grant_id: grantId, quarter_value: effectiveSelectedPeriod },
         effectiveSelectedPeriod ? undefined : null
     );
-    console.log('DATA ---> ',projectsRes)
+
+    const hasQuarters = useMemo(() => {
+        return grantData.quartersList && grantData.quartersList.length > 0;
+    }, [grantData.quartersList]);
+
+    const { data: allProjectsRes } = useFrappeGetCall(
+        'gms.api.projects.get_projects_by_grant',
+        { grant_id: grantId },
+        !hasQuarters && grantData.id ? undefined : null
+    );
+
+    console.log('DATA ---> ', projectsRes)
+    console.log('ALL PROJECTS DATA ---> ', allProjectsRes)
 
     // API → UI formatted grants
     const formattedGrant = useMemo<GrantUI>(() => {
@@ -106,7 +120,7 @@ export default function Grant() {
             alias: safe(data.message.alias),
             title: safe(data.message.title),
             leadInstitute: safe(data.message.organization.title),
-            timeline:formatTimeline(data.message.start_date, data.message.end_date),
+            timeline: formatTimeline(data.message.start_date, data.message.end_date),
             approvalNumber: safe(data.message.approval_number),
             totalBudget: formatIndianAmount(data.message.approved_amount),
             budgetSpend: formatIndianAmount(data.message.budget_spent),
@@ -126,14 +140,14 @@ export default function Grant() {
     }, [formattedGrant, setLastVisitedGrant]);
 
     useEffect(() => {
-    if (grantData.quartersList && grantData.quartersList.length > 0 && grantData.quartersList[0].items && grantData.quartersList[0].items.length > 0) {
-        setSelectedPeriod(grantData.quartersList[0].items[0].value);
-    }
-    },[grantData])
+        if (grantData.quartersList && grantData.quartersList.length > 0 && grantData.quartersList[0].items && grantData.quartersList[0].items.length > 0) {
+            setSelectedPeriod(grantData.quartersList[0].items[0].value);
+        }
+    }, [grantData])
 
 
     useEffect(() => {
-        console.log('selectedPeriod ----> ',selectedPeriod)
+        console.log('selectedPeriod ----> ', selectedPeriod)
         mutate()
     }, [selectedPeriod, effectiveSelectedPeriod]);
 
@@ -175,17 +189,17 @@ export default function Grant() {
     const forecastedTrend = getForecastMetric('Forecasted Amount');
     const spentTrend = getForecastMetric('Budget Spent');
     const utilizationTrend = getForecastMetric('Fund Utilization');
-    
+
     // Process Projects Data
     const formattedProjects = useMemo<Project[]>(() => {
         if (!projectsRes?.message?.projects) return [];
 
-        return projectsRes.message.projects.map((project: { 
-            name: string; 
-            title: string; 
-            lead_organization: string; 
-            start_date: string; 
-            milestones?: { metrics?: Record<string, string | number>; last_updated?: string }[] 
+        return projectsRes.message.projects.map((project: {
+            name: string;
+            title: string;
+            lead_organization: string;
+            start_date: string;
+            milestones?: { metrics?: Record<string, string | number>; last_updated?: string }[]
         }) => {
             // Get first milestone (assuming filtered by quarter or latest)
             const milestone = project.milestones?.[0] || {};
@@ -195,28 +209,28 @@ export default function Grant() {
                 id: project.name,
                 title: project.title,
                 projectLead: project.lead_organization || '--', // Using ID as organization name is not available
-                activeSince: project.start_date ? new Date(project.start_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '--', 
+                activeSince: project.start_date ? new Date(project.start_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '--',
                 lastUpdated: milestone.last_updated ? new Date(milestone.last_updated).toLocaleDateString('en-IN') : '--',
                 metrics: {
-                    tbl: { 
-                        value: Number(metrics['Technology Readiness Level'] || 0), 
-                        change: '', 
-                        isPositive: true 
+                    tbl: {
+                        value: Number(metrics['Technology Readiness Level'] || 0),
+                        change: '',
+                        isPositive: true
                     },
-                    mrl: { 
-                        value: Number(metrics['Market Readiness Level'] || 0), 
-                        change: '', 
-                        isPositive: true 
+                    mrl: {
+                        value: Number(metrics['Market Readiness Level'] || 0),
+                        change: '',
+                        isPositive: true
                     },
-                    crl: { 
-                        value: Number(metrics['Commercial Readiness Level'] || 0), 
-                        change: '', 
-                        isPositive: true 
+                    crl: {
+                        value: Number(metrics['Commercial Readiness Level'] || 0),
+                        change: '',
+                        isPositive: true
                     },
-                    sirl: { 
-                        value: Number(metrics['Social Impact Readiness Level'] || 0), 
-                        change: '', 
-                        isPositive: true 
+                    sirl: {
+                        value: Number(metrics['Social Impact Readiness Level'] || 0),
+                        change: '',
+                        isPositive: true
                     },
                 },
                 budgetSpent: formatIndianAmount(metrics['Budget Spent']),
@@ -253,7 +267,7 @@ export default function Grant() {
         });
 
         const totalActual = Number(projectsRes.message.total_budget_spent || 0);
-        
+
         const utilization = totalForecasted > 0 ? ((totalActual / totalForecasted) * 100).toFixed(0) : '0';
 
         return {
@@ -287,7 +301,7 @@ export default function Grant() {
 
     const partners = useMemo(() => {
         if (!partnersResult?.message?.partners_map) return [];
-        
+
         // Flatten the map values into a single array
         return Object.values(partnersResult.message.partners_map).flat().map((p: any) => ({
             id: p.id,
@@ -323,185 +337,200 @@ export default function Grant() {
 
             {!isLoading && grantData.id && (
                 <>
-            {/* Breadcrumb */}
-            <AppBreadcrumb />
+                    {/* Breadcrumb */}
+                    <AppBreadcrumb />
 
-            {/* Page Header */}
-            <div className="mb-6">
-                <h1 className="text-foreground font-semibold text-[30px] leading-[125%] tracking-[-0.3px] mb-4">
-                    {grantData.title}
-                </h1>
-                
-                {/* Metadata Row */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
-                        Alias: {grantData.alias}
-                    </Badge>
-                    <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
-                        Lead Institute: {grantData.leadInstitute}
-                    </Badge>
-                    <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
-                        Timeline: {grantData.timeline}
-                    </Badge>
-                    <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
-                        Approval Number: {grantData.approvalNumber}
-                    </Badge>
-                </div>
-            </div>
+                    {/* Page Header */}
+                    <div className="mb-6">
+                        <h1 className="text-foreground font-semibold text-[30px] leading-[125%] tracking-[-0.3px] mb-4">
+                            {grantData.title}
+                        </h1>
 
-            {/* Metrics Cards */}
-            <div className="flex gap-4 mb-6">
-                {/* Total Budget */}
-                <div className="flex flex-col gap-3">
-                    <div className="text-muted-foreground font-medium text-base leading-[150%]">Total Budget</div>
-                    <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">
-                        {grantData.totalBudget}
-                    </div>
-                </div>
-
-                <div className="w-px bg-border self-stretch" />
-
-                {/* Total Budget Spend */}
-                <div className="flex flex-col gap-3">
-                    <div className="text-muted-foreground font-medium text-base leading-[150%]">Total Budget Spend</div>
-                    <div className="flex items-center gap-2">
-                        <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">
-                            {grantData.budgetSpend}
-                        </div>
-                        {grantData.budgetSpendPercent !== '--' && (
-                            <Badge className="bg-green-100 text-foreground font-mono text-xs font-normal leading-[150%]">
-                                {grantData.budgetSpendPercent}%
+                        {/* Metadata Row */}
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
+                                Alias: {grantData.alias}
                             </Badge>
-                        )}
+                            <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
+                                Lead Institute: {grantData.leadInstitute}
+                            </Badge>
+                            <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
+                                Timeline: {grantData.timeline}
+                            </Badge>
+                            <Badge variant="secondary" className="text-muted-foreground text-center font-medium text-sm leading-[150%] tracking-[0.07px] rounded-lg border border-[#E2E8F0]">
+                                Approval Number: {grantData.approvalNumber}
+                            </Badge>
+                        </div>
                     </div>
-                </div>
 
-                {/* <div className="w-px bg-border self-stretch" /> */}
+                    {/* Metrics Cards */}
+                    <div className="flex gap-4 mb-6">
+                        {/* Total Budget */}
+                        <div className="flex flex-col gap-3">
+                            <div className="text-muted-foreground font-medium text-base leading-[150%]">Total Budget</div>
+                            <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">
+                                {grantData.totalBudget}
+                            </div>
+                        </div>
 
-                {/* Overall Progress */}
-                {/* <div className="flex flex-col gap-3">
+                        <div className="w-px bg-border self-stretch" />
+
+                        {/* Total Budget Spend */}
+                        <div className="flex flex-col gap-3">
+                            <div className="text-muted-foreground font-medium text-base leading-[150%]">Total Budget Spend</div>
+                            <div className="flex items-center gap-2">
+                                <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">
+                                    {grantData.budgetSpend}
+                                </div>
+                                {grantData.budgetSpendPercent !== '--' && (
+                                    <Badge className="bg-green-100 text-foreground font-mono text-xs font-normal leading-[150%]">
+                                        {grantData.budgetSpendPercent}%
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* <div className="w-px bg-border self-stretch" /> */}
+
+                        {/* Overall Progress */}
+                        {/* <div className="flex flex-col gap-3">
                     <div className="text-muted-foreground font-medium text-base leading-[150%]">Overall Progress</div>
                     <div className="text-foreground font-semibold text-xl leading-[120%] tracking-[-0.4px]">
                         {grantData.overallProgress}
                         {grantData.overallProgress !== '--' && '%'}
                     </div>
                 </div> */}
-            </div>
+                    </div>
 
-            {/* Separator */}
-            {/* <div className="h-px bg-border" /> */}
-
-
-
-            {/* Conditional rendering based on projects data */}
-            {Number(grantData.totalProjects) === 0 ? (
-                <EmptyState />
-            ) : (
-                <>
-                    {/* Controls Row */}
-                    <DashbaordFilterComponent 
-                        quartersList={grantData.quartersList} 
-                        selectedPeriod={selectedPeriod} 
-                        setSelectedPeriod={setSelectedPeriod}
-                        comparisonQuarter={comparisonQuarter}
-                        setComparisonQuarter={setComparisonQuarter}
-                    />
-                    {/* Projects Section */}
-                    <SectionWrapper 
-                        title="Projects"
-                        className="mt-8"
-                        contentClassName="space-y-4"
-                    >
-                        {projectsData.map((project) => (
-                            <ProjectCard
-                                key={project.id}
-                                grantId={grantId as string}
-                                title={project.title}
-                                id={project.id}
-                                selectedPeriod={selectedPeriod}
-                                projectLead={project.projectLead}
-                                activeSince={project.activeSince}
-                                lastUpdated={project.lastUpdated}
-                                metrics={project.metrics}
-                                budgetSpent={project.budgetSpent}
-                                progress={project.progress}
-                                highlights={project.highlights}
-                                lowlights={project.lowlights}
-                                comparisonData={comparisonRes?.message?.find((item: any) => item.project === project.id)}
-                            />
-                        ))}
-                    </SectionWrapper>
+                    {/* Separator */}
+                    {/* <div className="h-px bg-border" /> */}
 
 
-                    {/* Budget Utilisation */}
-                    <SectionWrapper 
-                        title="Budget Utilisation"
-                        contentClassName="flex flex-col gap-6"
-                    >
-                        <div className="p-6 pl-0 bg-card border border-border rounded">
-                            <BudgetUtilizationChart budgetUtilization={grantData.budget_utilization}/>
-                        </div>
-                        {/* Metrics Grid */}
-                        <div className="grid grid-cols-4 gap-4">
-                            {/* Forecasted */}
-                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Forecasted</div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                        {formatIndianAmount(budgetMetrics.forecasted)}
-                                    </span>
-                                    {forecastedTrend && (
-                                        <TrendingBadge change={forecastedTrend.change} isPositive={forecastedTrend.isPositive} />
-                                    ) }
-                                </div>
-                            </div>
 
-                            {/* Actual Spend */}
-                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Actual Spend</div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                        {formatIndianAmount(budgetMetrics.actual)}
-                                    </span>
-                                     {spentTrend && (
-                                        <TrendingBadge change={spentTrend.change} isPositive={spentTrend.isPositive} />
-                                    )}
-                                </div>
-                            </div>
+                    {/* Conditional rendering based on projects data */}
+                    {Number(grantData.totalProjects) === 0 ? (
+                        <EmptyState />
+                    ) : (
+                        <>
+                            {/* Controls Row */}
+                            {hasQuarters && (
+                                <DashbaordFilterComponent
+                                    quartersList={grantData.quartersList}
+                                    selectedPeriod={selectedPeriod}
+                                    setSelectedPeriod={setSelectedPeriod}
+                                    comparisonQuarter={comparisonQuarter}
+                                    setComparisonQuarter={setComparisonQuarter}
+                                />
+                            )}
+                            {/* Projects Section */}
+                            <SectionWrapper
+                                title="Projects"
+                                className="mt-8"
+                                contentClassName="space-y-4"
+                            >
+                                {hasQuarters ? (
+                                    projectsData.map((project) => (
+                                        <ProjectCard
+                                            key={project.id}
+                                            grantId={grantId as string}
+                                            title={project.title}
+                                            id={project.id}
+                                            selectedPeriod={selectedPeriod}
+                                            projectLead={project.projectLead}
+                                            activeSince={project.activeSince}
+                                            lastUpdated={project.lastUpdated}
+                                            metrics={project.metrics}
+                                            budgetSpent={project.budgetSpent}
+                                            progress={project.progress}
+                                            highlights={project.highlights}
+                                            lowlights={project.lowlights}
+                                            comparisonData={comparisonRes?.message?.find((item: any) => item.project === project.id)}
+                                        />
+                                    ))
+                                ) : (
+                                    allProjectsRes?.message?.map((project: any) => (
+                                        <SimpleProjectCard
+                                            key={project.name}
+                                            title={project.title}
+                                            projectLead={project.lead_organization}
+                                            startDate={project.start_date}
+                                            lastUpdated={project.update_date}
+                                        />
+                                    ))
+                                )}
+                            </SectionWrapper>
 
-                            {/* Utilisation % */}
-                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Utilisation %</div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                        {budgetMetrics.utilization}%
-                                    </span>
-                                    {utilizationTrend && (
-                                        <TrendingBadge change={utilizationTrend.change} isPositive={utilizationTrend.isPositive} />
-                                    )}
-                                </div>
-                            </div>
+                            {!hasQuarters && <PendingDocuments />}
 
-                            {/* Current year Utilised */}
-                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
-                                <div className="text-sm text-muted-foreground">Overall year Utilised</div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
-                                        {budgetMetrics.overallUtilization}%
-                                    </span>
-                                    {/* <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700">
-                                        <TrendingUp className="w-3 h-3" />
-                                        <span className="text-xs font-medium">--</span>
-                                    </span> */}
-                                </div>
-                            </div>
-                        </div>
-                    </SectionWrapper>
+                            {hasQuarters && (
+                                <>
+                                    {/* Budget Utilisation */}
+                                    <SectionWrapper
+                                        title="Budget Utilisation"
+                                        contentClassName="flex flex-col gap-6"
+                                    >
+                                        <div className="p-6 pl-0 bg-card border border-border rounded">
+                                            <BudgetUtilizationChart budgetUtilization={grantData.budget_utilization} />
+                                        </div>
+                                        {/* Metrics Grid */}
+                                        <div className="grid grid-cols-4 gap-4">
+                                            {/* Forecasted */}
+                                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Forecasted</div>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                                        {formatIndianAmount(budgetMetrics.forecasted)}
+                                                    </span>
+                                                    {forecastedTrend && (
+                                                        <TrendingBadge change={forecastedTrend.change} isPositive={forecastedTrend.isPositive} />
+                                                    )}
+                                                </div>
+                                            </div>
 
-                    <OrgMembers partners={partners} contributors={contributors} quarter={selectedPeriod} />
+                                            {/* Actual Spend */}
+                                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Actual Spend</div>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                                        {formatIndianAmount(budgetMetrics.actual)}
+                                                    </span>
+                                                    {spentTrend && (
+                                                        <TrendingBadge change={spentTrend.change} isPositive={spentTrend.isPositive} />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Utilisation % */}
+                                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                                <div className="text-sm text-muted-foreground">{selectedPeriod.slice(0, 2) || 'Quarterly'} Utilisation %</div>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                                        {budgetMetrics.utilization}%
+                                                    </span>
+                                                    {utilizationTrend && (
+                                                        <TrendingBadge change={utilizationTrend.change} isPositive={utilizationTrend.isPositive} />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Current year Utilised */}
+                                            <div className="p-6 bg-card border border-border rounded flex flex-col gap-3">
+                                                <div className="text-sm text-muted-foreground">Overall year Utilised</div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-2xl font-semibold leading-[120%]  text-foreground">
+                                                        {budgetMetrics.overallUtilization}%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </SectionWrapper>
+
+                                    <OrgMembers partners={partners} contributors={contributors} quarter={selectedPeriod} />
+                                </>
+                            )}
+                        </>
+                    )}
                 </>
-            )}
-            </>
             )}
         </DashboardLayout>
     );

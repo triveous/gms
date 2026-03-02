@@ -16,7 +16,7 @@ interface ChatPanelProps {
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
-    const { isChatOpen, closeChat } = useChatContext();
+    const { isChatOpen, closeChat, pendingMessage, setPendingMessage } = useChatContext();
     const { createDoc } = useFrappeCreateDoc();
     const { deleteDoc } = useFrappeDeleteDoc();
     const [input, setInput] = useState('');
@@ -101,7 +101,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
 
     const isAssistantResponding = status === 'submitted' || status === 'streaming' || initialMessage !== null;
 
-    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p => 
+    const hasDataBlockPart = latestAssistantMessage?.parts?.some(p =>
         p.type === 'data-block' || p.type === 'data-goal' || p.type === 'data-step'
     );
     const hasTextPart = latestAssistantMessage?.parts?.some(p => p.type === 'text');
@@ -161,6 +161,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
         }
     }, [currentConversaionId, initialMessage, sendMessage]);
 
+    useEffect(() => {
+        if (isChatOpen && pendingMessage) {
+            handleSend({ text: pendingMessage, files: [] });
+            setPendingMessage(null);
+        }
+    }, [isChatOpen, pendingMessage, setPendingMessage]);
+
     // Drawer mode (traditional fixed overlay)
     if (isDrawerMode) {
         return (
@@ -179,24 +186,24 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
                     )}
                 >
                     <ChatLayout
-                    isDrawerMode
-                    onNewChat={handleNewChat}
-                    onClose={closeChat}
-                    conversationList={conversationListData || []}
-                    onSelectConversation={handleConversationClick}
-                    messages={messages}
-                    status={status}
-                    error={error}
-                    quickQuestions={quickQuestions}
-                    handleSend={handleSend}
-                    input={input}
-                    setInput={setInput}
-                    isAssistantResponding={!!isAssistantResponding}
-                    hasTextPart={!!hasTextPart}
-                    showBeforeThinking={!!showBeforeThinking}
-                    showThinkingActive={!!showThinkingActive}
-                    hasDataBlockPart={!!hasDataBlockPart}
-                />
+                        isDrawerMode
+                        onNewChat={handleNewChat}
+                        onClose={closeChat}
+                        conversationList={conversationListData || []}
+                        onSelectConversation={handleConversationClick}
+                        messages={messages}
+                        status={status}
+                        error={error}
+                        quickQuestions={quickQuestions}
+                        handleSend={handleSend}
+                        input={input}
+                        setInput={setInput}
+                        isAssistantResponding={!!isAssistantResponding}
+                        hasTextPart={!!hasTextPart}
+                        showBeforeThinking={!!showBeforeThinking}
+                        showThinkingActive={!!showThinkingActive}
+                        hasDataBlockPart={!!hasDataBlockPart}
+                    />
                 </div>
             </>
         );
@@ -206,23 +213,23 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
     return (
         <div className="h-full w-full bg-background border-l border-border">
             <ChatLayout
-            onNewChat={handleNewChat}
-            onClose={closeChat}
-            conversationList={conversationListData || []}
-            onSelectConversation={handleConversationClick}
-            messages={messages}
-            status={status}
-            error={error}
-            quickQuestions={quickQuestions}
-            handleSend={handleSend}
-            input={input}
-            setInput={setInput}
-            isAssistantResponding={!!isAssistantResponding}
-            hasTextPart={!!hasTextPart}
-            showBeforeThinking={!!showBeforeThinking}
-            showThinkingActive={!!showThinkingActive}
-            hasDataBlockPart={!!hasDataBlockPart}
-        />
+                onNewChat={handleNewChat}
+                onClose={closeChat}
+                conversationList={conversationListData || []}
+                onSelectConversation={handleConversationClick}
+                messages={messages}
+                status={status}
+                error={error}
+                quickQuestions={quickQuestions}
+                handleSend={handleSend}
+                input={input}
+                setInput={setInput}
+                isAssistantResponding={!!isAssistantResponding}
+                hasTextPart={!!hasTextPart}
+                showBeforeThinking={!!showBeforeThinking}
+                showThinkingActive={!!showThinkingActive}
+                hasDataBlockPart={!!hasDataBlockPart}
+            />
         </div>
     );
 };

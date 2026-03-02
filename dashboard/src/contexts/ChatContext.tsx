@@ -5,19 +5,29 @@ interface ChatContextType {
     toggleChat: () => void;
     openChat: () => void;
     closeChat: () => void;
+    pendingMessage: string | null;
+    setPendingMessage: (message: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
     const toggleChat = () => setIsChatOpen(prev => !prev);
     const openChat = () => setIsChatOpen(true);
     const closeChat = () => setIsChatOpen(false);
 
     return (
-        <ChatContext.Provider value={{ isChatOpen, toggleChat, openChat, closeChat }}>
+        <ChatContext.Provider value={{
+            isChatOpen,
+            toggleChat,
+            openChat,
+            closeChat,
+            pendingMessage,
+            setPendingMessage
+        }}>
             {children}
         </ChatContext.Provider>
     );

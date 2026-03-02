@@ -50,13 +50,7 @@ export const formatTimeline = (start: string, end: string) => {
     const years = e.getFullYear() - s.getFullYear();
 
     // Convert to readable date formats
-    const months = [
-        'January','February','March','April','May','June',
-        'July','August','September','October','November','December'
-    ];
 
-    const startFormatted = `${months[s.getMonth()]} ${s.getFullYear()}`;
-    const endFormatted = `${e.getDate()} ${months[e.getMonth()]} ${e.getFullYear()}`;
 
     // return `${years} year (${startFormatted} - ${endFormatted})`;
     return `${years} year`;
@@ -81,4 +75,23 @@ export const calculateBudgetSpendPercent = (total: any, spent: any) => {
     }
 
     return ((spentAmount / totalAmount) * 100).toFixed(0);
+};
+
+export const calculateActiveSince = (startDate: string) => {
+    if (!startDate) return '--';
+    const start = new Date(startDate);
+    if (isNaN(start.getTime())) return '--';
+
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - start.getTime());
+    const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+
+    return `${diffYears.toFixed(1)} years`;
+};
+
+export const formatDate = (dateString: string) => {
+    if (!dateString) return '--';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '--';
+    return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
 };
