@@ -590,10 +590,8 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
     """
     Get persisted tasks from a message's additional_kwargs.
 
-    Reads task IDs from TASK_PARTS_KEY in additional_kwargs, then enriches
-    each task with the **live status from Frappe** so that status transitions
-    made outside the agent (e.g. "Validating", "Reviewing" set by submit_file.py)
-    are always reflected correctly in chat history.
+    Reads from TASK_PARTS_KEY in additional_kwargs and converts
+    tasks to data-task format for the UI.
 
     Args:
         message: The message to read data from
@@ -603,63 +601,10 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
     """
     parts = []
 
+    # Read tasks_parts format
     tasks_parts = message.additional_kwargs.get(TASK_PARTS_KEY, [])
-    if not tasks_parts:
-        return parts
-
-    # Try to enrich each task with live status from Frappe
-    try:
-        import frappe  # Only available inside a Frappe request context
-
-        for task in tasks_parts:
-            task_id = task.get("id", "")
-            enriched = dict(task)  # copy so we don't mutate the checkpoint object
-
-            if task_id and frappe.db.exists("Grant Document Extraction Task", task_id):
-                doc_fields = frappe.db.get_value(
-                    "Grant Document Extraction Task",
-                    task_id,
-                    ["status", "raw_extraction_json", "uploaded_file", "extraction_error"],
-                    as_dict=True
-                )
-                if doc_fields:
-                    live_status = doc_fields.get("status")
-                    if live_status:
-                        enriched["status"] = live_status
-                        # Keep nested data dict in sync too
-                        if isinstance(enriched.get("data"), dict):
-                            enriched["data"] = {**enriched["data"], "status": live_status}
-                    
-                    # Include llm_response and file_id for UI handling
-                    import json
-                    try:
-                        error_json = doc_fields.get("extraction_error")
-                        if error_json:
-                            error_data = json.loads(error_json)
-                            if isinstance(error_data, dict) and error_data.get("isError"):
-                                enriched["isError"] = True
-                                enriched["errorMessage"] = error_data.get("errorMessage")
-                        
-                        if not enriched.get("isError"):
-                            raw_json = doc_fields.get("raw_extraction_json")
-                            if raw_json:
-                                enriched["llm_response"] = json.loads(raw_json)
-                        
-                    except Exception:
-                        pass
-                    
-                    enriched["file_id"] = doc_fields.get("uploaded_file")
-
-            parts.append(
-                {
-                    "type": "data-task",
-                    "id": task_id,
-                    "data": enriched,
-                }
-            )
-
-    except Exception:
-        # Fallback: return stored values as-is (e.g. outside Frappe context)
+    if tasks_parts:
+        # Convert tasks to data parts format for UI
         for task in tasks_parts:
             parts.append(
                 {
