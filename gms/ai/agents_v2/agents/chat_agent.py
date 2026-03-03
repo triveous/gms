@@ -1,24 +1,28 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from deepagents import SubAgent, create_deep_agent
-from langchain_core.messages import HumanMessage
+from langchain.tools import ToolRuntime
+from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import StructuredTool
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 
 if TYPE_CHECKING:
     from gms.ai.doctype.ai_agent.ai_agent import AIAgent
-from gms.ai.agents_v2.middleware.data_overview import DataOverviewMiddleware
-from gms.ai.agents_v2.middleware.goal import GoalMiddleware
-from gms.ai.agents_v2.middleware.kb_search import KBSearchMiddleware
-from gms.ai.agents_v2.middleware.state_sync import (
+from gms.ai.agents_v2.middleware import (
+    DataOverviewMiddleware,
     EndStateNotifierMiddleware,
+    FileUploadMiddleware,
+    GoalMiddleware,
+    KBSearchMiddleware,
     StartStateNotifierMiddleware,
+    StepsMiddleware,
+    TaskMiddleware,
+    TitleGenerationMiddleware,
 )
-from gms.ai.agents_v2.middleware.steps import StepsMiddleware
-from gms.ai.agents_v2.middleware.title_generation import TitleGenerationMiddleware
 from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
 from gms.ai.kb.kb import Knowledge
@@ -129,6 +133,10 @@ def create_chat_agent(
         main_middleware.append(StepsMiddleware())
     if ai_agent.goal_middleware:
         main_middleware.append(GoalMiddleware())
+    
+    main_middleware.append(FileUploadMiddleware())  # Adds request_file_upload tool
+    main_middleware.append(TaskMiddleware())        # Always register – data-task must always persist
+    
     if ai_agent.title_middleware:
         main_middleware.append(
             TitleGenerationMiddleware(
@@ -147,6 +155,7 @@ def create_chat_agent(
         checkpointer=checkpointer,
         subagents=subagents,
         middleware=main_middleware,
+        tools=[],  # Tools are provided by middleware
     )
 
 

@@ -191,6 +191,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
                         onClose={closeChat}
                         conversationList={conversationListData || []}
                         onSelectConversation={handleConversationClick}
+                        threadId={currentConversaionId}
                         messages={messages}
                         status={status}
                         error={error}
@@ -217,6 +218,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
                 onClose={closeChat}
                 conversationList={conversationListData || []}
                 onSelectConversation={handleConversationClick}
+                threadId={currentConversaionId}
                 messages={messages}
                 status={status}
                 error={error}

@@ -55,6 +55,7 @@ from .types import (
 
 from gms.ai.agents_v2.middleware.steps import STEPS_PARTS_KEY
 from gms.ai.agents_v2.middleware.goal import GOALS_PARTS_KEY
+from gms.ai.agents_v2.middleware.task import TASK_PARTS_KEY
 
 
 class UIMessagePart(TypedDict, total=False):
@@ -585,6 +586,38 @@ def get_goals_parts(message: BaseMessage) -> list[dict]:
     return parts
 
 
+def get_task_parts(message: BaseMessage) -> list[dict]:
+    """
+    Get persisted tasks from a message's additional_kwargs.
+
+    Reads from TASK_PARTS_KEY in additional_kwargs and converts
+    tasks to data-task format for the UI.
+
+    Args:
+        message: The message to read data from
+
+    Returns:
+        List of data-task part dicts, or empty list if none.
+    """
+    parts = []
+
+    # Read tasks_parts format
+    tasks_parts = message.additional_kwargs.get(TASK_PARTS_KEY, [])
+    if tasks_parts:
+        # Convert tasks to data parts format for UI
+        for task in tasks_parts:
+            parts.append(
+                {
+                    "type": "data-task",
+                    "id": task.get("id", ""),
+                    "data": task,
+                }
+            )
+
+    return parts
+
+
+
 def _should_include_type(type_name: str, include_types: set[str] | None) -> bool:
     """Check if a content type should be included."""
     if include_types is None:
@@ -755,6 +788,11 @@ def convert_message_to_ui_message(
     goals_parts = get_goals_parts(message)
     if goals_parts:
         parts.extend(goals_parts)
+
+    # Read persisted tasks from additional_kwargs
+    task_parts = get_task_parts(message)
+    if task_parts:
+        parts.extend(task_parts)
 
     return UIMessage(id=message_id, role=role, parts=parts)
 

@@ -14,6 +14,67 @@ import type { QuickQuestion } from '@/types/chat';
 import QuickQuestions from './QuickQuestions';
 import ChatHeader from './ChatHeader';
 import ChatInputArea from './ChatInputArea';
+import { toast } from 'sonner';
+import { ReviewDialog } from './ReviewDialog';
+
+/** Deeply find a value by key in a nested object structure (handles backend nesting variations) */
+const findDeep = (obj: any, key: string): any => {
+    if (!obj || typeof obj !== 'object') return undefined;
+    if (obj[key] !== undefined && obj[key] !== null) return obj[key];
+    for (const k in obj) {
+        if (obj[k] && typeof obj[k] === 'object') {
+            const found = findDeep(obj[k], key);
+            if (found !== undefined) return found;
+        }
+    }
+    return undefined;
+};
+
+/** Map backend task status strings to progress step numbers */
+const statusToStep = (backendStatus: string): number => {
+    console.log("backendStatus", backendStatus)
+    switch (backendStatus?.toLowerCase()) {
+        case 'extracting': return 2;
+        case 'validating': return 3;
+        case 'reviewing': return 4;
+        case 'approved': return 6;
+        case 'rejected': return 4;
+        default: return 0;
+    }
+};
+
+
+
+const getInitialUploadStep = (parts: any[]): any => {
+    const taskPart = parts.find((p: any) => p.type === 'data-task');
+    if (!taskPart) return null;
+
+    const data = taskPart.data || {};
+
+    const status = (data.status || '').toLowerCase();
+    if (status === 'submitting' || !status) return 0;
+
+    const step = statusToStep(status);
+    return step;
+};
+
+const getInitialReviewData = (parts: any[]): any => {
+    const taskPart = parts.find((p: any) => p.type === 'data-task');
+    if (!taskPart) return null;
+
+    const data = taskPart.data || {};
+    const llm_response = data.llm_response;
+
+    if (llm_response) {
+        return {
+            ...llm_response,
+            task_id: data?.task,
+            file_id: data?.file,
+            filename: data?.filename
+        };
+    }
+    return null;
+};
 
 
 
@@ -22,6 +83,7 @@ interface ChatLayoutProps {
     onClose: () => void;
     conversationList: ConversationType[];
     onSelectConversation: (id: string) => void;
+    threadId: string;
 
     messages: SDKMessage[];
     status: 'error' | 'submitted' | 'streaming' | 'ready';
@@ -47,6 +109,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     onClose,
     conversationList,
     onSelectConversation,
+    threadId,
     messages,
     status,
     error,
@@ -61,6 +124,237 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
     hasDataBlockPart,
     isDrawerMode = false,
 }) => {
+    const [taskStates, setTaskStates] = React.useState<Record<string, { uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null; grant_id: string | null }>>({});
+    const [reviewDialogState, setReviewDialogState] = React.useState<{ open: boolean; type: 'progress' | 'plan' | 'dpr'; activeMessageId: string | null }>({
+        open: false,
+        type: 'progress',
+        activeMessageId: null
+    });
+
+    const updateTaskState = (messageId: string, updates: Partial<{ uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null; grant_id: string | null }>) => {
+        setTaskStates(prev => ({
+            ...prev,
+            [messageId]: {
+                ...(prev[messageId] || { uploadStep: 0, reviewData: null, isSubmitting: false, isRejected: false, errorStep: null, errorMessage: null, grant_id: null }),
+                ...updates
+            }
+        }));
+    };
+
+    // Initialize/Sync task states from messages
+    React.useEffect(() => {
+        const newStates = { ...taskStates };
+        let hasChanges = false;
+
+        messages.forEach(msg => {
+
+            if (msg.role !== 'assistant') return;
+            if (newStates[msg.id]) return;
+
+            const parts = msg.parts || (msg.content ? [{ type: 'text', text: msg.content }] : []);
+
+            // Try to find if this message has a task
+            const hasTask = parts.find((p: any) => p.type === 'data-task');
+
+            if (hasTask) {
+                    const initialStep = getInitialUploadStep(parts);
+                    const taskData = hasTask.data || {};
+                    const isError = findDeep(taskData, 'isError') === true;
+                    const errorMessage = findDeep(taskData, 'errorMessage');
+                    newStates[msg.id] = {
+                        uploadStep: initialStep,
+                        reviewData: getInitialReviewData(parts),
+                        isSubmitting: false,
+                        isRejected: false,
+                        errorStep: isError ? initialStep : null,
+                        errorMessage: isError ? errorMessage : (hasTask?.data?.errorMessage || null),
+                        grant_id: hasTask?.data?.grant_id || null
+                    };
+    
+                    hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            setTaskStates(newStates);
+        }
+    }, [messages]);
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, taskId: string, messageId: string) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        updateTaskState(messageId, { uploadStep: 1 });
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('thread_id', threadId);
+        formData.append('task_id', taskId);
+
+        try {
+            const response = await fetch('/api/method/gms.api.submit_file.resume_with_file', {
+                method: 'POST',
+                headers: {
+                    'X-Frappe-CSRF-Token': (window as any).csrf_token
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Upload failed');
+            }
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            if (reader) {
+                updateTaskState(messageId, { uploadStep: 2 });
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(trimmedLine.slice(6));
+                                if (data.type === 'data-task') {
+                                    const taskData = data;
+                                    const statusStr = (findDeep(taskData, 'status') || '').toLowerCase();
+                                    const step = statusToStep(statusStr);
+
+                                    const isError = findDeep(taskData, 'isError') === true;
+                                    const errorMessage = findDeep(taskData, 'errorMessage');
+                                    // Always update step, even if it's 0 (allows resetting to upload prompt on rejection)
+                                    updateTaskState(messageId, {
+                                        uploadStep: step,
+                                        isRejected: statusStr === 'rejected',
+                                        errorStep: isError ? step : null,
+                                        errorMessage: isError ? errorMessage : null,
+                                        grant_id: data?.data?.grant_id || taskStates[messageId]?.grant_id || null
+                                    });
+
+                                    // Deep search for llm_response and metadata
+                                    const llm_response = findDeep(taskData, 'llm_response');
+                                    if (llm_response && Object.keys(llm_response).length > 0) {
+                                        updateTaskState(messageId, {
+                                            reviewData: {
+                                                ...llm_response,
+                                                file_id: findDeep(taskData, 'file_id'),
+                                                filename: findDeep(taskData, 'filename'),
+                                                task_id: taskData?.id
+                                            },
+                                            uploadStep: 4
+                                        });
+                                    }
+                                } else if (data.type === 'data-resume-data' || data.type === 'resume-data') {
+                                    const resumeData = data;
+                                    updateTaskState(messageId, { reviewData: resumeData, uploadStep: 4 });
+                                } else if (data.type === 'data-submit-result') {
+                                    if (data?.status === 'submitted') {
+                                        toast.success('Submitted successfully');
+                                        updateTaskState(messageId, { uploadStep: 6 });
+                                        setReviewDialogState(prev => ({ ...prev, open: false }));
+                                    } else if (data?.status === 'rejected') {
+                                        toast.info(data?.message || 'Submission discarded');
+                                        updateTaskState(messageId, { uploadStep: 0, isRejected: true });
+                                        setReviewDialogState(prev => ({ ...prev, open: false }));
+                                    }
+                                }
+                            } catch (e) { }
+                        }
+                    }
+                }
+            }
+        } catch (error: any) {
+            console.error('File upload error:', error);
+            toast.error(error.message || 'Failed to upload file');
+            updateTaskState(messageId, { uploadStep: 0 });
+        }
+    };
+
+    const handleReviewSubmit = async (messageId: string, isSubmit: boolean = true) => {
+        const state = taskStates[messageId];
+        
+        if (!state?.reviewData) {
+            toast.error('No data to submit');
+            return;
+        }
+
+        updateTaskState(messageId, { isSubmitting: true, uploadStep: isSubmit ? 5 : 4, isRejected: false });
+
+        try {
+            console.log("state.reviewData", state);
+            const formData = new FormData();
+            formData.append('submit', isSubmit.toString());
+            formData.append('file_id', state.reviewData.file_id || '');
+            formData.append('extracted_data', JSON.stringify(state.reviewData));
+            formData.append('thread_id', threadId);
+            formData.append('task_id', state.reviewData.task_id || '');
+            formData.append('grant_id', state.grant_id || '');
+
+            const response = await fetch('/api/method/gms.api.submit_file.submit_extracted_milestone', {
+                method: 'POST',
+                headers: {
+                    'X-Frappe-CSRF-Token': (window as any).csrf_token
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Submission failed');
+            }
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(trimmedLine.slice(6));
+                                if (data.type === 'data-task') {
+                                    if (data?.status === 'approved') {
+                                        updateTaskState(messageId, { uploadStep: 6, isRejected: false });
+                                    }
+                                } else if (data.type === 'data-submit-result') {
+                                    if (data?.data?.status === 'submitted') {
+                                        updateTaskState(messageId, { uploadStep: 6, isRejected: false });
+                                        setReviewDialogState(prev => ({ ...prev, open: false }));
+                                    } else if (data?.data?.status === 'rejected') {
+                                        updateTaskState(messageId, { uploadStep: 4, isRejected: true });
+                                        setReviewDialogState(prev => ({ ...prev, open: false }));
+                                    }
+                                }
+                            } catch (e) { }
+                        }
+                    }
+                }
+            }
+        } catch (error: any) {
+            console.error('Submission error:', error);
+            toast.error(error.message || 'Failed to submit data');
+            updateTaskState(messageId, { uploadStep: 4 });
+        } finally {
+            updateTaskState(messageId, { isSubmitting: false });
+        }
+    };
     const containerWidthClass = isDrawerMode
         ? 'w-[399px] max-w-[399px]'
         : 'w-full';
@@ -130,6 +424,10 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                                         message={message}
                                         status={messageStatus}
                                         isLast={isLastMessage && isAssistant}
+                                        // threadId={threadId}
+                                        taskState={taskStates[message.id] || { uploadStep: 0, reviewData: null, isSubmitting: false, isRejected: false }}
+                                        onFileChange={(e, taskId) => handleFileChange(e, taskId, message.id)}
+                                        onOpenReview={(type) => setReviewDialogState({ open: true, type, activeMessageId: message.id })}
                                     />
                                 );
                             })
@@ -155,6 +453,23 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     showThinkingActive={showThinkingActive}
                 />
             </div>
+            <ReviewDialog
+                open={reviewDialogState.open}
+                onOpenChange={(open) => setReviewDialogState(prev => ({ ...prev, open }))}
+                type={reviewDialogState.type}
+                data={reviewDialogState.activeMessageId ? taskStates[reviewDialogState.activeMessageId]?.reviewData : null}
+                onSubmit={async () => {
+                    if (reviewDialogState.activeMessageId) {
+                        await handleReviewSubmit(reviewDialogState.activeMessageId, true);
+                    }
+                }}
+                onCancel={async () => {
+                    if (reviewDialogState.activeMessageId) {
+                        await handleReviewSubmit(reviewDialogState.activeMessageId, false);
+                    }
+                }}
+                isSubmitting={reviewDialogState.activeMessageId ? taskStates[reviewDialogState.activeMessageId]?.isSubmitting : false}
+            />
         </div>
     );
 };

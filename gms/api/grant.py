@@ -119,7 +119,7 @@ def get_single_grant_info(grant_id):
         milestones = frappe.get_list(
             "Grant Project Milestone",
             fields=["name", "period_start", "forecasted_amount"],
-            filters={"project": ["in", project_ids]},
+            filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
             limit_page_length=0,
         )
 
@@ -425,7 +425,7 @@ def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
 		milestones = frappe.get_all(
 			"Grant Project Milestone",
 			fields=["name", "milestone_type", "period_start", "period_end"],
-			filters={"project": ["in", project_ids]},
+			filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
 		)
 
 		if milestones:
