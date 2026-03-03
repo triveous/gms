@@ -178,11 +178,29 @@ class AgentRunner:
 
         except Exception as e:
             traceback.print_exception(e)
-            # Log error
-            print(f"Agent execution error: {e}")
+            error_msg = str(e)
+            print(f"Agent execution error: {error_msg}")
 
-            # Yield error event as per Vercel AI SDK protocol
-            yield handler.encode_error(str(e))
+            # Detect output-token-cap termination from Gemini.
+            # When finish_reason is MAX_TOKENS the model stopped mid-generation;
+            # the frontend has already received partial text-delta events.
+            # We must close the text block gracefully before surfacing the warning
+            # so the frontend does not hang waiting for a text-end event.
+            _is_token_cap = any(
+                marker in error_msg.upper()
+                for marker in ("MAX_TOKENS", "STOP_REASON", "finish_reason", "MAX_OUTPUT_TOKENS")
+            )
+            if _is_token_cap:
+                # Flush a clean finish so the frontend stream closes properly
+                yield from handler.finish()
+                # Overwrite finish with a soft warning the user can act on
+                yield handler.encode_error(
+                    "The response was cut short because it exceeded the model\'s output limit. "
+                    "Try asking about a single grant or project at a time for a complete answer."
+                )
+            else:
+                # Genuine failure — surface the raw error
+                yield handler.encode_error(error_msg)
 
         # Always finish stream (even on error)
         yield from handler.finish()

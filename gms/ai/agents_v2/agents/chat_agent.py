@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
 from langgraph.checkpoint.base import BaseCheckpointSaver
 
+from langchain.chat_models import init_chat_model
 from gms.ai.agents_v2.checkpointer.frappe_in import FrappeBufferedCheckpointer
 
 if TYPE_CHECKING:
@@ -113,10 +114,14 @@ def create_chat_agent(
             f"\n\nCurrent Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         )
 
+        # Initialize model with output token cap for sub-agent
+        sub_model_key = sub_ai_agent.model or SUB_AGENT_DEFAULT_MODEL
+        subagent_model = init_chat_model(sub_model_key, max_tokens=8192)
+
         # Create SubAgent with configuration from the linked AI Agent
         subagent = SubAgent(
             name=sub_agent_row.tool_name,
-            model=sub_ai_agent.model or SUB_AGENT_DEFAULT_MODEL,
+            model=subagent_model,
             description=sub_agent_row.tool_description,
             system_prompt=sub_system_prompt,
             tools=[],
@@ -148,9 +153,12 @@ def create_chat_agent(
         StartStateNotifierMiddleware()
     )  # Register LAST to run LAST in before_agent
 
+    # Initialize main agent model with high output token cap for long summaries
+    main_model = init_chat_model(model, max_tokens=32768)
+
     return create_deep_agent(
         name=ai_agent.agent_name,
-        model=model,
+        model=main_model,
         system_prompt=system_prompt,
         checkpointer=checkpointer,
         subagents=subagents,
