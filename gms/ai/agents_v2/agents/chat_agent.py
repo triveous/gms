@@ -86,13 +86,11 @@ def create_chat_agent(
         system_prompt += f"""
 
 ## Current Page Context
-The user is currently viewing a specific page.
+The user is currently viewing a specific page while messaging to llm.
 The following context:
 
 {context}
 
-### Important Rule
-- When the user uses relative or referential keywords such as "this", "that", "it", "these", "those", "here", "current", or "the grant/project/quarter", always resolve them against the context above. For example, "What is the total budget of the grant?" refers to the grant mentioned in the context.
 """
 
     # Build sub-agents from the AI Agent's agents child table
