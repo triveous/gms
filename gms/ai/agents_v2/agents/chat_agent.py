@@ -86,8 +86,8 @@ def create_chat_agent(
         system_prompt += f"""
 
 ## Current Page Context
-The user is currently viewing a specific page. Answer questions ONLY within the scope of this context.
-Do NOT answer questions unrelated to the following context:
+The user is currently viewing a specific page.
+The following context:
 
 {context}
 
