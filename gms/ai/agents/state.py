@@ -2,14 +2,24 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
 
+import frappe
 from frappe.model.document import Document
 from pydantic import BaseModel, Field
 from pydantic_ai.ui.vercel_ai.response_types import DataChunk
 
 from gms.ai.agents.ui import CustomUIEventSender
-from gms.ai.kb.knowledge_base import KnowledgeBase
+from gms.ai.kb.kb import Knowledge
 import uuid
 from pydantic import TypeAdapter
+
+
+def _default_knowledge() -> Knowledge:
+    ai_settings = frappe.get_single("AI Settings")
+    return Knowledge(
+        uri=ai_settings.milvus_db_url,
+        token=ai_settings.milvus_db_token or "",
+        collection_name=ai_settings.milvus_kb_collection or "documents",
+    )
 
 
 class Todo(BaseModel):
@@ -39,7 +49,7 @@ class AgentState:
     agent_conf: Document
     events: CustomUIEventSender
 
-    kb: KnowledgeBase = field(default_factory=KnowledgeBase)
+    kb: Knowledge = field(default_factory=_default_knowledge)
     planning: PlanningState = field(default_factory=PlanningState)
     thinking: ThinkingState = field(default_factory=ThinkingState)
 
@@ -259,7 +269,7 @@ class AgentContext:
 
     events: CustomUIEventSender
 
-    kb: KnowledgeBase = field(default_factory=KnowledgeBase)
+    kb: Knowledge = field(default_factory=_default_knowledge)
     planning: PlanningState = field(default_factory=PlanningState)
     thinking: ThinkingState = field(default_factory=ThinkingState)
 

@@ -1,8 +1,8 @@
 import frappe
 from frappe.utils import now
 from gms.ai.doctype.ai_document.ai_document import AIDocument
-from gms.ai.kb.docling import DoclingIngestionManager
-from gms.ai.kb.knowledge_base import KnowledgeBase
+from gms.ai.kb.kb import Knowledge
+from gms.ai.kb.pdf_ingestion import PDFIngestionManager
 
 
 def after_insert(doc: AIDocument, method):
@@ -65,7 +65,6 @@ def index_ai_document(ai_document_id: str, forced: bool):
 
     file_id = ai_document.file
     file = frappe.get_doc("File", ai_document.file)
-
     def process():
         doc_meta = {"file_id": file_id, "ai_document_id": ai_document_id}
         if file.file_type != "PDF":
@@ -98,8 +97,18 @@ def index_ai_document(ai_document_id: str, forced: bool):
             doc_meta["grant_id"] = grant_id
 
         frappe.log("Ingesting")
-        DoclingIngestionManager().request_docling_document(
-            original_file=file, ai_document=ai_document, doc_meta=doc_meta
+        ingestion_manager = PDFIngestionManager()
+        ingestion_manager.delete_existing_chunks(
+            ai_document_id=ai_document_id,
+            file_id=file_id,
+        )
+        inserted_ids = ingestion_manager.ingest_pdf(
+            original_file=file,
+            ai_document=ai_document,
+            doc_meta=doc_meta,
+        )
+        frappe.log(
+            f"Indexed {len(inserted_ids)} chunks for AI Document {ai_document_id}"
         )
         frappe.log("Ingested")
         return True, None
@@ -134,8 +143,13 @@ def index_ai_document(ai_document_id: str, forced: bool):
 
 
 def remove_from_index(ai_document_id: str, file_id: str):
-    kb = KnowledgeBase()
-    kb.remove_documents(
-        expr=f'ai_document_id == "{ai_document_id}" or file_id == "{file_id}"',
+    ai_settings = frappe.get_single("AI Settings")
+    kb = Knowledge(
+        uri=ai_settings.milvus_db_url,
+        token=ai_settings.milvus_db_token or "",
+        collection_name=ai_settings.milvus_kb_collection or "documents",
+    )
+    kb.delete_documents_by_expression(
+        expression=f'ai_document_id == "{ai_document_id}" or file_id == "{file_id}"',
     )
     frappe.log("Unindexed")

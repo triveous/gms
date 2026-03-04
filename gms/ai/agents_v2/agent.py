@@ -1,13 +1,12 @@
 import queue
 from typing import Any
 
+import frappe
 from deepagents import create_deep_agent
 from langchain.agents.middleware.types import AgentState
 from langchain_core.messages import HumanMessage, AIMessageChunk, ToolMessage
 from langchain.tools import ToolRuntime
 from langchain_core.runnables import RunnableConfig
-from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
-from langchain_milvus import BM25BuiltInFunction, Milvus
 from langgraph.config import get_stream_writer
 from langgraph.types import Command
 from pydantic_ai.ui.vercel_ai.response_types import (
@@ -22,6 +21,8 @@ from pydantic_ai.ui.vercel_ai.response_types import (
 )
 from typing import TypedDict
 import asyncio
+
+from gms.ai.kb.kb import Knowledge
 
 
 class QueryKBStep(TypedDict):
@@ -107,35 +108,19 @@ class VercelUIMessenger:
         return self.queue.get()
 
 
-milvus = dense_index_param = {"metric_type": "COSINE", "index_type": "HNSW"}
-sparse_index_param = {"metric_type": "BM25", "index_type": "AUTOINDEX"}
+_knowledge: Knowledge | None = None
 
-# NOTE: This is deprecated - use AgentRunner which loads credentials from AI Settings
-# Keeping for reference only - DO NOT USE directly
-milvus = Milvus(
-    auto_id=True,
-    embedding_function=GoogleGenerativeAIEmbeddings(
-        model="gemini-embedding-001",
-        task_type="RETRIEVAL_QUERY",
-        output_dimensionality=3072,
-    ),
-    collection_name="documents",
-    builtin_function=BM25BuiltInFunction(),
-    vector_field=["dense", "sparse"],
-    enable_dynamic_field=True,
-    connection_args={
-        "uri": "",
-        "token": "",
-    },
-    index_params=[dense_index_param, sparse_index_param],
-    drop_old=False,
-)
 
-retriever = milvus.as_retriever(
-    search_type="similarity",
-    ranker_type="rrf",
-    ranker_params={"k": 20},
-)
+def _get_knowledge() -> Knowledge:
+    global _knowledge
+    if _knowledge is None:
+        settings = frappe.get_single("AI Settings")
+        _knowledge = Knowledge(
+            uri=settings.milvus_db_url,
+            token=settings.milvus_db_token or "",
+            collection_name=settings.milvus_kb_collection or "documents",
+        )
+    return _knowledge
 
 
 def notify_search_query(query: list[str], runtime: ToolRuntime):
@@ -174,11 +159,21 @@ async def read_knowledge_base(query: list[str], runtime: ToolRuntime):
     :return: The retrieved chunk of content from document
     """
 
-    nested_doc = await asyncio.gather(*[retriever.ainvoke(q) for q in query])
-    documents = [doc for d in nested_doc for doc in d]
-    doc_sources = [str(d.metadata.get("file_name", "Default")) for d in documents]
-    content = "\n".join([f"<content>{doc.page_content}</content>" for doc in documents])
-    if len(documents) == 0:
+    knowledge = _get_knowledge()
+    nested_results = await asyncio.gather(
+        *[
+            knowledge.asearch(
+                q,
+                limit=20,
+                task_type="QUESTION_ANSWERING",
+                output_fields=["text", "*"],
+            )
+            for q in query
+        ]
+    )
+    results = [result for result_list in nested_results for result in result_list]
+    content = "\n".join([f"<content>{result.text}</content>" for result in results])
+    if len(results) == 0:
         return "Not content found for this. Try different query"
     return content
 

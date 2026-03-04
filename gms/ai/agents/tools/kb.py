@@ -1,10 +1,10 @@
 import asyncio
 
 import frappe
-from langchain_core.documents.base import Document
 from pydantic_ai import ModelRetry, RunContext
 
 from gms.ai.agents.state import AgentContext
+from gms.ai.kb.kb import SearchResult
 
 
 def query_filter_for_grant():
@@ -27,28 +27,36 @@ async def perform_search(ctx: RunContext[AgentContext], query: list[str], k: int
     kb = ctx.deps.kb
     expr = query_filter_for_grant()
 
-    tasks = [kb.retrieve_raw(q, k=k, expr=expr) for q in query]
-    query_documents = await asyncio.gather(*tasks)
-    unique_documents = []
-    unique_ids = set()
+    tasks = [
+        kb.asearch(
+            q,
+            limit=k,
+            task_type="QUESTION_ANSWERING",
+            filter_expr=expr,
+            output_fields=["text", "*"],
+        )
+        for q in query
+    ]
+    query_results = await asyncio.gather(*tasks)
+    unique_results: list[SearchResult] = []
+    unique_ids: set[str] = set()
 
-    for search_document in query_documents:
-        for d in search_document:
-            document: Document = d
-            id = document.metadata["pk"]
-            if id not in unique_ids:
-                unique_ids.add(id)
-                unique_documents.append(document)
+    for search_result in query_results:
+        for result in search_result:
+            if result.id in unique_ids:
+                continue
+            unique_ids.add(result.id)
+            unique_results.append(result)
 
-    print(f"Result Count {len(unique_documents)}")
-    return unique_documents
+    print(f"Result Count {len(unique_results)}")
+    return unique_results
 
 
-def to_document_content(doc: Document):
+def to_document_content(result: SearchResult):
     return f"""\
             <document>
-                <content>{doc.page_content}</content>
-                <content>{doc.metadata}</content>
+                <content>{result.text}</content>
+                <content>{result.metadata}</content>
             </document>
             """
 
@@ -72,7 +80,10 @@ async def read_knowledge_base(ctx: RunContext[AgentContext], query: list[str]):
 
     # Notify reading sources
     await ctx.deps.add_browse_kb_result_step(
-        sources=[f"{d.metadata['filename']}#{d.metadata['page_no']}" for d in documents]
+        sources=[
+            f"{d.metadata.get('filename', 'unknown')}#{d.metadata.get('page_no', '')}"
+            for d in documents
+        ]
     )
 
     # Prepare content to be shared as tool response

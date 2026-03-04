@@ -14,7 +14,7 @@ from gms.ai.agents_v2.utils import get_ui_stream_writer
 from gms.ai.kb.kb import Knowledge
 
 READ_KNOWLEDGE_BASE_TOOL_DESCRIPTION = """Reads and retrieves relevant content from the knowledge base based on the given query.
-Search for relevant documents in the knowledge base based on the given query.
+Search for relevant documents in the knowledge base based on the given query. Maximum 3 queries can be provided at once. 
 """
 
 
