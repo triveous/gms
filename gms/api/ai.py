@@ -9,6 +9,7 @@ runner = AgentRunner()
 def ask():
     thread_id = frappe.form_dict.get("thread_id")
     query = frappe.form_dict.get("query")
+    context = frappe.form_dict.get("context")
     if not query:
         frappe.response["http_status_code"] = 400
         frappe.throw("Missing Query")
@@ -17,7 +18,7 @@ def ask():
     ai_agent_id = frappe.get_cached_value("GMS Settings", "GMS Settings", "rag_agent")
 
     return Response(
-        runner.run_ui_mode(ai_agent_id, thread_id, query),
+        runner.run_ui_mode(ai_agent_id, thread_id, query, context),
         status=200,
         headers={
             "Content-Type": "text/event-stream",

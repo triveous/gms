@@ -15,6 +15,7 @@ import NotFound from '@/pages/NotFound';
 import { formatIndianAmount } from '@/utils/formatters';
 import { TrendingBadge } from '@/components/TrendingBadge';
 import { formatTextWithNumber } from '@/utils/textFormatters';
+import { usePageContext } from '@/contexts/PageContext';
 
 interface BudgetUtilizationItem {
     quarter: string;
@@ -107,6 +108,7 @@ export default function Project() {
     const [selectedPeriod, setSelectedPeriod] = useState<string>('');
     const [comparisonQuarter, setComparisonQuarter] = useState<string>('');
     const [overallYearUtilization, setOverallUtilization] = useState(0);
+    const { setPageContext } = usePageContext();
     const { data: projectResponse, error: projectError, isLoading: isLoadingProject } = useFrappeGetCall<{ message: { project: ProjectDetails } }>('gms.api.project.get_project_details', {
         project_id: projectId
     });
@@ -185,6 +187,16 @@ export default function Project() {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
+
+    // Push page context for chat whenever project or quarter changes
+    useEffect(() => {
+        if (!projectData?.title) return;
+        setPageContext({
+            page: 'project_details',
+            projectTitle: projectData.title,
+            selectedQuarter: selectedPeriod,
+        });
+    }, [projectData, selectedPeriod]);
 
 
 
@@ -552,7 +564,7 @@ export default function Project() {
                                 {impactTrend && (
                                     <div className="flex items-center w-3 gap-2">
                                         <TrendingBadge change={impactTrend.change} isPositive={impactTrend.isPositive} />
-                                    </div>  
+                                    </div>
                                 )}
                             </div>
 
@@ -581,7 +593,7 @@ export default function Project() {
                 contentClassName="flex flex-col gap-6"
             >
                 <div className="p-6 pl-0 bg-card border border-border rounded">
-                    <BudgetUtilizationChart budgetUtilization={projectData.budget_utilization}/>
+                    <BudgetUtilizationChart budgetUtilization={projectData.budget_utilization} />
                 </div>
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-4 gap-4">

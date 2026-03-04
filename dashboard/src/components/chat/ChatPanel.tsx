@@ -10,6 +10,7 @@ import { useChatScroll } from './hooks/useChatScroll';
 import { useChatHistory } from './hooks/useChatHistory';
 import type { QuickQuestion } from '@/types/chat';
 import ChatLayout from './ChatLayout';
+import { usePageContext, buildPageContextString } from '@/contexts/PageContext';
 
 interface ChatPanelProps {
     isDrawerMode?: boolean;
@@ -17,6 +18,7 @@ interface ChatPanelProps {
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
     const { isChatOpen, closeChat, pendingMessage, setPendingMessage } = useChatContext();
+    const { pageContext } = usePageContext();
     const { createDoc } = useFrappeCreateDoc();
     const { deleteDoc } = useFrappeDeleteDoc();
     const [input, setInput] = useState('');
@@ -47,7 +49,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
             },
             prepareSendMessagesRequest({ messages, id }) {
                 const textPart = messages[messages.length - 1].parts?.find(p => p.type === "text")
-                return { body: { query: textPart?.text, thread_id: id } };
+                const contextString = buildPageContextString(pageContext);
+                return { body: { query: textPart?.text, thread_id: id, context: contextString || undefined } };
             },
         }) as any,
         async onFinish(options: any) {

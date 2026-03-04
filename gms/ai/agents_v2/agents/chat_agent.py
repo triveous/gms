@@ -65,6 +65,7 @@ def create_chat_agent(
     ai_agent_id: str,
     knowledge: Knowledge,
     checkpointer: BaseCheckpointSaver | None = None,
+    context: str = ""
 ):
     """Create a chat agent with knowledge base search capability.
 
@@ -83,6 +84,18 @@ def create_chat_agent(
     system_prompt: str = ai_agent.instruction or DEFAULT_SYSTEM_PROMPT
     # Append current time to system prompt
     system_prompt += f"\n\nCurrent Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+    # Append page context if provided — scope the agent to answer only within this context
+    if context:
+        system_prompt += f"""
+
+## Current Page Context
+The user is currently viewing a specific page while messaging to llm.
+The following context:
+
+{context}
+
+"""
 
     # Build sub-agents from the AI Agent's agents child table
     subagents = []
