@@ -13,6 +13,7 @@ from typing import Any
 
 import fitz
 import frappe
+import pymupdf.layout
 import pymupdf4llm
 from frappe.core.doctype.file.file import File
 from google import genai
