@@ -104,6 +104,9 @@ def create_chat_agent(
                     knowledge=knowledge,
                     search_limit=sub_ai_agent.kb_search_top_k or 10,
                     search_max_result=sub_ai_agent.kb_search_max_result_count or 50,
+                    search_rrf_k=sub_ai_agent.kb_search_rrf_k or 60,
+                    dense_search_radius=sub_ai_agent.kb_search_dense_search_radius,
+                    dense_search_range_filter=sub_ai_agent.kb_search_dense_search_range_filter,
                 )
             )
 

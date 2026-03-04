@@ -77,6 +77,15 @@ class Knowledge:
         # Ensure collection exists
         self._ensure_collection()
 
+    @staticmethod
+    def _to_optional_float(value: Any) -> float | None:
+        if value is None or value == "":
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
     def _ensure_collection(self):
         """Create collection if it doesn't exist."""
         if self.client.has_collection(self.collection_name):
@@ -206,6 +215,8 @@ class Knowledge:
             "RETRIEVAL_QUERY", "QUESTION_ANSWERING", "FACT_VERIFICATION"
         ] = "RETRIEVAL_QUERY",
         filter_expr: str | None = None,
+        radius: float | None = None,
+        range_filter: float | None = None,
     ) -> list[SearchResult]:
         """Perform hybrid search using dense and sparse vectors with RRF ranking.
 
@@ -219,6 +230,8 @@ class Knowledge:
                 - QUESTION_ANSWERING: For QA use cases
                 - FACT_VERIFICATION: For fact-checking use cases
             filter_expr: Optional Milvus filter expression (e.g., "grant_id IN ['G1','G2']")
+            radius: Optional Milvus dense search radius
+            range_filter: Optional Milvus dense search range_filter
 
         Returns:
             List of SearchResult objects
@@ -229,11 +242,19 @@ class Knowledge:
         # Generate query embedding with the specified task type
         query_embedding = self._embedding_fn.embed_query(query, task_type=task_type)
 
+        dense_search_params: dict[str, Any] = {}
+        radius_value = self._to_optional_float(radius)
+        range_filter_value = self._to_optional_float(range_filter)
+        if radius_value is not None:
+            dense_search_params["radius"] = radius_value
+            if range_filter_value is not None:
+                dense_search_params["range_filter"] = range_filter_value
+
         # Dense search request
         dense_req = AnnSearchRequest(
             data=[query_embedding],
             anns_field="dense",
-            param={"metric_type": "COSINE", "params": {"ef": 100}},
+            param={"metric_type": "COSINE", "params": dense_search_params},
             limit=limit,
             expr=filter_expr,
         )
@@ -270,7 +291,7 @@ class Knowledge:
                 metadata = {k: v for k, v in entity.items() if k != "text"}
                 search_results.append(
                     SearchResult(
-                        id=str(hit.get("pk", "")),
+                        id=str(hit.get("id", "")),
                         text=entity.get("text", ""),
                         metadata=metadata,
                         score=hit.get("distance", 0.0),
@@ -289,6 +310,8 @@ class Knowledge:
             "RETRIEVAL_QUERY", "QUESTION_ANSWERING", "FACT_VERIFICATION"
         ] = "RETRIEVAL_QUERY",
         filter_expr: str | None = None,
+        radius: float | None = None,
+        range_filter: float | None = None,
     ) -> list[SearchResult]:
         """Async version of search. Currently wraps sync version.
 
@@ -296,7 +319,16 @@ class Knowledge:
         """
         # pymilvus doesn't have native async support yet
         # This is a placeholder for future async implementation
-        return self.search(query, limit, rrf_k, output_fields, task_type, filter_expr)
+        return self.search(
+            query=query,
+            limit=limit,
+            rrf_k=rrf_k,
+            output_fields=output_fields,
+            task_type=task_type,
+            filter_expr=filter_expr,
+            radius=radius,
+            range_filter=range_filter,
+        )
 
     def delete_documents(self, ids: list[int]) -> int:
         """Delete documents by their IDs.

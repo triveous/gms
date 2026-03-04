@@ -26,14 +26,21 @@ def query_filter_for_grant():
 async def perform_search(ctx: RunContext[AgentContext], query: list[str], k: int):
     kb = ctx.deps.kb
     expr = query_filter_for_grant()
+    agent_conf = ctx.deps.agent_conf
+    rrf_k = agent_conf.kb_search_rrf_k or 60
+    dense_search_radius = agent_conf.dense_search_radius
+    dense_search_range_filter = agent_conf.dense_search_range_filter
 
     tasks = [
         kb.asearch(
             q,
             limit=k,
+            rrf_k=rrf_k,
             task_type="QUESTION_ANSWERING",
             filter_expr=expr,
             output_fields=["text", "*"],
+            radius=dense_search_radius,
+            range_filter=dense_search_range_filter,
         )
         for q in query
     ]

@@ -34,6 +34,9 @@ class AIAgent(Document):
     kb_search_middleware: bool
     kb_search_top_k: int
     kb_search_max_result_count: int
+    kb_search_rrf_k: int
+    kb_search_dense_search_radius: float
+    kb_search_dense_search_range_filter: float
 
     @property
     def model_setting_dict(self):

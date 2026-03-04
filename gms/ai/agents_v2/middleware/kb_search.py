@@ -110,7 +110,12 @@ OUTPUT_FIELDS = ["text", "ai_document_id", "filename", "page_no"]
 
 
 def create_read_knowledgebase_tool(
-    knowledge: Knowledge, limit: int = 10, max_result: int = 50
+    knowledge: Knowledge,
+    limit: int = 10,
+    max_result: int = 50,
+    rrf_k: int = 60,
+    dense_search_radius: float | None = None,
+    dense_search_range_filter: float | None = None,
 ):
     """Create a knowledge base search tool using the Knowledge class.
 
@@ -118,8 +123,15 @@ def create_read_knowledgebase_tool(
         knowledge: Knowledge instance for searching
         limit: Maximum number of results per query
         max_result: Maximum number of total unique results to return
+        rrf_k: RRF ranking parameter for hybrid retrieval
+        dense_search_radius: Optional dense search radius
+        dense_search_range_filter: Optional dense search range filter
     """
-    print(f"Setting up search limit {limit} max_result {max_result}")
+    print(
+        "Setting up search "
+        f"limit={limit} max_result={max_result} rrf_k={rrf_k} "
+        f"radius={dense_search_radius} range_filter={dense_search_range_filter}"
+    )
 
     def _build_grant_filter(runtime: ToolRuntime) -> str | None:
         """Build Milvus filter expression from data_overview state.
@@ -161,9 +173,12 @@ def create_read_knowledgebase_tool(
             results = await knowledge.asearch(
                 q,
                 limit=limit,
+                rrf_k=rrf_k,
                 task_type="QUESTION_ANSWERING",
                 filter_expr=filter_expr,
                 output_fields=OUTPUT_FIELDS,
+                radius=dense_search_radius,
+                range_filter=dense_search_range_filter,
             )
             all_results.extend(results)
 
@@ -234,9 +249,12 @@ def create_read_knowledgebase_tool(
                     knowledge.search,
                     q,
                     limit=limit,
+                    rrf_k=rrf_k,
                     task_type="QUESTION_ANSWERING",
                     filter_expr=filter_expr,
                     output_fields=OUTPUT_FIELDS,
+                    radius=dense_search_radius,
+                    range_filter=dense_search_range_filter,
                 ): q
                 for q in query
             }
@@ -312,6 +330,9 @@ class KBSearchMiddleware(AgentMiddleware):
         knowledge: Knowledge,
         search_limit: int = 10,
         search_max_result: int = 50,
+        search_rrf_k: int = 60,
+        dense_search_radius: float | None = None,
+        dense_search_range_filter: float | None = None,
     ):
         """Initialize the middleware with a Knowledge instance.
 
@@ -319,9 +340,17 @@ class KBSearchMiddleware(AgentMiddleware):
             knowledge: Knowledge instance (cached externally)
             search_limit: Maximum results per query
             search_max_result: Maximum number of total unique results to return
+            search_rrf_k: RRF ranking parameter for hybrid retrieval
+            dense_search_radius: Optional dense search radius
+            dense_search_range_filter: Optional dense search range filter
         """
         self.knowledge = knowledge
         self.read_knowledge_base = create_read_knowledgebase_tool(
-            knowledge, limit=search_limit, max_result=search_max_result
+            knowledge,
+            limit=search_limit,
+            max_result=search_max_result,
+            rrf_k=search_rrf_k,
+            dense_search_radius=dense_search_radius,
+            dense_search_range_filter=dense_search_range_filter,
         )
         self.tools = [self.read_knowledge_base]
