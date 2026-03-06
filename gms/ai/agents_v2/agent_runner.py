@@ -15,7 +15,7 @@ import traceback
 from typing import Any, ClassVar, Generator
 
 import frappe
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessageChunk, HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from gms.ai.agents_v2.agents.chat_agent import create_chat_agent
@@ -132,6 +132,64 @@ class AgentRunner:
         checkpointer = FrappeBufferedCheckpointer()
         checkpointer.load_from_frappe(config)
 
+        handler = VercelUIStreamHandler(include_types=["text", "data", "tool"])
+
+        # --- Upload keyword bypass ---
+        # If the user message contains "upload", skip the LLM entirely and
+        # directly trigger the file upload flow using existing logic.
+        if "upload" in query.lower():
+            yield from handler.start()
+            try:
+                from gms.permission import get_organization_user
+
+                org_user = get_organization_user(frappe.session.user)
+                if not org_user:
+                    msg = "You are not associated with any organization. Only members of a Grantee organization are allowed to upload files."
+                    yield from handler.process_event("messages", (AIMessageChunk(content=msg), {}))
+                else:
+                    is_grantee = frappe.db.exists(
+                        "Grant Contributor",
+                        {
+                            "organization": org_user.get("organization"),
+                            "contribution_type": "Grantee",
+                        },
+                    )
+                    if not is_grantee:
+                        msg = "You are not allowed to access this feature. Only members of a Grantee organization can upload files."
+                        yield from handler.process_event("messages", (AIMessageChunk(content=msg), {}))
+                    else:
+                        doc = frappe.new_doc("Grant Document Extraction Task")
+                        doc.status = "Submitting"
+                        doc.reviewed_by = frappe.session.user
+                        doc.insert(ignore_permissions=True)
+                        frappe.db.commit()
+
+                        task_id = doc.name
+
+                        grantee_contributor = frappe.db.get_value(
+                            "Grant Contributor",
+                            {
+                                "organization": org_user.get("organization"),
+                                "contribution_type": "Grantee",
+                            },
+                            ["parent"],
+                            as_dict=True,
+                        )
+                        grant_id = grantee_contributor.get("parent") if grantee_contributor else None
+
+                        yield from handler.write_task({"id": task_id, "status": "Submitting", "grant_id": grant_id})
+            except Exception as e:
+                traceback.print_exception(e)
+                yield handler.encode_error(str(e))
+            finally:
+                if thread:
+                    thread.save()
+                    frappe.db.commit()
+                checkpointer.flush_to_frappe()
+                yield from handler.finish()
+            return
+        # --- End upload keyword bypass ---
+
         agent = create_chat_agent(
             ai_agent_id=ai_agent_id,
             knowledge=self.knowledge,
@@ -139,8 +197,6 @@ class AgentRunner:
             context=context
         )
         state = {"messages": [HumanMessage(content=query)]}
-
-        handler = VercelUIStreamHandler(include_types=["text", "data", "tool"])
 
         # Start stream
         yield from handler.start()
