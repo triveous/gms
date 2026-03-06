@@ -171,71 +171,52 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
         }
     }, [isChatOpen, pendingMessage, setPendingMessage]);
 
-    // Drawer mode (traditional fixed overlay)
-    if (isDrawerMode) {
-        return (
-            <>
-                {isChatOpen && (
-                    <div
-                        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 xl:hidden"
-                        onClick={closeChat}
-                    />
-                )}
-
-                <div
-                    className={cn(
-                        'fixed top-0 right-0 h-screen min-w-[447px] bg-background transition-transform duration-300 ease-in-out z-50',
-                        isChatOpen ? 'translate-x-0' : 'translate-x-full'
-                    )}
-                >
-                    <ChatLayout
-                        isDrawerMode
-                        onNewChat={handleNewChat}
-                        onClose={closeChat}
-                        conversationList={conversationListData || []}
-                        onSelectConversation={handleConversationClick}
-                        threadId={currentConversaionId}
-                        messages={messages}
-                        status={status}
-                        error={error}
-                        quickQuestions={quickQuestions}
-                        handleSend={handleSend}
-                        input={input}
-                        setInput={setInput}
-                        isAssistantResponding={!!isAssistantResponding}
-                        hasTextPart={!!hasTextPart}
-                        showBeforeThinking={!!showBeforeThinking}
-                        showThinkingActive={!!showThinkingActive}
-                        hasDataBlockPart={!!hasDataBlockPart}
-                    />
-                </div>
-            </>
-        );
-    }
-
-    // Panel mode (resizable panel)
+    // Single unified return — no conditional branching.
+    // ChatLayout stays at the same position in the React tree regardless of mode,
+    // so internal state (messages, scroll position, etc.) is preserved on resize.
     return (
-        <div className="h-full w-full bg-background border-l border-border">
-            <ChatLayout
-                onNewChat={handleNewChat}
-                onClose={closeChat}
-                conversationList={conversationListData || []}
-                onSelectConversation={handleConversationClick}
-                threadId={currentConversaionId}
-                messages={messages}
-                status={status}
-                error={error}
-                quickQuestions={quickQuestions}
-                handleSend={handleSend}
-                input={input}
-                setInput={setInput}
-                isAssistantResponding={!!isAssistantResponding}
-                hasTextPart={!!hasTextPart}
-                showBeforeThinking={!!showBeforeThinking}
-                showThinkingActive={!!showThinkingActive}
-                hasDataBlockPart={!!hasDataBlockPart}
-            />
-        </div>
+        <>
+            {/* Drawer-mode backdrop overlay — only rendered in drawer mode */}
+            {isDrawerMode && isChatOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-40 xl:hidden"
+                    onClick={closeChat}
+                />
+            )}
+
+            {/* Container switches between drawer (fixed slide-in) and panel (static fill) styles */}
+            <div
+                className={cn(
+                    isDrawerMode
+                        ? cn(
+                            'fixed top-0 right-0 h-screen min-w-[447px] bg-background transition-transform duration-300 ease-in-out z-50',
+                            isChatOpen ? 'translate-x-0' : 'translate-x-full'
+                        )
+                        : 'h-full w-full bg-background border-l border-border'
+                )}
+            >
+                <ChatLayout
+                    isDrawerMode={isDrawerMode}
+                    onNewChat={handleNewChat}
+                    onClose={closeChat}
+                    conversationList={conversationListData || []}
+                    onSelectConversation={handleConversationClick}
+                    threadId={currentConversaionId}
+                    messages={messages}
+                    status={status}
+                    error={error}
+                    quickQuestions={quickQuestions}
+                    handleSend={handleSend}
+                    input={input}
+                    setInput={setInput}
+                    isAssistantResponding={!!isAssistantResponding}
+                    hasTextPart={!!hasTextPart}
+                    showBeforeThinking={!!showBeforeThinking}
+                    showThinkingActive={!!showThinkingActive}
+                    hasDataBlockPart={!!hasDataBlockPart}
+                />
+            </div>
+        </>
     );
 };
 
