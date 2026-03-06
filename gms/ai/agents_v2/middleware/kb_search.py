@@ -109,9 +109,6 @@ def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBSte
 OUTPUT_FIELDS = ["text", "ai_document_id", "filename", "page_no"]
 
 
-
-
-
 def create_read_knowledgebase_tool(
     knowledge: Knowledge, limit: int = 10, max_result: int = 50
 ):
@@ -199,7 +196,6 @@ def create_read_knowledgebase_tool(
             ]
         )
 
-
         print(f"Unique: {unique_results} Total: {all_results}")
         print(
             f"Total documents returned: {len(unique_results)} (from {len(all_results)} results)"
@@ -279,8 +275,6 @@ def create_read_knowledgebase_tool(
                 for r in unique_results
             ]
         )
-
-
         print(f"Unique: {unique_results} Total: {all_results}")
         print(
             f"Total documents returned: {len(unique_results)} (from {len(all_results)} results)"
