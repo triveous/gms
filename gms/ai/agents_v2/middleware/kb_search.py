@@ -108,33 +108,8 @@ def create_browse_step(results: list, goal_id: str | None = None) -> BrowseKBSte
 
 OUTPUT_FIELDS = ["text", "ai_document_id", "filename", "page_no"]
 
-# ~10K tokens at ~4 chars/token — keeps ToolMessage well within safe context budget.
-# At 50 results × 2048 token chunks the raw payload can reach ~100K tokens.
-MAX_TOOL_OUTPUT_CHARS = 40_000
 
 
-def _truncate_tool_content(content: str) -> str:
-    """Trim tool output to MAX_TOOL_OUTPUT_CHARS, cutting at a clean document boundary.
-
-    Cutting at a </document> tag preserves XML structure so the LLM can still
-    parse every included chunk correctly. A notice is appended so the model
-    knows the corpus was trimmed and can recommend a more targeted query.
-    """
-    if len(content) <= MAX_TOOL_OUTPUT_CHARS:
-        return content
-
-    truncated = content[:MAX_TOOL_OUTPUT_CHARS]
-    # Prefer cutting at the last complete document boundary
-    last_close = truncated.rfind("</document>")
-    if last_close > 0:
-        truncated = truncated[: last_close + len("</document>")]
-
-    return (
-        truncated
-        + "\n\n<!-- RESULTS TRUNCATED: knowledge base returned more content than the "
-        "context budget allows. Refine the query to target a specific grant or project "
-        "for complete information. -->"
-    )
 
 
 def create_read_knowledgebase_tool(
@@ -224,8 +199,6 @@ def create_read_knowledgebase_tool(
             ]
         )
 
-        # Apply hard cap to prevent context explosion on large queries
-        content = _truncate_tool_content(content)
 
         print(f"Unique: {unique_results} Total: {all_results}")
         print(
@@ -307,8 +280,6 @@ def create_read_knowledgebase_tool(
             ]
         )
 
-        # Apply hard cap to prevent context explosion on large queries
-        content = _truncate_tool_content(content)
 
         print(f"Unique: {unique_results} Total: {all_results}")
         print(
