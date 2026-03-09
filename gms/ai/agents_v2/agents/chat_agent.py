@@ -22,6 +22,7 @@ from gms.ai.agents_v2.middleware import (
     StepsMiddleware,
     TaskMiddleware,
     TitleGenerationMiddleware,
+    UploadKeywordBypassMiddleware,
 )
 from gms.ai.agents_v2.vercel_ui.converter import convert_messages_to_ui_messages
 from gms.ai.agents_v2.vercel_ui.stream_handler import VercelUIStreamHandler
@@ -152,6 +153,7 @@ The following context:
     
     main_middleware.append(FileUploadMiddleware())  # Adds request_file_upload tool
     main_middleware.append(TaskMiddleware())        # Always register – data-task must always persist
+    main_middleware.append(UploadKeywordBypassMiddleware()) # Bypasses agent on 'upload' keyword
     
     if ai_agent.title_middleware:
         main_middleware.append(
