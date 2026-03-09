@@ -29,28 +29,16 @@ const ResizableLayout: React.FC = () => {
     }, []);
 
 
-    
-    // If on small screen or chat is closed, show traditional layout
-    if (!isLargeScreen || !isChatOpen) {
-        return (
-            <>
-                <div className="min-h-screen w-full">
-                    <Outlet />
-                </div>
-                <ChatPanel isDrawerMode={true} />
-            </>
-        );
-    }
-
     // On large screen with chat open - use Shadcn Resizable
+    // We always render the group so ChatPanel state is not destroyed on mobile resize
     return (
-        <ResizablePanelGroup 
-            orientation="horizontal" 
+        <ResizablePanelGroup
+            orientation="horizontal"
             className="h-screen w-screen"
         >
             {/* Main Dashboard Panel - Remaining Space */}
-            <ResizablePanel 
-                defaultSize={windowWidth-DEFAULT_CHAT_WIDTH_PX} 
+            <ResizablePanel
+                defaultSize={windowWidth - DEFAULT_CHAT_WIDTH_PX}
                 className="h-screen overflow-auto remove-scrollbar"
                 minSize={30} // Prevent dashboard from becoming too small
             >
@@ -59,14 +47,15 @@ const ResizableLayout: React.FC = () => {
 
 
             {/* Chat Panel - Fixed Pixel Width (converted to %) */}
-            <ResizablePanel 
-                defaultSize={isChatOpen? DEFAULT_CHAT_WIDTH_PX: 0}
-                minSize={isChatOpen? MIN_CHAT_WIDTH_PX: 0}
-                maxSize={isChatOpen? MAX_CHAT_WIDTH_PX: 0}
+            {/* Collapses to 0-width on mobile or when closed */}
+            <ResizablePanel
+                defaultSize={(isLargeScreen && isChatOpen) ? DEFAULT_CHAT_WIDTH_PX : 0}
+                minSize={(isLargeScreen && isChatOpen) ? MIN_CHAT_WIDTH_PX : 0}
+                maxSize={(isLargeScreen && isChatOpen) ? MAX_CHAT_WIDTH_PX : 0}
                 className="h-screen relative"
             >
-                <div className="h-screen absolute sticky top-0">
-                    <ChatPanel isDrawerMode={false} />
+                <div className="h-full w-full">
+                    <ChatPanel isDrawerMode={!isLargeScreen} />
                 </div>
             </ResizablePanel>
         </ResizablePanelGroup>
