@@ -32,6 +32,7 @@ from gms.ai.agents_v2.middleware.task import (
     TASK_PARTS_KEY,
     TaskMiddleware,
 )
+from gms.ai.agents_v2.middleware.upload_bypass import UploadKeywordBypassMiddleware
 
 __all__ = [
     # Goal
@@ -62,4 +63,5 @@ __all__ = [
     # Task
     "TASK_PARTS_KEY",
     "TaskMiddleware",
+    "UploadKeywordBypassMiddleware",
 ]

@@ -15,7 +15,7 @@ import traceback
 from typing import Any, ClassVar, Generator
 
 import frappe
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AIMessageChunk, HumanMessage
 from langchain_core.runnables import RunnableConfig
 
 from gms.ai.agents_v2.agents.chat_agent import create_chat_agent
@@ -132,6 +132,10 @@ class AgentRunner:
         checkpointer = FrappeBufferedCheckpointer()
         checkpointer.load_from_frappe(config)
 
+        handler = VercelUIStreamHandler(include_types=["text", "data", "tool"])
+
+
+
         agent = create_chat_agent(
             ai_agent_id=ai_agent_id,
             knowledge=self.knowledge,
@@ -139,8 +143,6 @@ class AgentRunner:
             context=context
         )
         state = {"messages": [HumanMessage(content=query)]}
-
-        handler = VercelUIStreamHandler(include_types=["text", "data", "tool"])
 
         # Start stream
         yield from handler.start()
