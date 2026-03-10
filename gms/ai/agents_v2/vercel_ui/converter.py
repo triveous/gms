@@ -389,11 +389,15 @@ class LangGraphUIMessageConverter:
         """Convert a 'custom' stream event (data chunks)."""
         if isinstance(data, BaseChunk):
             # Already a Vercel chunk, pass through if type matches
-            # Note: BaseChunk doesn't always have a clear type mapping, so we assume "data"
-            # unless it's a specific chunk type we can check.
             if self._should_include("data"):
                 yield data
         elif isinstance(data, dict):
+            # Handle manual text events (e.g. from middleware)
+            if data.get("type") == "text":
+                if self._should_include("text"):
+                    yield from self._handle_text_block(self.message_id, data)
+                return
+
             # Filter check for data dicts
             if not self._should_include("data"):
                 return
