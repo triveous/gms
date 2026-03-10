@@ -599,18 +599,81 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
     Returns:
         List of data-task part dicts, or empty list if none.
     """
+    import frappe
+    import json
+
     parts = []
 
     # Read tasks_parts format
     tasks_parts = message.additional_kwargs.get(TASK_PARTS_KEY, [])
     if tasks_parts:
-        # Convert tasks to data parts format for UI
         for task in tasks_parts:
+            task_id = task.get("id", "")
+            task_data = dict(task)
+
+            # Look up task details from DB to align with submit_file.py format
+            if task_id:
+                try:
+                    fields = [
+                        "status", "name", "milestone_type", "grant",
+                        "period_start", "period_end", "raw_extraction_json",
+                        "extraction_error", "matched_grant", "uploaded_file"
+                    ]
+                    db_doc = frappe.db.get_value(
+                        "Grant Document Extraction Task", task_id, fields, as_dict=True
+                    )
+                    
+                    if db_doc:
+                        # 1. Core status
+                        if db_doc.get("status"):
+                            task_data["status"] = db_doc["status"]
+                        
+                        # 2. File details
+                        file_id = db_doc.get("uploaded_file")
+                        if file_id:
+                            task_data["file_id"] = file_id
+                            filename = frappe.db.get_value("File", file_id, "file_name")
+                            if filename:
+                                task_data["filename"] = filename
+
+                        # 3. LLM Response (Classification Results)
+                        raw_json = db_doc.get("raw_extraction_json")
+                        if isinstance(raw_json, str) and raw_json:
+                            try:
+                                task_data["llm_response"] = json.loads(raw_json)
+                            except Exception:
+                                pass
+                        
+                        # 4. Error states
+                        err_json = db_doc.get("extraction_error")
+                        if isinstance(err_json, str) and err_json:
+                            try:
+                                err_data = json.loads(err_json)
+                                if err_data:
+                                    task_data["isError"] = True
+                                    task_data["errorMessage"] = err_data.get("errorMessage")
+                            except Exception:
+                                pass
+                        
+                        # If the llm_response itself indicates an error
+                        llm_resp = task_data.get("llm_response")
+                        if isinstance(llm_resp, dict) and llm_resp.get("isError"):
+                            task_data["isError"] = True
+                            task_data["errorMessage"] = llm_resp.get("errorMessage")
+                        
+                        # 5. Other metadata fields
+                        for f in ["name", "milestone_type", "grant", "period_start", "period_end", "matched_grant"]:
+                            if db_doc.get(f):
+                                task_data[f] = db_doc[f]
+
+                except Exception:
+                    pass
+
             parts.append(
                 {
                     "type": "data-task",
-                    "id": task.get("id", ""),
-                    "data": task,
+                    "id": task_id,
+                    "data": task_data,
                 }
             )
 
