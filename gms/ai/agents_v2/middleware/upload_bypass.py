@@ -102,8 +102,11 @@ class UploadKeywordBypassMiddleware(AgentMiddleware):
             # Stream task event to UI
             writer.write_task({"id": task_id, "status": "Submitting", "grant_id": grant_id})
 
-            # Return an empty AIMessage without tool calls so the agent completes
-            return AIMessage(content="")
+            # Return AIMessage with task ID so history reload can track it
+            return AIMessage(
+                content="",
+                additional_kwargs={"tasks_parts": [{"id": task_id, "status": "Submitting"}]}
+            )
 
         except Exception as e:
             traceback.print_exception(e)
