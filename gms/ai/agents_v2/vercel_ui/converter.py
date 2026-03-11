@@ -619,7 +619,7 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
             if task_id:
                 try:
                     fields = [
-                        "status", "name", "milestone_type", "grant",
+                        "status", "name", "milestone_type",
                         "period_start", "period_end", "raw_extraction_json",
                         "extraction_error", "matched_grant", "uploaded_file"
                     ]
@@ -670,8 +670,8 @@ def get_task_parts(message: BaseMessage) -> list[dict]:
                             if db_doc.get(f):
                                 task_data[f] = db_doc[f]
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    frappe.log_error(f"get_task_parts DB lookup failed for task_id={task_id}: {e}")
 
             parts.append(
                 {
