@@ -31,6 +31,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isDrawerMode = true }) => {
 
     const { data: conversationListData, mutate: refetchConversationList } = useFrappeGetDocList<ConversationType>('AI Thread', {
         fields: ['name', 'title'],
+        limit: 0,
         orderBy: {
             field: 'creation',
             order: 'desc'

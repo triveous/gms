@@ -61,7 +61,7 @@ def fy_start_and_quarter_end(qval):
 
 
 @frappe.whitelist()
-def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_id=None, sort_by=None):
+def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_ids=None, sort_by=None):
 	"""
 	Separate API endpoint to fetch partners for grant milestones in a specific quarter with pagination.
 	
@@ -70,7 +70,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	- quarter_value: e.g., "Q2-2025-2026" or "2025-2026" (for yearly)
 	- page: Page number (1-indexed)
 	- page_size: Records per page
-	- project_id: (optional) Filter by specific project ID
+	- project_ids: (optional) Filter by specific project IDs
 	- sort_by: (optional) Sort by field. Options: "title" (sorts by partner title)
 	
 	Returns: {partners_map, all_projects, total_count, page, page_size, total_pages}
@@ -85,20 +85,38 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	# ----------------------------
 	# STEP 1: Fetch Projects
 	# ----------------------------
-	project_filters = {"grant": grant_id}
-	if project_id:
-		project_filters["name"] = project_id
-	
-	projects = frappe.get_list(
+	all_grant_projects = frappe.get_list(
 		"Grant Project",
 		fields=["name", "title"],
-		filters=project_filters,
+		filters={"grant": grant_id},
 	)
+	project_map = {p["name"]: p["title"] for p in all_grant_projects}
+	all_projects = [{"id": p["name"], "name": p["title"]} for p in all_grant_projects]
+	
+	if project_ids:
+		if isinstance(project_ids, str):
+			try:
+				import json
+				parsed = json.loads(project_ids)
+				if isinstance(parsed, list):
+					target_project_ids = [str(x).strip() for x in parsed]
+				else:
+					target_project_ids = [x.strip() for x in project_ids.split(",") if x.strip()]
+			except Exception:
+				target_project_ids = [x.strip() for x in project_ids.split(",") if x.strip()]
+		elif isinstance(project_ids, list):
+			target_project_ids = [str(x).strip() for x in project_ids]
+		else:
+			target_project_ids = []
+			
+		projects = [p for p in all_grant_projects if p["name"] in target_project_ids]
+	else:
+		projects = all_grant_projects
+		
 	project_ids = [p["name"] for p in projects]
-	project_map = {p["name"]: p["title"] for p in projects}
 	
 	if not project_ids:
-		return {"partners_map": {}, "all_projects": [], "total_count": 0, "page": page, "page_size": page_size, "total_pages": 0}
+		return {"partners_map": {}, "all_projects": all_projects, "total_count": 0, "page": page, "page_size": page_size, "total_pages": 0}
 	
 	# ----------------------------
 	# STEP 2: Fetch Milestones for Quarter
@@ -164,7 +182,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 				filtered_milestone_ids.append(m["name"])
 	
 	if not filtered_milestone_ids:
-		return {"partners_map": {}, "all_projects": [], "total_count": 0, "page": page, "page_size": page_size, "total_pages": 0}
+		return {"partners_map": {}, "all_projects": all_projects, "total_count": 0, "page": page, "page_size": page_size, "total_pages": 0}
 	
 	# ----------------------------
 	# STEP 3: Count and Paginate Partners
@@ -195,7 +213,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 	)
 
 	if not partner_rows:
-		return {"partners_map": {}, "all_projects": [], "total_count": total_count, "page": page, "page_size": page_size, "total_pages": total_pages}
+		return {"partners_map": {}, "all_projects": all_projects, "total_count": total_count, "page": page, "page_size": page_size, "total_pages": total_pages}
 	
 	# Fetch milestone details to get project info
 	milestone_project_map = {}
@@ -208,17 +226,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 		)
 		milestone_project_map = {m["name"]: m["project"] for m in milestones_for_projects}
 	
-	# Collect all projects with partners in this quarter
-	all_projects = []
-	if partner_rows:
-		all_milestone_ids = list(set([p["parent"] for p in partner_rows]))
-		all_milestones = frappe.get_list(
-			"Grant Project Milestone",
-			fields=["name", "project"],
-			filters={"name": ["in", all_milestone_ids], "milestone_type": "Progress Update"},
-		)
-		unique_project_ids = sorted(list(set([m["project"] for m in all_milestones])))
-		all_projects = [{"id": pid, "name": project_map.get(pid)} for pid in unique_project_ids]
+	# `all_projects` is already populated in Step 1 with all projects for the grant
 	
 	# Fetch partner titles
 	partner_ids = {p.get("partner") for p in partner_rows if p.get("partner")}
@@ -270,7 +278,7 @@ def fetch_grant_partners(grant_id, quarter_value, page=1, page_size=10, project_
 
 
 @frappe.whitelist()
-def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role_filter=None, sort_by=None, project_id=None):
+def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role_filter=None, sort_by=None, project_ids=None):
 	"""
 	Separate API endpoint to fetch contributors for grant milestones in a specific quarter with pagination.
 	
@@ -281,7 +289,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	- page_size: Records per page
 	- role_filter: (optional) Filter by specific role (e.g., "Developer", "Project Lead")
 	- sort_by: (optional) Sort by field. Options: "name" (sorts by contributor name)
-	- project_id: (optional) Filter by specific project ID
+	- project_ids: (optional) Filter by specific project IDs
 	
 	Returns: {contributors_map, all_roles, total_count, page, page_size, total_pages}
 	"""
@@ -295,23 +303,42 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	# ----------------------------
 	# STEP 1: Fetch Projects
 	# ----------------------------
-	project_filters = {"grant": grant_id}
-	if project_id:
-		project_filters["name"] = project_id
-	
-	projects = frappe.get_list(
+	all_grant_projects = frappe.get_list(
 		"Grant Project",
 		fields=["name", "title"],
-		filters=project_filters,
+		filters={"grant": grant_id},
 	)
+	project_map = {p["name"]: p["title"] for p in all_grant_projects}
+	all_projects = [{"id": p["name"], "name": p["title"]} for p in all_grant_projects]
+	
+	if project_ids:
+		# Handle string (comma-separated or single) or list
+		if isinstance(project_ids, str):
+			try:
+				import json
+				parsed = json.loads(project_ids)
+				if isinstance(parsed, list):
+					target_project_ids = [str(x).strip() for x in parsed]
+				else:
+					target_project_ids = [x.strip() for x in project_ids.split(",") if x.strip()]
+			except Exception:
+				target_project_ids = [x.strip() for x in project_ids.split(",") if x.strip()]
+		elif isinstance(project_ids, list):
+			target_project_ids = [str(x).strip() for x in project_ids]
+		else:
+			target_project_ids = []
+			
+		projects = [p for p in all_grant_projects if p["name"] in target_project_ids]
+	else:
+		projects = all_grant_projects
+		
 	project_ids = [p["name"] for p in projects]
-	project_map = {p["name"]: p["title"] for p in projects}
 	
 	if not project_ids:
 		return {
 			"contributors_map": {},
 			"all_roles": [],
-			"all_projects": [],
+			"all_projects": all_projects,
 			"total_count": 0,
 			"page": page,
 			"page_size": page_size,
@@ -385,7 +412,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 		return {
 			"contributors_map": {},
 			"all_roles": [],
-			"all_projects": [],
+			"all_projects": all_projects,
 			"total_count": 0,
 			"page": page,
 			"page_size": page_size,
@@ -395,6 +422,30 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 	# ----------------------------
 	# STEP 3: Fetch ALL Contributors (without pagination) to collect all roles and projects
 	# ----------------------------
+	
+	# Fetch all unique roles for the grant as a whole, ignoring quarter/project filters
+	# so that `all_roles` is always populated even if the filtered query yields no results.
+	all_grant_milestones = frappe.get_all(
+		"Grant Project Milestone",
+		filters={"project": ["in", [p["name"] for p in all_grant_projects]], "milestone_type": "Progress Update"},
+		fields=["name"]
+	)
+	all_grant_milestone_ids = [m["name"] for m in all_grant_milestones]
+	
+	all_roles = []
+	if all_grant_milestone_ids:
+		all_roles_query = frappe.get_all(
+			"Grant Project Milestone Contributor",
+			filters={
+				"parent": ["in", all_grant_milestone_ids],
+				"parenttype": "Grant Project Milestone",
+				"parentfield": "contributors",
+			},
+			fields=["role"],
+			distinct=True
+		)
+		all_roles = sorted(list(set([r.get("role") for r in all_roles_query if r.get("role")])))
+
 	all_contributor_rows = frappe.get_all(
 		"Grant Project Milestone Contributor",
 		fields=["parent", "team_member", "role"],
@@ -405,20 +456,7 @@ def fetch_grant_contributors(grant_id, quarter_value, page=1, page_size=10, role
 		},
 	)
 	
-	# Collect all unique roles
-	all_roles = sorted(list(set([c.get("role") for c in all_contributor_rows if c.get("role")])))
-	
-	# Collect all projects with contributors in this quarter
-	all_projects = []
-	if all_contributor_rows:
-		milestone_ids_all = list(set([c["parent"] for c in all_contributor_rows]))
-		milestones_all = frappe.get_list(
-			"Grant Project Milestone",
-			fields=["name", "project"],
-			filters={"name": ["in", milestone_ids_all], "milestone_type": "Progress Update"},
-		)
-		unique_project_ids = sorted(list(set([m["project"] for m in milestones_all])))
-		all_projects = [{"id": pid, "name": project_map.get(pid)} for pid in unique_project_ids]
+	# `all_projects` is already populated in Step 1 with all projects for the grant
 	
 	# Apply role filter if provided
 	filtered_contributor_rows = all_contributor_rows

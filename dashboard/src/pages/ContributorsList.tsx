@@ -27,11 +27,11 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
     const { grantId, projectId } = useParams<{ grantId: string; projectId?: string }>();
     const [searchParams] = useSearchParams();
     const quarter = searchParams.get('quarter');
-    
+
     const [currentPage, setCurrentPage] = useState(1);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [roleFilter, setRoleFilter] = useState<string | null>(null);
-    const [projectFilter, setProjectFilter] = useState<string | null>(null);
+    const [projectFilter, setProjectFilter] = useState<string[]>([]);
     const [sortByType, setSortByType] = useState<'name' | null>(null);
 
     // Only use projectId if we are explicitly in project scope
@@ -63,7 +63,7 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                 page: currentPage,
                 page_size: ITEMS_PER_PAGE,
                 role_filter: roleFilter || undefined,
-                project_id: projectFilter || undefined,
+                project_ids: projectFilter.length > 0 ? projectFilter : undefined,
                 sort_by: sortByType === 'name' ? 'name' : undefined
             });
         }
@@ -87,7 +87,7 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
         } else {
             // Grant context (New API Logic)
             if (!grantContributorsResult?.message?.contributors_map) return [];
-            
+
             // Flatten the map values into a single array
             return Object.values(grantContributorsResult.message.contributors_map).flat().map((c: any) => ({
                 id: c.id,
@@ -119,18 +119,18 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
     // Total Items logic
     const totalItems = useMemo(() => {
         if (activeProjectId) {
-             return projectContributorsResult?.message?.total_count || 0;
+            return projectContributorsResult?.message?.total_count || 0;
         } else {
-             return grantContributorsResult?.message?.total_count || 0;
+            return grantContributorsResult?.message?.total_count || 0;
         }
     }, [activeProjectId, grantContributorsResult, projectContributorsResult]);
 
     // Pagination Logic
     const totalPages = useMemo(() => {
         if (activeProjectId) {
-             return projectContributorsResult?.message?.total_pages || 1;
+            return projectContributorsResult?.message?.total_pages || 1;
         } else {
-             return grantContributorsResult?.message?.total_pages || 1;
+            return grantContributorsResult?.message?.total_pages || 1;
         }
     }, [activeProjectId, grantContributorsResult, projectContributorsResult]);
 
@@ -181,7 +181,7 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
     return (
         <DashboardLayout showGrantSwitcher={true}>
             <AppBreadcrumb />
-            
+
             <div className="bg-white rounded-lg border border-none p-6 mt-4">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -193,7 +193,7 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                     <TableHeader>
                         <TableRow className="border-b border-border">
                             <TableHead className="w-[300px]">
-                                <button 
+                                <button
                                     onClick={handleSort}
                                     className="flex items-center gap-2 text-muted-foreground font-medium hover:text-foreground"
                                 >
@@ -212,14 +212,15 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start" className='border-border rounded-sm'>
                                             {allProjects.map((project) => {
-                                                const isChecked = projectFilter === project.id;
+                                                const isChecked = projectFilter.includes(project.id);
                                                 return (
                                                     <DropdownMenuCheckboxItem
                                                         key={project.id}
                                                         className="border-border pl-2 [&>span]:hidden cursor-pointer"
                                                         checked={isChecked}
+                                                        onSelect={(e) => e.preventDefault()}
                                                         onCheckedChange={(checked) => {
-                                                            setProjectFilter(checked ? project.id : null);
+                                                            setProjectFilter(prev => checked ? [...prev, project.id] : prev.filter(id => id !== project.id));
                                                             setCurrentPage(1);
                                                         }}
                                                     >
@@ -282,25 +283,25 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                                         </TableCell>
                                         {!activeProjectId && (
                                             <TableCell className="py-4 text-muted-foreground">
-                                            {/* @ts-expect-error: projectName is injected by API map but missing in type */}
-                                            {person.projectName || '-'}
+                                                {/* @ts-expect-error: projectName is injected by API map but missing in type */}
+                                                {person.projectName || '-'}
                                             </TableCell>
                                         )}
                                         <TableCell className="py-4 text-muted-foreground">
                                             {person.role && (
-                                                <Badge 
-                                                    variant="secondary" 
+                                                <Badge
+                                                    variant="secondary"
                                                     className="font-normal border-border border bg-transparent text-muted-foreground rounded-full px-3 py-0.5 text-xs"
                                                 >
                                                     {person.role}
                                                 </Badge>
                                             )}
-                    
+
                                         </TableCell>
                                         <TableCell className="py-4">
                                             {person.designation}
                                         </TableCell>
-                                        
+
                                     </TableRow>
                                 );
                             })
@@ -331,7 +332,7 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                                 <ChevronLeft className="w-4 h-4 mr-1" />
                                 Previous
                             </Button>
-                            
+
                             <div className="flex items-center gap-1">
                                 {getPageNumbers().map((page, index) => (
                                     typeof page === 'number' ? (

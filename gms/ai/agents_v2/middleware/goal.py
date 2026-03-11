@@ -146,10 +146,7 @@ def create_set_goal_tool():
         Returns:
             Command updating goals in state
         """
-        # Clean up goal text
-        goal_text = goal_text.strip()
-        if len(goal_text) > 50:
-            goal_text = goal_text[:47] + "..."
+ 
 
         # Get next sequential ID from current goals count
         existing_goals = runtime.state.get("goals", [])

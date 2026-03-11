@@ -27,10 +27,10 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
     const { grantId, projectId } = useParams<{ grantId: string; projectId?: string }>();
     const [searchParams] = useSearchParams();
     const quarter = searchParams.get('quarter');
-    
+
     const [currentPage, setCurrentPage] = useState(1);
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-    const [projectFilter, setProjectFilter] = useState<string | null>(null);
+    const [projectFilter, setProjectFilter] = useState<string[]>([]);
     const [sortByType, setSortByType] = useState<'title' | null>(null);
 
     // Only use projectId if we are explicitly in project scope
@@ -54,13 +54,13 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                 sort_by: sortByType === 'title' ? 'title' : undefined
             });
         } else if (grantId && quarter) {
-             // Grant Scope
+            // Grant Scope
             fetchGrantPartners({
                 grant_id: grantId,
                 quarter_value: quarter,
                 page: currentPage,
                 page_size: ITEMS_PER_PAGE,
-                project_id: projectFilter || undefined,
+                project_ids: projectFilter.length > 0 ? projectFilter : undefined,
                 sort_by: sortByType === 'title' ? 'title' : undefined
             });
         }
@@ -71,7 +71,7 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
         if (activeProjectId) {
             // Project context (New API Logic)
             if (!projectPartnersResult?.message?.partners_map) return [];
-             return Object.values(projectPartnersResult.message.partners_map).flat().map((p: any) => ({
+            return Object.values(projectPartnersResult.message.partners_map).flat().map((p: any) => ({
                 id: p.id,
                 title: p.title,
                 projectName: p.project_name,
@@ -81,7 +81,7 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
         } else {
             // Grant context (New API Logic)
             if (!grantPartnersResult?.message?.partners_map) return [];
-            
+
             // Flatten the map values into a single array
             return Object.values(grantPartnersResult.message.partners_map).flat().map((p: any) => ({
                 id: p.id,
@@ -101,24 +101,24 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
     // Total Items logic
     const totalItems = useMemo(() => {
         if (activeProjectId) {
-             return projectPartnersResult?.message?.total_count || 0;
+            return projectPartnersResult?.message?.total_count || 0;
         } else {
-             return grantPartnersResult?.message?.total_count || 0;
+            return grantPartnersResult?.message?.total_count || 0;
         }
     }, [activeProjectId, grantPartnersResult, projectPartnersResult]);
 
     // Pagination Logic
     const totalPages = useMemo(() => {
         if (activeProjectId) {
-             return projectPartnersResult?.message?.total_pages || 1;
+            return projectPartnersResult?.message?.total_pages || 1;
         } else {
-             return grantPartnersResult?.message?.total_pages || 1;
+            return grantPartnersResult?.message?.total_pages || 1;
         }
     }, [activeProjectId, grantPartnersResult, projectPartnersResult]);
 
     // Derived list for render
     const visiblePartners = partners;
-    
+
     // Pagination display variables
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
@@ -165,7 +165,7 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
     return (
         <DashboardLayout showGrantSwitcher={true}>
             <AppBreadcrumb />
-            
+
             <div className="bg-white rounded-lg border border-none p-6 mt-4">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -177,7 +177,7 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                     <TableHeader>
                         <TableRow className="border-b border-border">
                             <TableHead className="w-[352px]">
-                                <button 
+                                <button
                                     onClick={handleSort}
                                     className="flex items-center gap-2 text-muted-foreground font-medium hover:text-foreground"
                                 >
@@ -196,14 +196,15 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start" className='border-border rounded-sm'>
                                             {allProjects.map((project) => {
-                                                const isChecked = projectFilter === project.id;
+                                                const isChecked = projectFilter.includes(project.id);
                                                 return (
                                                     <DropdownMenuCheckboxItem
                                                         key={project.id}
                                                         className="border-border pl-2 [&>span]:hidden cursor-pointer"
                                                         checked={isChecked}
+                                                        onSelect={(e) => e.preventDefault()}
                                                         onCheckedChange={(checked) => {
-                                                            setProjectFilter(checked ? project.id : null);
+                                                            setProjectFilter(prev => checked ? [...prev, project.id] : prev.filter(id => id !== project.id));
                                                             setCurrentPage(1);
                                                         }}
                                                     >
@@ -240,9 +241,9 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                                     <TableCell className="py-4 max-w-[762px]">
                                         <div className="flex flex-wrap gap-2">
                                             {(partner.responsibilities || []).map((resp: string, index: number) => (
-                                                <Badge 
+                                                <Badge
                                                     key={index}
-                                                    variant="secondary" 
+                                                    variant="secondary"
                                                     className="font-normal border-border border bg-transparent text-[#525252] rounded-lg px-3 py-1 text-xs"
                                                 >
                                                     {resp}
@@ -282,7 +283,7 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                                 <ChevronLeft className="w-4 h-4 mr-1" />
                                 Previous
                             </Button>
-                            
+
                             <div className="flex items-center gap-1">
                                 {getPageNumbers().map((page, index) => (
                                     typeof page === 'number' ? (
