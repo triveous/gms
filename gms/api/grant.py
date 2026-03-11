@@ -453,8 +453,14 @@ def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
 
 			# ----------------------------
 			# STEP 6: Add milestone files with appropriate file types and dates
+			# Deduplicate by file_url — the same physical file may be attached to
+			# multiple milestones; we only want one entry per unique file.
 			# ----------------------------
+			seen_file_urls = set()
 			for file_doc in milestone_files:
+				if file_doc.get("file_url") in seen_file_urls:
+					continue
+				seen_file_urls.add(file_doc.get("file_url"))
 				file_name = file_doc.get("file_name")
 				creation_date = file_doc.get("creation")
 				file_id = file_doc.get("name")
