@@ -131,6 +131,15 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
         activeMessageId: null
     });
 
+    const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+        return () => clearTimeout(timeoutId);
+    }, [messages.length, showBeforeThinking, showThinkingActive, status]);
+
     const updateTaskState = (messageId: string, updates: Partial<{ uploadStep: number; reviewData: any; isSubmitting: boolean; isRejected: boolean; errorStep: number | null; errorMessage: string | null; grant_id: string | null }>) => {
         setTaskStates(prev => ({
             ...prev,
@@ -374,6 +383,7 @@ const ChatLayout: React.FC<ChatLayoutProps> = ({
                     <ConversationContent
                         className={`h-full ${containerWidthClass} flex flex-col-reverse overflow-y-auto bg-[#F8FAFC] rounded-md p-4 remove-scrollbar`}
                     >
+                        <div ref={messagesEndRef} />
                         {(status === 'error' || error) && (
                             <div className="flex w-full justify-center py-2">
                                 <span className="text-sm text-red-500">

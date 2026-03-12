@@ -194,7 +194,7 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                                                 <ListFilter className="w-4 h-4" />
                                             </button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className='border-border rounded-sm'>
+                                        <DropdownMenuContent align="start" className='border-border rounded-sm max-w-[516px]'>
                                             {allProjects.map((project) => {
                                                 const isChecked = projectFilter.includes(project.id);
                                                 return (
@@ -208,11 +208,11 @@ export default function PartnersList({ scope = 'grant' }: { scope?: 'grant' | 'p
                                                             setCurrentPage(1);
                                                         }}
                                                     >
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={`flex h-4 w-4 items-center justify-center rounded-[5px] border ${isChecked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+                                                        <div className="flex items-start gap-2 py-0.5">
+                                                            <div className={`flex h-4 w-4 items-center justify-center rounded-[5px] border shrink-0 mt-0.5 ${isChecked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
                                                                 {isChecked && <Check className="h-3 w-3 bg-white rounded-[5px] border-[1px] border-border" />}
                                                             </div>
-                                                            <span>{project.name}</span>
+                                                            <span className="whitespace-normal break-words">{project.name}</span>
                                                         </div>
                                                     </DropdownMenuCheckboxItem>
                                                 );

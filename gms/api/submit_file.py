@@ -472,7 +472,8 @@ def submit_extracted_milestone():
                                 "artifacts": milestone.get("artifacts", []),
                                 "partners": milestone.get("partners", []),
                                 "contributors": milestone.get("contributors", []),
-                                "metrics_values": milestone.get("metrics_values", [])
+                                "metrics_values": milestone.get("metrics_values", []),
+                                "uploaded_file": file_id
                             }
                             
                             if not milestone_doc_data.get("title"):
@@ -602,33 +603,6 @@ def submit_extracted_milestone():
                             doc.insert(ignore_permissions=True)
                             created_milestones.append(doc.name)
 
-                        # Attach the same file to every created milestone.
-                        # Each attachment record shares the same file_url (no content duplication).
-                        # The first milestone reuses the original File doc; subsequent ones get a
-                        # lightweight new File record pointing to the same file_url.
-                        if file_id and created_milestones:
-                            try:
-                                orig_file = frappe.get_doc("File", file_id)
-                                for idx, milestone_name in enumerate(created_milestones):
-                                    if idx == 0:
-                                        # Reuse the original file doc for the first milestone
-                                        frappe.db.set_value("File", file_id, {
-                                            "attached_to_doctype": "Grant Project Milestone",
-                                            "attached_to_name": milestone_name,
-                                        })
-                                    else:
-                                        # Create a new attachment record pointing to the same file_url
-                                        dup = frappe.get_doc({
-                                            "doctype": "File",
-                                            "file_name": orig_file.file_name,
-                                            "file_url": orig_file.file_url,
-                                            "is_private": orig_file.is_private,
-                                            "attached_to_doctype": "Grant Project Milestone",
-                                            "attached_to_name": milestone_name,
-                                        })
-                                        dup.insert(ignore_permissions=True)
-                            except Exception:
-                                pass
     
                         frappe.db.commit()
     
