@@ -151,7 +151,6 @@ The following context:
     if ai_agent.goal_middleware:
         main_middleware.append(GoalMiddleware())
     
-    main_middleware.append(FileUploadMiddleware())  # Adds request_file_upload tool
     main_middleware.append(TaskMiddleware())        # Always register – data-task must always persist
     main_middleware.append(UploadKeywordBypassMiddleware()) # Bypasses agent on 'upload' keyword
     
