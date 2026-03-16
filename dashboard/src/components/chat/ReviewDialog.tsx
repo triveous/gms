@@ -143,7 +143,7 @@ export function ReviewDialog({ open, onOpenChange, type = 'progress', data, onSu
                                     {type === 'plan' ? 'Review Plan' : type === 'dpr' ? 'Review DPR details' : 'Review Progress'}
                                 </DialogTitle>
                                 {type === 'dpr' ? (
-                                    <div className="text-[#64748B] text-[14px] italic mt-1">
+                                    <div className="text-[#64748B] text-[14px] mt-1 font-sans font-normal">
                                         Note: Only key details were shown to verify COE and its projects; the full document will used for AI features.
                                     </div>
                                 ) : (

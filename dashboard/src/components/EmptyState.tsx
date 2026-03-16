@@ -1,8 +1,17 @@
 import { Sparkles } from 'lucide-react';
-import DefaultImage from '../assets/defalut-coe.png'
+import DefaultImage from '../assets/defalut-coe.png';
+import { useChatContext } from '@/contexts/ChatContext';
+import { Button } from './ui/button';
 
 
 export default function EmptyState() {
+    const { openChat, setPendingMessage } = useChatContext();
+
+    const handleUploadDPR = () => {
+        setPendingMessage('I want to upload a DPR document');
+        openChat();
+    };
+
     return (
         <div className="flex flex-col items-center justify-center py-16 px-4 bg-white mt-6 rounded-lg">
             {/* Illustration */}
@@ -16,12 +25,14 @@ export default function EmptyState() {
             </h2>
 
             {/* Upload Button */}
-            <div 
-                className="flex items-center gap-2 px-6 py-2.5 border border-border rounded-lg hover:bg-accent transition-colors"
+            <Button
+                onClick={handleUploadDPR}
+                variant="outline"
+                className="flex items-center gap-2 px-6 py-2 h-[45px] text-[#475569] border-[#E2E8F0] shadow-none font-medium"
             >
                 <Sparkles className="w-5 h-5" />
                 Upload your DPR
-            </div>
+            </Button>
         </div>
     );
 }

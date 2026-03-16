@@ -132,7 +132,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                                             {uploadStep === 0 ? (
                                                 <>
                                                     <div className="text-[15px] text-[#475569] mb-4">
-                                                        Task: ({taskId})
+                                                        Task: (Upload DPR, Plans & Reports)
                                                     </div>
                                                     <div className="">
                                                         <label className="flex items-center gap-4 px-4 py-2 rounded-full border-2 border-[#cbd5e1] bg-white cursor-pointer hover:bg-slate-50 transition-all w-fit max-w-full">
@@ -155,7 +155,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                                             ) : (
                                                 <div className="py-2">
                                                     <div className="text-[15px] text-[#475569] mb-6">
-                                                        Task: ({taskId})
+                                                        Task: (Upload DPR, Plans & Reports)
                                                     </div>
                                                     <div className="space-y-0 relative pl-2">
                                                         {[
