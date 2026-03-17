@@ -20,6 +20,12 @@ import {
     DropdownMenuCheckboxItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+    TooltipProvider,
+} from '@/components/ui/tooltip';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -210,7 +216,8 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                                                 <ListFilter className="w-4 h-4" />
                                             </button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className='border-border rounded-sm'>
+                                        <DropdownMenuContent align="start" className='border-border rounded-sm max-w-[516px] max-h-[182px]'>
+                                            <TooltipProvider delayDuration={300}>
                                             {allProjects.map((project) => {
                                                 const isChecked = projectFilter.includes(project.id);
                                                 return (
@@ -224,15 +231,27 @@ export default function ContributorsList({ scope = 'grant' }: { scope?: 'grant' 
                                                             setCurrentPage(1);
                                                         }}
                                                     >
-                                                        <div className="flex items-center gap-2">
-                                                            <div className={`flex h-4 w-4 items-center justify-center rounded-[5px] border ${isChecked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
+                                                        <div className="flex items-center gap-2 py-0.5 min-w-0">
+                                                            <div className={`flex h-4 w-4 items-center justify-center rounded-[5px] border shrink-0 ${isChecked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/30'}`}>
                                                                 {isChecked && <Check className="h-3 w-3 bg-white rounded-[5px] border-[1px] border-border" />}
                                                             </div>
-                                                            <span>{project.name}</span>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <span className="truncate">{project.name}</span>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent 
+                                                                    side="bottom" 
+                                                                    showArrow={false}
+                                                                    className="bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0] text-[10px] font-[400] shadow-sm px-2 py-1.5 rounded-md max-w-[400px]"
+                                                                >
+                                                                    {project.name}
+                                                                </TooltipContent>
+                                                            </Tooltip>
                                                         </div>
                                                     </DropdownMenuCheckboxItem>
                                                 );
                                             })}
+                                            </TooltipProvider>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableHead>
