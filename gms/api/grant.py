@@ -420,16 +420,15 @@ def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
 		project_ids = [p["name"] for p in projects]
 
 		# ----------------------------
-		# STEP 4: Fetch all milestones for these projects with dates
+		# STEP 4: Fetch all milestones for these projects with dates and uploaded_file
 		# ----------------------------
 		milestones = frappe.get_all(
 			"Grant Project Milestone",
-			fields=["name", "milestone_type", "period_start", "period_end"],
+			fields=["name", "milestone_type", "period_start", "period_end", "uploaded_file"],
 			filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
 		)
 
 		if milestones:
-			milestone_ids = [m["name"] for m in milestones]
 			milestone_type_map = {m["name"]: m.get("milestone_type") for m in milestones}
 			milestone_dates_map = {
 				m["name"]: {
@@ -437,87 +436,90 @@ def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
 					"end_date": m.get("period_end")
 				} for m in milestones
 			}
+			
+			# Map uploaded_file to milestone
+			file_to_milestone_map = {m["uploaded_file"]: m["name"] for m in milestones if m.get("uploaded_file")}
+			file_ids = list(file_to_milestone_map.keys())
 
-			# ----------------------------
-			# STEP 5: Fetch all attachments for these milestones
-			# ----------------------------
-			milestone_files = frappe.get_all(
-				"File",
-				fields=["name", "file_name", "creation", "attached_to_name", "file_url"],
-				filters={
-					"attached_to_doctype": "Grant Project Milestone",
-					"attached_to_name": ["in", milestone_ids],
-				},
-				order_by="creation desc",
-			)
+			if file_ids:
+				# ----------------------------
+				# STEP 5: Fetch details for these unique files
+				# ----------------------------
+				milestone_files = frappe.get_all(
+					"File",
+					fields=["name", "file_name", "creation", "file_url"],
+					filters={"name": ["in", file_ids]},
+					order_by="creation desc",
+				)
 
-			# ----------------------------
-			# STEP 6: Add milestone files with appropriate file types and dates
-			# ----------------------------
-			for file_doc in milestone_files:
-				file_name = file_doc.get("file_name")
-				creation_date = file_doc.get("creation")
-				file_id = file_doc.get("name")
-				milestone_id = file_doc.get("attached_to_name")
-				file_url = file_doc.get("file_url")
+				# ----------------------------
+				# STEP 6: Add milestone files with appropriate file types and dates
+				# ----------------------------
+				for file_doc in milestone_files:
+					file_name = file_doc.get("file_name")
+					creation_date = file_doc.get("creation")
+					file_id = file_doc.get("name")
+					file_url = file_doc.get("file_url")
+					
+					milestone_id = file_to_milestone_map.get(file_id)
 
-				# Get milestone type and dates
-				milestone_type = milestone_type_map.get(milestone_id)
-				milestone_dates = milestone_dates_map.get(milestone_id, {})
-				start_date = milestone_dates.get("start_date")
-				end_date = milestone_dates.get("end_date")
+					# Get milestone type and dates
+					milestone_type = milestone_type_map.get(milestone_id)
+					milestone_dates = milestone_dates_map.get(milestone_id, {})
+					start_date = milestone_dates.get("start_date")
+					end_date = milestone_dates.get("end_date")
 
-				# Determine file_type based on milestone type
-				if milestone_type == "Planning Update":
-					file_type = "Yearly Plans"
-				elif milestone_type == "Progress Update":
-					file_type = "Progress Report"
-				else:
-					file_type = "Document"
-
-				file_types_set.add(file_type)
-
-				# Apply file_type filter
-				if file_types_filter and file_type not in file_types_filter:
-					continue
-
-				# Parse creation date
-				try:
-					if isinstance(creation_date, str):
-						uploaded_on = datetime.strptime(creation_date, "%Y-%m-%d %H:%M:%S.%f").strftime("%d-%m-%Y, %I:%M%p (IST)")
+					# Determine file_type based on milestone type
+					if milestone_type == "Planning Update":
+						file_type = "Yearly Plans"
+					elif milestone_type == "Progress Update":
+						file_type = "Progress Report"
 					else:
-						uploaded_on = creation_date.strftime("%d-%m-%Y, %I:%M%p (IST)")
-				except Exception:
-					uploaded_on = str(creation_date)
+						file_type = "Document"
 
-				# Format dates
-				try:
-					if isinstance(start_date, str):
-						start_date = start_date.split(" ")[0]  # Remove time if present
-					else:
-						start_date = str(start_date) if start_date else None
-				except Exception:
-					pass
+					file_types_set.add(file_type)
 
-				try:
-					if isinstance(end_date, str):
-						end_date = end_date.split(" ")[0]  # Remove time if present
-					else:
-						end_date = str(end_date) if end_date else None
-				except Exception:
-					pass
+					# Apply file_type filter
+					if file_types_filter and file_type not in file_types_filter:
+						continue
 
-				files_list.append({
-					"file_id": file_id,
-					"file_name": file_name,
-					"uploaded_on": uploaded_on,
-					"file_type": file_type,
-					"milestone_id": milestone_id,
-					"milestone_type": milestone_type,
-					"start_date": start_date,
-					"end_date": end_date,
-					"download_link": file_url,
-				})
+					# Parse creation date
+					try:
+						if isinstance(creation_date, str):
+							uploaded_on = datetime.strptime(creation_date, "%Y-%m-%d %H:%M:%S.%f").strftime("%d-%m-%Y, %I:%M%p (IST)")
+						else:
+							uploaded_on = creation_date.strftime("%d-%m-%Y, %I:%M%p (IST)")
+					except Exception:
+						uploaded_on = str(creation_date)
+
+					# Format dates
+					try:
+						if isinstance(start_date, str):
+							start_date = start_date.split(" ")[0]  # Remove time if present
+						else:
+							start_date = str(start_date) if start_date else None
+					except Exception:
+						pass
+
+					try:
+						if isinstance(end_date, str):
+							end_date = end_date.split(" ")[0]  # Remove time if present
+						else:
+							end_date = str(end_date) if end_date else None
+					except Exception:
+						pass
+
+					files_list.append({
+						"file_id": file_id,
+						"file_name": file_name,
+						"uploaded_on": uploaded_on,
+						"file_type": file_type,
+						"milestone_id": milestone_id,
+						"milestone_type": milestone_type,
+						"start_date": start_date,
+						"end_date": end_date,
+						"download_link": file_url,
+					})
 
 	# Define file type priority (DPR first, then Yearly Plans, then Progress Report)
 	file_type_priority = {

@@ -127,6 +127,7 @@ INPUT:
 1. Grant list (with grant_id and associated project_ids).
 2. Milestone Type IDs.
 3. One document (full text).
+4. No png, jpg, mp4 kind of files.
 
 Grant List {grant_list}
 The document may be one of the following types:
@@ -236,7 +237,7 @@ For YEARLY_PLAN or QUARTERLY_PROGRESS_REPORT:
 2. PROJECT CHECK: You must check if the projects you found in the document exist in the provided Grant List. If the document references a project that is NOT in the selected Grant ID's project list, you MUST return an error.
 
 For DPR:
-1. Ensure the document defines a grant title and at least one project. If missing, return an error.
+1. Ensure the document defines a grant title and at least one project. If missing, return an error. The title of the grant and the projects should have length under 140 characters max.
 2. Ensure the Grant should have atleas one Funder, else return an error.
 3. Ensure the Grant and project should have timeline (start_date, end_date), else return an error.
 

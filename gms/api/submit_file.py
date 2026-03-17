@@ -472,7 +472,8 @@ def submit_extracted_milestone():
                                 "artifacts": milestone.get("artifacts", []),
                                 "partners": milestone.get("partners", []),
                                 "contributors": milestone.get("contributors", []),
-                                "metrics_values": milestone.get("metrics_values", [])
+                                "metrics_values": milestone.get("metrics_values", []),
+                                "uploaded_file": file_id
                             }
                             
                             if not milestone_doc_data.get("title"):
@@ -601,20 +602,7 @@ def submit_extracted_milestone():
                             doc = frappe.get_doc(milestone_doc_data)
                             doc.insert(ignore_permissions=True)
                             created_milestones.append(doc.name)
-                            
-                            if file_id:
-                                try:
-                                    file_doc = frappe.get_doc("File", file_id)
-                                    attached_file = frappe.get_doc({
-                                        "doctype": "File",
-                                        "file_name": file_doc.file_name,
-                                        "file_url": file_doc.file_url,
-                                        "is_private": file_doc.is_private,
-                                        "attached_to_doctype": "Grant Project Milestone",
-                                        "attached_to_name": doc.name,
-                                    })
-                                    attached_file.insert(ignore_permissions=True)
-                                except Exception: pass
+
     
                         frappe.db.commit()
     
