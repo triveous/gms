@@ -31,6 +31,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title",
+   "length": 400,
    "reqd": 1
   },
   {
@@ -59,8 +60,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-19 19:03:45.271361",
- "modified_by": "Administrator",
+ "modified": "2026-03-17 11:23:58.346788",
+ "modified_by": "administrator@gmail.com",
  "module": "GMS",
  "name": "Grant Project",
  "owner": "Administrator",

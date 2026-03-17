@@ -181,6 +181,7 @@ Rules:
 - One document → One parent grant
 - Use only provided grant IDs
 - Do not hallucinate
+- FUZZY TITLE MATCHING: The grant or project title in the document may NOT match the title in the Grant List exactly. Use semantic similarity to determine if they refer to the same entity. Consider abbreviations, acronyms, word reordering, minor wording differences, or partial name matches as potentially the same grant/project. Only treat it as a mismatch if the titles are clearly about completely different subjects.
 
 Return:
 {{
@@ -233,7 +234,7 @@ Before generating the final output, verify the conditions based on document type
 
 For YEARLY_PLAN or QUARTERLY_PROGRESS_REPORT:
 1. PERIOD CHECK: You must check if `period_start` and `period_end` are present in the document or can be inferred. If they are missing, you MUST return an error.
-2. PROJECT CHECK: You must check if the projects you found in the document exist in the provided Grant List. If the document references a project that is NOT in the selected Grant ID's project list, you MUST return an error.
+2. PROJECT CHECK: You must check if the projects you found in the document exist in the provided Grant List. Use FUZZY/SEMANTIC matching — the project title in the document may differ slightly from the title in the Grant List (e.g. abbreviations, word order changes, partial names, acronyms). If a project in the document is clearly the same as one in the Grant List despite minor title differences, treat it as a match and use the Grant List's project ID. Only return an error if a project is genuinely not present in the Grant List (i.e. the subject matter is completely different from all listed projects).
 
 For DPR:
 1. Ensure the document defines a grant title and at least one project. If missing, return an error.
