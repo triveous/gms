@@ -29,6 +29,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title",
+   "length": 400,
    "reqd": 1
   },
   {
@@ -97,8 +98,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-21 17:32:52.192264",
- "modified_by": "Administrator",
+ "modified": "2026-03-17 12:57:08.517658",
+ "modified_by": "administrator@gmail.com",
  "module": "GMS",
  "name": "Grant",
  "naming_rule": "Random",

@@ -1,6 +1,7 @@
 import frappe
 import json
 import time
+import threading
 from gms.ai.document_classifier import DocumentClassifier, extract_text_from_file
 
 
@@ -67,6 +68,34 @@ def resume_with_file():
             })
             frappe.db.commit()
 
+        def _run_in_thread(fn, *args, **kwargs):
+            """Run fn in a background thread, return (result, error)."""
+            result_holder = {}
+            error_holder = {}
+            done = threading.Event()
+            # Capture current site so the thread can initialize its own Frappe context
+            site = frappe.local.site
+
+            def _target():
+                try:
+                    frappe.init(site=site)
+                    frappe.connect()
+                    result_holder["value"] = fn(*args, **kwargs)
+                except Exception as e:
+                    error_holder["error"] = e
+                finally:
+                    frappe.db.close()
+                    done.set()
+
+            t = threading.Thread(target=_target, daemon=True)
+            t.start()
+            return done, result_holder, error_holder
+
+        def _yield_heartbeats_until_done(done_event, interval=15):
+            """Yield SSE comment heartbeats until the event is set."""
+            while not done_event.wait(timeout=interval):
+                yield ": heartbeat\n\n"
+
         def generator():
             handler = VercelUIStreamHandler()
             yield from handler.start()
@@ -83,12 +112,18 @@ def resume_with_file():
                 frappe.db.commit()
                 yield from handler.write_task({"id": task_id, "status": "Extracting"})
 
-            # STEP 1: Extraction
-            extraction_result = classifier.extract_data(
+            # STEP 1: Extraction — run in background thread with heartbeats
+            done_evt, result_h, error_h = _run_in_thread(
+                classifier.extract_data,
                 filename=file.filename,
                 content=extracted_text,
                 doc_id="uploaded_document"
             )
+            yield from _yield_heartbeats_until_done(done_evt)
+
+            if "error" in error_h:
+                raise error_h["error"]
+            extraction_result = result_h["value"]
             
             if task_id:
                 classifier.update_extraction_task(task_id, extraction_result)
@@ -96,8 +131,8 @@ def resume_with_file():
             if task_id:
                 frappe.db.set_value("Grant Document Extraction Task", task_id, {
                     "status": "Validating" if not extraction_result.get("isError") else "Extracting",
-                    "raw_extraction_json": json.dumps(extraction_result) if not extraction_result.get("isError") else "{""}",
-                    "extraction_error": json.dumps(extraction_result) if extraction_result.get("isError") else "{""}"
+                    "raw_extraction_json": json.dumps(extraction_result) if not extraction_result.get("isError") else "{}",
+                    "extraction_error": json.dumps(extraction_result) if extraction_result.get("isError") else "{}"
                 })
                 
                 # Check for extraction error constraints (e.g., missing period, unknown projects)
@@ -125,18 +160,24 @@ def resume_with_file():
 
             milestone_exists = classifier.check_milestone_exists(extraction_result)
 
-            # STEP 2: Validation
-            validation_result = classifier.validate_data(
+            # STEP 2: Validation — run in background thread with heartbeats
+            done_evt2, result_h2, error_h2 = _run_in_thread(
+                classifier.validate_data,
                 extracted_data=extraction_result,
                 content=extracted_text,
                 milestone_exists=milestone_exists
             )
+            yield from _yield_heartbeats_until_done(done_evt2)
+
+            if "error" in error_h2:
+                raise error_h2["error"]
+            validation_result = result_h2["value"]
 
             if task_id:
                 frappe.db.set_value("Grant Document Extraction Task", task_id, {
                     "status": "Reviewing" if not validation_result.get("isError") else "Validating",
-                    "raw_extraction_json": json.dumps(validation_result) if not validation_result.get("isError") else "{""}",
-                    "extraction_error": json.dumps(validation_result) if validation_result.get("isError") else "{""}"
+                    "raw_extraction_json": json.dumps(validation_result) if not validation_result.get("isError") else "{}",
+                    "extraction_error": json.dumps(validation_result) if validation_result.get("isError") else "{}"
                 })
                 
                 if validation_result.get("isError"):
