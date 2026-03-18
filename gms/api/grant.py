@@ -425,7 +425,7 @@ def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
 		milestones = frappe.get_all(
 			"Grant Project Milestone",
 			fields=["name", "milestone_type", "period_start", "period_end", "uploaded_file"],
-			filters={"project": ["in", project_ids], "milestone_type": "Progress Update"},
+			filters={"project": ["in", project_ids]},
 		)
 
 		if milestones:
