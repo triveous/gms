@@ -556,5 +556,41 @@ def fetch_grant_dpr_files(grant_id, file_types=None, sort_by=None):
 		"file_types": all_file_types,
 	}
 
+# Custom query for the 'organization' Link field in the Grant Contributor table.
+# It enforces uniqueness by filtering out organizations that are already assigned 
+# as a 'Grantee' to other Grants, making them vanish from the dropdown selection.
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_grantee_organizations_query(doctype, txt, searchfield, start, page_len, filters):
+	current_grant = filters.get("grant")
 
+	# Find organizations already acting as a Grantee in other grants
+	occupied_grantees = frappe.get_all(
+		"Grant Contributor",
+		filters={
+			"contribution_type": "Grantee",
+			"parent": ("!=", current_grant) if current_grant else ("!=", ""),
+			"parenttype": "Grant"
+		},
+		pluck="organization",
+		distinct=True
+	)
 
+	# Filter out these from the Grant Organization list
+	org_filters = {}
+	if occupied_grantees:
+		# filter out occupied organizations
+		org_filters["name"] = ("not in", occupied_grantees)
+
+	# Also apply the search text if any
+	if txt:
+		org_filters["organization_name"] = ("like", f"%{txt}%")
+
+	return frappe.get_all(
+		"Grant Organization",
+		filters=org_filters,
+		fields=["name", "organization_name"],
+		limit_start=start,
+		limit_page_length=page_len,
+		as_list=True
+	)
