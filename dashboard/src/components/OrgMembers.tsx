@@ -51,16 +51,22 @@ const OrgMembers = ({ partners = [], contributors = [], quarter }: OrgMembersPro
         navigate(getNavigationUrl('contributors'));
     };
 
-    const visiblePartners = partners.slice(0, MAX_VISIBLE_PARTNERS);
-    const visibleContributors = contributors.slice(0, MAX_VISIBLE_CONTRIBUTORS);
+    const uniquePartners = partners.filter((partner, index, self) => 
+        index === self.findIndex((p) => p.title === partner.title)
+    );
+    const visiblePartners = uniquePartners.slice(0, MAX_VISIBLE_PARTNERS);
+    const uniqueContributors = contributors.filter((person, index, self) => 
+        index === self.findIndex((p) => p.title === person.title)
+    );
+    const visibleContributors = uniqueContributors.slice(0, MAX_VISIBLE_CONTRIBUTORS);
 
     return (
         <div className="flex flex-col gap-8 mt-8">
             {/* Academic & Industry Partners Section */}
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-foreground">Academic & Industry Partners</h2>
-                    {partners.length > MAX_VISIBLE_PARTNERS && (
+                    <h2 className="text-xl font-semibold text-foreground">Academic & Industry Partnerss</h2>
+                    {uniquePartners.length > MAX_VISIBLE_PARTNERS && (
                         <Button 
                             variant="outline" 
                             className="shadow-none rounded-md p-[7.5px] bg-white border-[#E2E8F0] hover:bg-gray-50 gap-3 w-[156px] h-[36px] text-[#020617] text-sm font-medium leading-[21px] tracking-[0.07px] text-center"
@@ -124,7 +130,7 @@ const OrgMembers = ({ partners = [], contributors = [], quarter }: OrgMembersPro
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-foreground">People & teams</h2>
-                    {contributors.length > MAX_VISIBLE_CONTRIBUTORS && (
+                    {uniqueContributors.length > MAX_VISIBLE_CONTRIBUTORS && (
                         <Button 
                             variant="outline" 
                             className="shadow-none rounded-lg p-[7.5px] bg-white border-[#E2E8F0] hover:bg-gray-50 gap-3 w-[156px] h-[36px] text-[#020617] text-sm font-medium leading-[21px] tracking-[0.07px] text-center"
