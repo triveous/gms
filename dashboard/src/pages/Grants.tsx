@@ -29,17 +29,6 @@ export default function Grants() {
     const { setGrantsList } = useAppContext();
     const { setPageContext } = usePageContext();
 
-    // Check if user belongs to a grantee organization and redirect to their grant
-    const { data: granteeData, isLoading: isGranteeLoading } = useFrappeGetCall(
-        'gms.api.organization.get_user_grantee_grant'
-    );
-
-    useEffect(() => {
-        if (granteeData?.message?.grant_id) {
-            navigate(`/${granteeData.message.grant_id}`, { replace: true });
-        }
-    }, [granteeData, navigate]);
-
     const { data, error, isLoading } = useFrappeGetCall(
         'gms.api.grants.get_grants_with_related',
         { limit: 50 }
@@ -153,14 +142,6 @@ export default function Grants() {
     const handleGrantClick = (grantId: string) => {
         navigate(`/${grantId}`);
     };
-    // Block rendering until grantee check completes - grantee users should never see the list
-    if (isGranteeLoading || granteeData?.message?.grant_id) {
-        return (
-            <DashboardLayout>
-                <GrantsSkeleton />
-            </DashboardLayout>
-        );
-    }
 
     return (
         <DashboardLayout>
